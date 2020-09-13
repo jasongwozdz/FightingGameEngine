@@ -1,6 +1,6 @@
 #include "Mesh.h"
 #include <fstream>
-
+#include <iostream>
 
 Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue) :
 	m_vertices(verticies),
@@ -14,6 +14,17 @@ Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::v
 	rm_graphicsQueue(graphicsQueue)
 {};
 
+Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue) :
+	m_texturedVertices(verticies),
+	m_indicies(indicies),
+	rm_commandBuffers(commandBuffers),
+	rm_logicalDevice(logicalDevice),
+	rm_swapChainImages(swapChainImages),
+	rm_swapChainExtent(swapChainExtent),
+	rm_physicalDevice(physicalDevice),
+	rm_commandPool(commandPool),
+	rm_graphicsQueue(graphicsQueue)
+{};
 
 Mesh::~Mesh() {};
 
@@ -32,12 +43,33 @@ VkShaderModule Mesh::createShaderModule(const std::vector<char>& code) {
 }
 
 //virtual
-void Mesh::createDescriptorSetLayout() {};
+void Mesh::createDescriptorSetLayout() 
+{
+	std::cout << "createDescriptorSetLayout NOT IMPLEMENTED" << std::endl;
+	assert(1 == 0);
+};
 
-void Mesh::createUniformBuffers() {};
+void Mesh::createUniformBuffers()
+{
+	std::cout << "createUniformBuffers NOT IMPLEMENTED" << std::endl;
+	assert(1 == 0);
+};
 
-void Mesh::createRenderPass() {};
+void Mesh::createRenderPass() 
+{
+	std::cout << "createRenderPass NOT IMPLEMENTED" << std::endl;
+	assert(1 == 0);
+};
 
-void Mesh::updateUniformBuffer(uint32_t currentImage) {};
+void Mesh::updateUniformBuffer(uint32_t currentImage)
+{
 
-void Mesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers) {};
+	std::cout << "updateUniformBuffer NOT IMPLEMENTED" << std::endl;
+	assert(1 == 0);
+};
+
+void Mesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers)
+{
+	std::cout << "bindToCommandBuffers NOT IMPLEMENTED" << std::endl;
+	assert(1 == 0);
+};

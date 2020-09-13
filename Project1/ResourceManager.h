@@ -2,6 +2,7 @@
 #include <vulkan/vulkan.h>
 #include <map>
 #include <vector>
+#include <stb_image.h>
 
 struct Vertex;
 

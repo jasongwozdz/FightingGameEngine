@@ -1,7 +1,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "TexturedMesh.h"
 #include "BufferOperations.h"
-
+#include "ResourceManager.h"
+#include "VulkanErrorCheck.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
+#include <iostream>
 
 extern int WIDTH = 1200;
 extern int HEIGHT = 900;
@@ -11,7 +16,7 @@ VkImage createVulkanImage() {
 }
 
 void TexturedMesh::createTextureImageViews() {
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+	m_textureImageView = createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void TexturedMesh::createDescriptorSetLayout() {
@@ -41,7 +46,7 @@ void TexturedMesh::createDescriptorSetLayout() {
 }
 
 void TexturedMesh::createDescriptorPool() {
-	std::array<VkDescriptorPoolSize, 7> poolSizes{};
+	std::array<VkDescriptorPoolSize, 2> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(rm_swapChainImages.size());
 
@@ -80,10 +85,10 @@ void TexturedMesh::createDescriptorSet() {
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = textureImageView;
+		imageInfo.imageView = m_textureImageView;
 		imageInfo.sampler = m_textureSampler;
 
-		std::array<VkWriteDescriptorSet, 7> descriptorWrites{};
+		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].dstSet = m_descriptorSets[i];
@@ -106,7 +111,7 @@ void TexturedMesh::createDescriptorSet() {
 }
 
 void TexturedMesh::createVertexBuffer() {
-	VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
+	VkDeviceSize bufferSize = sizeof(m_texturedVertices[0]) * m_texturedVertices.size();
 	m_vertexBufferSize = bufferSize;
 
 	VkBuffer stagingBuffer;
@@ -115,7 +120,7 @@ void TexturedMesh::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(rm_logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, m_vertices.data(), (size_t)bufferSize);
+	memcpy(data, m_texturedVertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(rm_logicalDevice, stagingBufferMemory);
 
 	BufferOperations::createBuffer(rm_logicalDevice, rm_physicalDevice, rm_commandPool, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
@@ -148,17 +153,14 @@ void TexturedMesh::createIndexBuffer() {
 
 void TexturedMesh::createPipeline() {
 
-	auto vertShaderCode = readShaderFile("shaders/vert.spv");
-	auto fragShaderCode = readShaderFile("shaders/frag.spv");
+	auto vertShaderCode = readShaderFile("shaders/texturedMeshVert.spv");
+	auto fragShaderCode = readShaderFile("shaders/texturedMeshFrag.spv");
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -173,6 +175,9 @@ void TexturedMesh::createPipeline() {
 	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	auto bindingDescription = TexturedVertex::getBindingDescription();
+	auto attributeDescriptions = TexturedVertex::getAttributeDescriptions();
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -245,7 +250,6 @@ void TexturedMesh::createPipeline() {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pSetLayouts = &m_descriptorSetLayout;
 
 	if (vkCreatePipelineLayout(rm_logicalDevice, &pipelineLayoutInfo, nullptr, &m_pipelineLayout) != VK_SUCCESS) {
@@ -331,7 +335,36 @@ void TexturedMesh::createRenderPass() {
 	}
 }
 
-void TexturedMesh::createTextureImages(std::string texturePath){}
+void TexturedMesh::createTextureImages(std::string texturePath)
+{
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	if (!pixels) {
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	BufferOperations::createBuffer(rm_logicalDevice, rm_physicalDevice, rm_commandPool, imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(rm_logicalDevice, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	vkUnmapMemory(rm_logicalDevice, stagingBufferMemory);
+
+	stbi_image_free(pixels);
+
+	createImage(texWidth, texHeight, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory);
+
+	transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+	copyBufferToImage(stagingBuffer, m_textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+	//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+
+	vkDestroyBuffer(rm_logicalDevice, stagingBuffer, nullptr);
+	vkFreeMemory(rm_logicalDevice, stagingBufferMemory, nullptr);
+}
 
 void TexturedMesh::createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
 	VkImageCreateInfo imageInfo{};
@@ -419,7 +452,29 @@ void  TexturedMesh::transitionImageLayout(VkImage image, VkFormat format, VkImag
 	BufferOperations::endSingleTimeCommands(rm_logicalDevice, rm_graphicsQueue, rm_commandPool, commandBuffer);
 }
 
-void  TexturedMesh::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height){}
+void TexturedMesh::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+{
+	VkCommandBuffer commandBuffer = BufferOperations::beginSingleTimeCommands(rm_logicalDevice, rm_commandPool);
+
+	VkBufferImageCopy region{};
+	region.bufferOffset = 0;
+	region.bufferRowLength = 0;
+	region.bufferImageHeight = 0;
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.mipLevel = 0;
+	region.imageSubresource.baseArrayLayer = 0;
+	region.imageSubresource.layerCount = 1;
+	region.imageOffset = { 0, 0, 0 };
+	region.imageExtent = {
+		width,
+		height,
+		1
+	};
+
+	vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+	BufferOperations::endSingleTimeCommands(rm_logicalDevice, rm_graphicsQueue, rm_commandPool, commandBuffer);
+}
 
 VkImageView TexturedMesh::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
 	VkImageViewCreateInfo viewInfo{};
@@ -465,10 +520,77 @@ void TexturedMesh::createTextureSampler()
 	}
 }
 
-TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath):
+void TexturedMesh::updateUniformBuffer(uint32_t currentImage) {
+	static auto startTime = std::chrono::high_resolution_clock::now();
+
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+
+	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
+	ubo.proj[1][1] *= -1;
+
+	void* data;
+	vkMapMemory(rm_logicalDevice, m_uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(rm_logicalDevice, m_uniformBuffersMemory[currentImage]);
+}
+
+void TexturedMesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers) {
+	for (size_t i = 0; i < rm_commandBuffers.size(); i++) {
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		if (vkBeginCommandBuffer(rm_commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+			throw std::runtime_error("failed to begin recording command buffer!");
+		}
+
+		VkRenderPassBeginInfo renderPassInfo{};
+		std::array<VkClearValue, 1> clearValues{};
+		VkDeviceSize offsets[1] = { 0 };
+
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = m_renderPass;
+		renderPassInfo.framebuffer = frameBuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = rm_swapChainExtent;
+
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
+
+		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
+
+		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &m_vertexBuffer, offsets);
+
+		vkCmdBindIndexBuffer(commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSets[i], 0, nullptr);
+
+		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(m_indicies.size()), 1, 0, 0, 0);
+
+		vkCmdEndRenderPass(commandBuffers[i]);
+
+		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to record command buffer!");
+		}
+	}
+}
+
+TexturedMesh::TexturedMesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath):
 	Mesh(verticies, indicies, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue)
 {
-	createTextureImages(texturePath);
+	try {
+		createTextureImages(texturePath);
+	}
+	catch(int e){
+		std::cout << "Failed to load texture" << std::endl;
+		return;
+	}
 	createTextureImageViews();
 	createTextureSampler();
 
@@ -480,4 +602,32 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 	createPipeline();
 	createVertexBuffer();
 	createIndexBuffer();
+}
+
+TexturedMesh::~TexturedMesh() {
+	//texture specific destructors
+	vkFreeMemory(rm_logicalDevice, m_textureImageMemory, nullptr);
+	vkDestroyImage(rm_logicalDevice, m_textureImage, nullptr);
+	vkDestroyImageView(rm_logicalDevice, m_textureImageView, nullptr);
+	vkDestroySampler(rm_logicalDevice, m_textureSampler, nullptr);
+	//index buffer
+	vkDestroyBuffer(rm_logicalDevice, m_indexBuffer, nullptr);
+	vkFreeMemory(rm_logicalDevice, m_indexBufferMemory, nullptr);
+	//vertex buffer
+	vkDestroyBuffer(rm_logicalDevice, m_vertexBuffer, nullptr);
+	vkFreeMemory(rm_logicalDevice, m_vertexBufferMemory, nullptr);
+	//renderpass
+	vkDestroyRenderPass(rm_logicalDevice, m_renderPass, nullptr);
+	//pipeline
+	vkDestroyPipeline(rm_logicalDevice, m_pipeline, nullptr);
+	vkDestroyPipelineLayout(rm_logicalDevice, m_pipelineLayout, nullptr);
+	//uniform buffers
+	for (size_t i = 0; i < rm_swapChainImages.size(); i++) {
+		vkDestroyBuffer(rm_logicalDevice, m_uniformBuffers[i], nullptr);
+		vkFreeMemory(rm_logicalDevice, m_uniformBuffersMemory[i], nullptr);
+	}
+	//descriptor pool/set
+	vkDestroyDescriptorPool(rm_logicalDevice, m_descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(rm_logicalDevice, m_descriptorSetLayout, nullptr);
+	std::cout << "deleteing TexturedMesh" << std::endl;
 }

@@ -25,6 +25,8 @@ public:
 
 	Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
 
+	Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
+
 	virtual ~Mesh();
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
@@ -73,6 +75,8 @@ protected:
 	int m_indexCount;
 	
 	std::vector<Vertex> m_vertices;
+
+	std::vector<TexturedVertex> m_texturedVertices;
 
 	std::vector<uint32_t> m_indicies;
 

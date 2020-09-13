@@ -4,9 +4,9 @@ class TexturedMesh :
 	public Mesh
 {
 public:
-	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath);
+	TexturedMesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath);
 
-
+	~TexturedMesh();
 
 private:
 	/*
@@ -15,11 +15,11 @@ private:
 	*****************
 	*/
 
-	VkImageView textureImageView;
+	VkImageView m_textureImageView;
 
-	VkImage textureImage;
+	VkImage m_textureImage;
 
-	VkDeviceMemory textureImageMemory;
+	VkDeviceMemory m_textureImageMemory;
 	
 	VkSampler m_textureSampler;
 	/*
@@ -44,12 +44,14 @@ private:
 
 	virtual void createRenderPass();
 
+	virtual void updateUniformBuffer(uint32_t currentImage);
+
+	virtual void bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers);
+	
 	//Textured specific
 	void createTextureImages(std::string texturePath);
 	
 	void createImage(uint32_t width, uint32_t height, VkSampleCountFlagBits numSamples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-
-	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight);
 
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t layercount);
 

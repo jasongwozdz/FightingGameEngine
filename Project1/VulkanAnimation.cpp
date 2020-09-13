@@ -18,7 +18,9 @@
 #include "VulkanErrorCheck.h"
 #include "Vertex.h"
 #include "PrimitiveMesh.h"
+#include "TexturedMesh.h"
 #include "BufferOperations.h"
+
 
 extern const int WIDTH;
 extern const int HEIGHT;
@@ -764,17 +766,17 @@ private:
 
 	void initScene() {
 
-		const std::vector<Vertex> verticies = {
-			{ {-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f} },
-			{ {0.5f, -0.5f}, {0.0f, 1.0f, 0.0f} },
-			{ {0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} },
-			{ {-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f} }
+		const std::vector<TexturedVertex> vertices = {
+			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
 		};
-
 		const std::vector<uint32_t> indices = {
 			0, 1, 2, 2, 3, 0
 		};
-		PrimitiveMesh* a = new PrimitiveMesh(verticies, indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue);
+		std::string texturePath = "./Textures/testTexture1.jpg";
+		TexturedMesh* a = new TexturedMesh(vertices, indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
 		meshes.push_back(a);
 	}
 
