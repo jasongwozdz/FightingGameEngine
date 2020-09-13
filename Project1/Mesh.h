@@ -75,7 +75,6 @@ protected:
 	std::vector<Vertex> m_vertices;
 
 	std::vector<uint32_t> m_indicies;
-	
 
 	VkBuffer m_vertexBuffer;
 

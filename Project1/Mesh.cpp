@@ -2,14 +2,6 @@
 #include <fstream>
 
 
-//Base constructor
-//Mesh::Mesh() :
-//	m_indexBufferComp(nullptr),
-//	m_normalComp(nullptr),
-//	m_textureComp(nullptr),
-//	m_shaderComp(nullptr) 
-//{}
-
 Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue) :
 	m_vertices(verticies),
 	m_indicies(indicies),

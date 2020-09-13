@@ -8,23 +8,15 @@ static class used for various operations involving Vulkan buffers
 class BufferOperations
 {
 public:
-	static VkDevice& rm_logicalDevice;
 
-	static VkPhysicalDevice& rm_physicalDevice;
+	static void createBuffer(VkDevice logicalDevice, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
-	static VkCommandPool& rm_commandPool;
+	static void copyBuffer(VkDevice logicalDevice, VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-	static VkQueue& rm_graphicsQueue;
+	static VkCommandBuffer beginSingleTimeCommands(VkDevice logicalDevice, VkCommandPool commandPool);
 
-	static void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	static void endSingleTimeCommands(VkDevice logicalDevice, VkQueue graphicsQueue, VkCommandPool commandPool, VkCommandBuffer commandBuffer);
 
-	static void copyBuffer(VkCommandPool commandPool, VkQueue graphicsQueue, VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-	static VkCommandBuffer beginSingleTimeCommands(VkDevice device, VkCommandPool commandPool);
-
-	static void endSingleTimeCommands(VkCommandBuffer commandBuffer);
-
-	static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-
+	static uint32_t findMemoryType(VkDevice logicalDevice, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, uint32_t typeFilter, VkMemoryPropertyFlags properties);
 };
 

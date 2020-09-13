@@ -357,8 +357,6 @@ private:
 			throw std::runtime_error("failed to create graphics command pool!");
 		}
 
-		BufferOperations::rm_commandPool = commandPool;
-
 		commandBuffers.resize(swapChainImageViews.size());
 
 		VkCommandBufferAllocateInfo allocInfo{};
@@ -508,9 +506,6 @@ private:
 
 		vkGetDeviceQueue(logicalDevice, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(logicalDevice, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
-
-		BufferOperations::rm_logicalDevice = logicalDevice;
-		BufferOperations::rm_graphicsQueue = graphicsQueue;
 	}
 
 	void createPhysicalDevice() {
@@ -535,8 +530,6 @@ private:
 		if (physicalDevice == VK_NULL_HANDLE) {
 			throw std::runtime_error("failed to find a suitable GPU!");
 		}
-
-		BufferOperations::rm_physicalDevice = physicalDevice;
 	}
 
 
@@ -767,10 +760,6 @@ private:
 				throw std::runtime_error("failed to create synchronization objects for a frame!");
 			}
 		}
-	}
-
-	void prepareCommandBuffers() {
-
 	}
 
 	void initScene() {
