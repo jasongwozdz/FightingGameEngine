@@ -1,4 +1,5 @@
 #pragma once
+#include "Singleton.h"
 #include <vulkan/vulkan.h>
 #include <map>
 #include <vector>
@@ -13,13 +14,28 @@ struct TextureReturnVals {
 	int textureChannels;
 };
 
-class ResourceManager
+struct ModelReturnVals {
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+};
+
+class ResourceManager : Singleton<ResourceManager>
 {
+public:
 
 	std::map<std::string, uintptr_t> m_resourceRegistry;
 
-	std::vector<Vertex> loadObjFile(std::string& filePath);
+	ModelReturnVals& loadObjFile(std::string& filePath);
 	
-	TextureReturnVals* loadTextureFile(std::string& filePath);
+	TextureReturnVals& loadTextureFile(std::string& filePath);
+
+	void freeResource(std::string filePath);
+
+	void freeAllResources();
+
+	static ResourceManager& getSingleton();
+
+	static ResourceManager* getSingletonPtr();
+
 };
 

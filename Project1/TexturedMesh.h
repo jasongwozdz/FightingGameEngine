@@ -4,7 +4,7 @@ class TexturedMesh :
 	public Mesh
 {
 public:
-	TexturedMesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath);
+	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath);
 
 	~TexturedMesh();
 
@@ -45,8 +45,6 @@ private:
 	virtual void createRenderPass();
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
-
-	virtual void bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers);
 	
 	//Textured specific
 	void createTextureImages(std::string texturePath);

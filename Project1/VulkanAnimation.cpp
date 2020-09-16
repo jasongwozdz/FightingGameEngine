@@ -20,12 +20,15 @@
 #include "PrimitiveMesh.h"
 #include "TexturedMesh.h"
 #include "BufferOperations.h"
+#include "ResourceManager.h"
 
 
 extern const int WIDTH;
 extern const int HEIGHT;
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
+template<> ResourceManager* Singleton<ResourceManager>::msSingleton = 0;
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -50,11 +53,11 @@ const std::vector<const char*> deviceExtensions = {
 	"VK_KHR_swapchain"
 };
 
-
 class VulkanRenderer {
 public:
 
 	void run(){
+		initSingletons();
 		initWindow();
 		createVulkanInstance();
 		init();
@@ -67,6 +70,8 @@ private:
 //------------------------------------------
 //		memebers
 //------------------------------------------
+
+	ResourceManager* m_resourceManager;
 
 	GLFWwindow *window;
 
@@ -123,8 +128,13 @@ private:
 //------------------------------------------
 //		methods
 //------------------------------------------
+	void initSingletons() {
+		m_resourceManager = new ResourceManager();
+	}
+
 	void recreateSwapChain() { };
-	
+
+	/*TODO: Add frame delta calculation.  "Frame rate governing"*/
 	void drawFrame(){
 		vkWaitForFences(logicalDevice, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -766,21 +776,64 @@ private:
 
 	void initScene() {
 
-		const std::vector<TexturedVertex> vertices = {
-			{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-			{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-			{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}}
-		};
-		const std::vector<uint32_t> indices = {
-			0, 1, 2, 2, 3, 0
-		};
-		std::string texturePath = "./Textures/testTexture1.jpg";
-		TexturedMesh* a = new TexturedMesh(vertices, indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
+		std::string modelPath = "./Models/viking_room.obj";
+		ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
+		std::string texturePath = "./Textures/viking_room.png";
+		TexturedMesh* a = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
+
 		meshes.push_back(a);
 	}
 
-	void init(){
+	/*TODO: MOVE BIND TO COMMAND BUFFERS FUNCTION OUTSIDE OF MESH OBJECT.*/
+	void bindMeshesToCommandBuffers() 
+	{
+		for (size_t i = 0; i < commandBuffers.size(); i++) {
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+			if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
+				throw std::runtime_error("failed to begin recording command buffer!");
+			}
+
+			VkRenderPassBeginInfo renderPassInfo{};
+			std::array<VkClearValue, 1> clearValues{};
+			VkDeviceSize offsets[1] = { 0 };
+			for (auto &mesh : meshes) 
+			{
+				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+				renderPassInfo.renderPass = mesh->m_renderPass;
+				renderPassInfo.framebuffer = swapChainFramebuffers[i];
+				renderPassInfo.renderArea.offset = { 0, 0 };
+				renderPassInfo.renderArea.extent = swapChainExtent;
+
+				clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+				renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+				renderPassInfo.pClearValues = clearValues.data();
+
+				vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+				vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mesh->m_pipeline);
+
+				vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
+
+				vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mesh->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
+
+				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
+
+				vkCmdEndRenderPass(commandBuffers[i]);
+			}
+
+			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
+				throw std::runtime_error("failed to record command buffer!");
+			}
+		}
+	}
+
+	void init()
+	{
 		createSurface();
 		createPhysicalDevice();
 		createLogicalDevice();
@@ -789,11 +842,10 @@ private:
 		createCommandPool();
 		initScene();
 		createFramebuffers();
-		for (auto mesh : meshes) {
-			mesh->bindToCommandBuffers(commandBuffers, swapChainFramebuffers);
-		}
+		//think of better way to do this
+		bindMeshesToCommandBuffers();
 		createSyncObjects();
-		return;
+		ResourceManager::getSingleton().freeAllResources();
 	}
 
 	void initWindow() {

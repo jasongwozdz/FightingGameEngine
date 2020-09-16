@@ -31,8 +31,6 @@ public:
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
 
-	virtual void bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers);
-
 	VkRenderPass m_renderPass;
 
 	static std::vector<char> readShaderFile(const std::string& filename) {
@@ -52,6 +50,18 @@ public:
 
 		return buffer;
 	};
+
+	VkBuffer m_vertexBuffer;
+
+	VkPipeline m_pipeline;
+	
+	VkPipelineLayout m_pipelineLayout;
+	
+	VkBuffer m_indexBuffer;
+
+	std::vector<VkDescriptorSet> m_descriptorSets;
+
+	std::vector<uint32_t> m_indicies;
 
 protected:
 
@@ -78,32 +88,21 @@ protected:
 
 	std::vector<TexturedVertex> m_texturedVertices;
 
-	std::vector<uint32_t> m_indicies;
-
-	VkBuffer m_vertexBuffer;
-
 	VkDeviceMemory m_vertexBufferMemory;
 
 	VkDeviceSize m_vertexBufferSize;
-
-	VkBuffer m_indexBuffer;
 
 	VkDeviceMemory m_indexBufferMemory;
 
 	std::vector<VkBuffer> m_uniformBuffers;
 
 	std::vector<VkDeviceMemory> m_uniformBuffersMemory;
-	
 
 	VkDescriptorPool m_descriptorPool;
 
 	VkDescriptorSetLayout m_descriptorSetLayout;
 
-	std::vector<VkDescriptorSet> m_descriptorSets;
 
-	VkPipelineLayout m_pipelineLayout;
-
-	VkPipeline m_pipeline;
 
 
 	/*

@@ -1,4 +1,3 @@
-#define STB_IMAGE_IMPLEMENTATION
 #include "TexturedMesh.h"
 #include "BufferOperations.h"
 #include "ResourceManager.h"
@@ -7,13 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <chrono>
 #include <iostream>
+#include "ResourceManager.h"
 
 extern int WIDTH = 1200;
 extern int HEIGHT = 900;
-
-VkImage createVulkanImage() {
-	return NULL;
-}
 
 void TexturedMesh::createTextureImageViews() {
 	m_textureImageView = createImageView(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -111,7 +107,7 @@ void TexturedMesh::createDescriptorSet() {
 }
 
 void TexturedMesh::createVertexBuffer() {
-	VkDeviceSize bufferSize = sizeof(m_texturedVertices[0]) * m_texturedVertices.size();
+	VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
 	m_vertexBufferSize = bufferSize;
 
 	VkBuffer stagingBuffer;
@@ -120,7 +116,7 @@ void TexturedMesh::createVertexBuffer() {
 
 	void* data;
 	vkMapMemory(rm_logicalDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, m_texturedVertices.data(), (size_t)bufferSize);
+	memcpy(data, m_vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(rm_logicalDevice, stagingBufferMemory);
 
 	BufferOperations::createBuffer(rm_logicalDevice, rm_physicalDevice, rm_commandPool, bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_vertexBuffer, m_vertexBufferMemory);
@@ -176,8 +172,8 @@ void TexturedMesh::createPipeline() {
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-	auto bindingDescription = TexturedVertex::getBindingDescription();
-	auto attributeDescriptions = TexturedVertex::getAttributeDescriptions();
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -337,12 +333,9 @@ void TexturedMesh::createRenderPass() {
 
 void TexturedMesh::createTextureImages(std::string texturePath)
 {
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-	if (!pixels) {
-		throw std::runtime_error("failed to load texture image!");
-	}
+	TextureReturnVals vals;
+	vals = ResourceManager::getSingleton().loadTextureFile(texturePath);
+	VkDeviceSize imageSize = vals.textureWidth * vals.textureHeight * 4;
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -350,15 +343,15 @@ void TexturedMesh::createTextureImages(std::string texturePath)
 
 	void* data;
 	vkMapMemory(rm_logicalDevice, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	memcpy(data, vals.pixels, static_cast<size_t>(imageSize));
 	vkUnmapMemory(rm_logicalDevice, stagingBufferMemory);
 
-	stbi_image_free(pixels);
+	//stbi_image_free(vals.pixels);
 
-	createImage(texWidth, texHeight, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory);
+	createImage(vals.textureWidth, vals.textureHeight, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_textureImage, m_textureImageMemory);
 
 	transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
-	copyBufferToImage(stagingBuffer, m_textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	copyBufferToImage(stagingBuffer, m_textureImage, static_cast<uint32_t>(vals.textureWidth), static_cast<uint32_t>(vals.textureHeight));
 	transitionImageLayout(m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 	//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
@@ -436,7 +429,8 @@ void  TexturedMesh::transitionImageLayout(VkImage image, VkFormat format, VkImag
 		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
-	else {
+	else
+	{
 		throw std::invalid_argument("unsupported layout transition!");
 	}
 
@@ -526,8 +520,8 @@ void TexturedMesh::updateUniformBuffer(uint32_t currentImage) {
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::mat4(1.0f);
+	ubo.view = glm::lookAt(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
 	ubo.proj[1][1] *= -1;
 
@@ -537,60 +531,10 @@ void TexturedMesh::updateUniformBuffer(uint32_t currentImage) {
 	vkUnmapMemory(rm_logicalDevice, m_uniformBuffersMemory[currentImage]);
 }
 
-void TexturedMesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers) {
-	for (size_t i = 0; i < rm_commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(rm_commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo{};
-		std::array<VkClearValue, 1> clearValues{};
-		VkDeviceSize offsets[1] = { 0 };
-
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_renderPass;
-		renderPassInfo.framebuffer = frameBuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = rm_swapChainExtent;
-
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-
-		vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &m_vertexBuffer, offsets);
-
-		vkCmdBindIndexBuffer(commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-		vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSets[i], 0, nullptr);
-
-		vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(m_indicies.size()), 1, 0, 0, 0);
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
-		}
-	}
-}
-
-TexturedMesh::TexturedMesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath):
+TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath):
 	Mesh(verticies, indicies, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue)
 {
-	try {
-		createTextureImages(texturePath);
-	}
-	catch(int e){
-		std::cout << "Failed to load texture" << std::endl;
-		return;
-	}
+	createTextureImages(texturePath);
 	createTextureImageViews();
 	createTextureSampler();
 

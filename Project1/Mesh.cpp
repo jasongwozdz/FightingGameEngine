@@ -67,9 +67,3 @@ void Mesh::updateUniformBuffer(uint32_t currentImage)
 	std::cout << "updateUniformBuffer NOT IMPLEMENTED" << std::endl;
 	assert(1 == 0);
 };
-
-void Mesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers)
-{
-	std::cout << "bindToCommandBuffers NOT IMPLEMENTED" << std::endl;
-	assert(1 == 0);
-};
