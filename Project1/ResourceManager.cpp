@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "ResourceManager.h"
 #include "BufferOperations.h"
 #include "Vertex.h"

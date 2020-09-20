@@ -28,20 +28,21 @@ Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies
 
 Mesh::~Mesh() {};
 
-VkShaderModule Mesh::createShaderModule(const std::vector<char>& code) {
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = code.size();
-	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(rm_logicalDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create shader module!");
-	}
-
-	return shaderModule;
+void Mesh::setWorldMatrix(glm::mat4 modelToWorld)
+{
+	m_ubo.model = modelToWorld;
 }
 
+void Mesh::setViewMatrix(glm::mat4 worldToView)
+{
+	m_ubo.view = worldToView;
+}
+
+void Mesh::setProjectionMatrix(glm::mat4 projection) 
+{
+	m_ubo.proj = projection;
+}
 //virtual
 void Mesh::createDescriptorSetLayout() 
 {
@@ -67,3 +68,5 @@ void Mesh::updateUniformBuffer(uint32_t currentImage)
 	std::cout << "updateUniformBuffer NOT IMPLEMENTED" << std::endl;
 	assert(1 == 0);
 };
+
+

@@ -21,8 +21,12 @@
 #include "TexturedMesh.h"
 #include "BufferOperations.h"
 #include "ResourceManager.h"
+#include "GraphicsPipeline.h"
 
+/*
+Notes Primitives should have the option of being drawn in world space or directly in camera space.  They should also have the option of disabling depth testing
 
+*/
 extern const int WIDTH;
 extern const int HEIGHT;
 
@@ -119,7 +123,7 @@ private:
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;
 
-	std::vector<Mesh*> meshes;
+	std::map<GraphicsPipeline*, std::vector<Mesh*>> pipelineMap;
 
 	size_t currentFrame = 0;
 
@@ -141,18 +145,21 @@ private:
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(logicalDevice, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
 			recreateSwapChain();
 			return;
 		}
-		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
-
-		//meshs[0].updateUniformBuffer(imageIndex)
-		for (Mesh* mesh : meshes) {
-			mesh->updateUniformBuffer(imageIndex);
+		for (auto pipeline : pipelineMap)
+		{
+			for (Mesh* mesh : pipeline.second) {
+				mesh->updateUniformBuffer(imageIndex);
+			}
 		}
 
 		if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
@@ -228,30 +235,6 @@ private:
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
 		return VK_FALSE;
-	}
-
-	VkFormat findDepthFormat() {
-		return findSupportedFormat(
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-		);
-	}
-
-	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
-		for (VkFormat format : candidates) {
-			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
-
-			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-				return format;
-			}
-			else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-				return format;
-			}
-		}
-
-		throw std::runtime_error("failed to find supported format!");
 	}
 
 	std::vector<const char*> getRequiredExtensions() {
@@ -417,22 +400,26 @@ private:
 	void createFramebuffers() {
 		swapChainFramebuffers.resize(swapChainImageViews.size());
 
-		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-			std::array<VkImageView, 1> attachments = {
-				swapChainImageViews[i]
-			};
+		for (auto pipeline : pipelineMap)
+		{
+			for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+				std::array<VkImageView, 2> attachments = {
+					swapChainImageViews[i],
+					pipeline.second[0]->m_depthComponent->m_depthImageView
+				};
 
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = meshes[0]->m_renderPass;
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
-			framebufferInfo.layers = 1;
+				VkFramebufferCreateInfo framebufferInfo{};
+				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+				framebufferInfo.renderPass = pipeline.second[0]->m_renderPass;
+				framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+				framebufferInfo.pAttachments = attachments.data();
+				framebufferInfo.width = swapChainExtent.width;
+				framebufferInfo.height = swapChainExtent.height;
+				framebufferInfo.layers = 1;
 
-			if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
+				if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+					throw std::runtime_error("failed to create framebuffer!");
+				}
 			}
 		}
 	}
@@ -775,17 +762,16 @@ private:
 	}
 
 	void initScene() {
-
 		std::string modelPath = "./Models/viking_room.obj";
 		ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
 		std::string texturePath = "./Textures/viking_room.png";
 		TexturedMesh* a = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
 
-		meshes.push_back(a);
+		GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, a->m_renderPass, a->m_descriptorSetLayout, swapChainExtent, static_cast<bool>(a->m_depthComponent));
+		pipelineMap[pipeline].push_back(a);
 	}
 
-	/*TODO: MOVE BIND TO COMMAND BUFFERS FUNCTION OUTSIDE OF MESH OBJECT.*/
-	void bindMeshesToCommandBuffers() 
+	void bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes ) 
 	{
 		for (size_t i = 0; i < commandBuffers.size(); i++) {
 			VkCommandBufferBeginInfo beginInfo{};
@@ -796,9 +782,9 @@ private:
 			}
 
 			VkRenderPassBeginInfo renderPassInfo{};
-			std::array<VkClearValue, 1> clearValues{};
+			std::array<VkClearValue, 2> clearValues{};
 			VkDeviceSize offsets[1] = { 0 };
-			for (auto &mesh : meshes) 
+			for (auto mesh : meshes) 
 			{
 				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 				renderPassInfo.renderPass = mesh->m_renderPass;
@@ -806,20 +792,22 @@ private:
 				renderPassInfo.renderArea.offset = { 0, 0 };
 				renderPassInfo.renderArea.extent = swapChainExtent;
 
+				//values must be in same order as attachments array in createRenderPass in mesh class
 				clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+				clearValues[1].depthStencil = { 1.0f, 0 };//1.0 Far view plane, 0.0 near view plane
 
 				renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 				renderPassInfo.pClearValues = clearValues.data();
 
 				vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-				vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mesh->m_pipeline);
+				vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
 
 				vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
 
 				vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mesh->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
 
 				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
 
@@ -832,6 +820,8 @@ private:
 		}
 	}
 
+
+
 	void init()
 	{
 		createSurface();
@@ -843,7 +833,10 @@ private:
 		initScene();
 		createFramebuffers();
 		//think of better way to do this
-		bindMeshesToCommandBuffers();
+		for (auto pipeline : pipelineMap) 
+		{
+			bindMeshesToCommandBuffers(pipeline.first, pipeline.second);
+		}
 		createSyncObjects();
 		ResourceManager::getSingleton().freeAllResources();
 	}
@@ -871,9 +864,9 @@ private:
 		for (auto framebuffer : swapChainFramebuffers) {
 			vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 		}
-		for (auto mesh : meshes) {
-			mesh->~Mesh();
-		}
+		//for (auto mesh : meshes) {
+		//	mesh->~Mesh();
+		//}
 
 		vkFreeCommandBuffers(logicalDevice, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
@@ -885,9 +878,11 @@ private:
 		}
 
 		vkFreeCommandBuffers(logicalDevice, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-
-		for (auto mesh : meshes) {
-			mesh->~Mesh();
+		
+		for (auto pipeline : pipelineMap) {
+			for (auto mesh : pipeline.second) {
+				mesh->~Mesh();
+			}
 		}
 
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {

@@ -41,8 +41,6 @@ private:
 	
 	void createIndexBuffer();
 
-	void createPipeline();
-
 	void createUniformBuffers();
 
 	void createRenderPass();

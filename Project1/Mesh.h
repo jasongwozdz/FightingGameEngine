@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 #include "Vertex.h"
+#include "DepthBuffer.h"
 
 
 
@@ -13,6 +14,7 @@ class mesh_IndexBufferComp;
 class mesh_NormalComp;
 class mesh_TextureComp;
 class mesh_ShaderComp;
+class DepthBuffer;
 
 class Mesh
 {
@@ -21,7 +23,7 @@ public:
 		alignas(16) glm::mat4 model;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 proj;
-	}ubo;
+	}m_ubo;
 
 	Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
 
@@ -33,24 +35,6 @@ public:
 
 	VkRenderPass m_renderPass;
 
-	static std::vector<char> readShaderFile(const std::string& filename) {
-		std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-		if (!file.is_open()) {
-			throw std::runtime_error("failed to open file!");
-		}
-
-		size_t fileSize = (size_t)file.tellg();
-		std::vector<char> buffer(fileSize);
-
-		file.seekg(0);
-		file.read(buffer.data(), fileSize);
-
-		file.close();
-
-		return buffer;
-	};
-
 	VkBuffer m_vertexBuffer;
 
 	VkPipeline m_pipeline;
@@ -61,8 +45,18 @@ public:
 
 	std::vector<VkDescriptorSet> m_descriptorSets;
 
+	VkDescriptorSetLayout m_descriptorSetLayout;
+
 	std::vector<uint32_t> m_indicies;
 
+	DepthBuffer* m_depthComponent = nullptr;
+	
+	void setWorldMatrix(glm::mat4 modelToWorld);
+
+	void setViewMatrix(glm::mat4 worldToView);
+
+	void setProjectionMatrix(glm::mat4 projection);
+		
 protected:
 
 	/*
@@ -100,7 +94,6 @@ protected:
 
 	VkDescriptorPool m_descriptorPool;
 
-	VkDescriptorSetLayout m_descriptorSetLayout;
 
 
 
@@ -130,7 +123,6 @@ protected:
 	Methods
 	*****************
 	*/
-	VkShaderModule createShaderModule(const std::vector<char>& code);
 
 	virtual void createDescriptorSetLayout();
 

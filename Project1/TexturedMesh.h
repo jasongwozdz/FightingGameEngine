@@ -1,5 +1,8 @@
 #pragma once
 #include "Mesh.h"
+
+class DepthBuffer;
+
 class TexturedMesh :
 	public Mesh
 {
@@ -14,7 +17,6 @@ private:
 	Member Variables
 	*****************
 	*/
-
 	VkImageView m_textureImageView;
 
 	VkImage m_textureImage;
@@ -37,8 +39,6 @@ private:
 	virtual void createVertexBuffer();
 
 	virtual void createIndexBuffer();
-
-	virtual void createPipeline();
 
 	virtual void createUniformBuffers();
 

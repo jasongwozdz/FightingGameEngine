@@ -194,14 +194,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BufferOperations.cpp" />
+    <ClCompile Include="DepthBuffer.cpp" />
+    <ClCompile Include="GraphicsPipeline.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="PrimitiveMesh.cpp" />
     <ClCompile Include="TexturedMesh.cpp" />
     <ClCompile Include="VulkanAnimation.cpp" />
+    <ClCompile Include="VulkanImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BufferOperations.h" />
+    <ClInclude Include="DepthBuffer.h" />
+    <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="PrimitiveMesh.h" />
