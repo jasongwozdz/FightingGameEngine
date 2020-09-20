@@ -28,7 +28,6 @@ Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies
 
 Mesh::~Mesh() {};
 
-
 void Mesh::setWorldMatrix(glm::mat4 modelToWorld)
 {
 	m_ubo.model = modelToWorld;
@@ -56,15 +55,8 @@ void Mesh::createUniformBuffers()
 	assert(1 == 0);
 };
 
-void Mesh::createRenderPass() 
-{
-	std::cout << "createRenderPass NOT IMPLEMENTED" << std::endl;
-	assert(1 == 0);
-};
-
 void Mesh::updateUniformBuffer(uint32_t currentImage)
 {
-
 	std::cout << "updateUniformBuffer NOT IMPLEMENTED" << std::endl;
 	assert(1 == 0);
 };

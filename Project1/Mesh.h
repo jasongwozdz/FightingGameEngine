@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <vulkan/vulkan.h>
 #include "Vertex.h"
 #include "DepthBuffer.h"
@@ -20,8 +21,8 @@ class Mesh
 {
 public:
 	struct {
-		alignas(16) glm::mat4 model;
-		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 model = glm::mat4(1.0f);
+		alignas(16) glm::mat4 view = glm::lookAt(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 		alignas(16) glm::mat4 proj;
 	}m_ubo;
 
@@ -32,8 +33,6 @@ public:
 	virtual ~Mesh();
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
-
-	VkRenderPass m_renderPass;
 
 	VkBuffer m_vertexBuffer;
 
@@ -94,10 +93,6 @@ protected:
 
 	VkDescriptorPool m_descriptorPool;
 
-
-
-
-
 	/*
 	*****************
 	References
@@ -128,7 +123,6 @@ protected:
 
 	virtual void createUniformBuffers();
 
-	virtual void createRenderPass();
 
 
 

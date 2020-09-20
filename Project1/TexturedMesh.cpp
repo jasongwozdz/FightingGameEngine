@@ -9,11 +9,13 @@
 #include "DepthBuffer.h"
 #include "VulkanImage.h"
 
-void TexturedMesh::createTextureImageViews() {
+void TexturedMesh::createTextureImageViews()
+{
 	m_textureImageView = VulkanImage::createImageView(rm_logicalDevice, m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
-void TexturedMesh::createDescriptorSetLayout() {
+void TexturedMesh::createDescriptorSetLayout()
+{
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.binding = 0;
 	uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
@@ -39,7 +41,8 @@ void TexturedMesh::createDescriptorSetLayout() {
 	}
 }
 
-void TexturedMesh::createDescriptorPool() {
+void TexturedMesh::createDescriptorPool()
+{
 	std::array<VkDescriptorPoolSize, 2> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = static_cast<uint32_t>(rm_swapChainImages.size());
@@ -58,7 +61,8 @@ void TexturedMesh::createDescriptorPool() {
 	}
 }
 
-void TexturedMesh::createDescriptorSet() {
+void TexturedMesh::createDescriptorSet()
+{
 	std::vector<VkDescriptorSetLayout> layouts(rm_swapChainImages.size(), m_descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -104,7 +108,8 @@ void TexturedMesh::createDescriptorSet() {
 	}
 }
 
-void TexturedMesh::createVertexBuffer() {
+void TexturedMesh::createVertexBuffer()
+{
 	VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
 	m_vertexBufferSize = bufferSize;
 
@@ -125,7 +130,8 @@ void TexturedMesh::createVertexBuffer() {
 	vkFreeMemory(rm_logicalDevice, stagingBufferMemory, nullptr);
 }
 
-void TexturedMesh::createIndexBuffer() {
+void TexturedMesh::createIndexBuffer()
+{
 	VkDeviceSize bufferSize = sizeof(m_indicies[0]) * m_indicies.size();
 
 	VkBuffer stagingBuffer;
@@ -154,50 +160,6 @@ void TexturedMesh::createUniformBuffers()
 
 	for (size_t i = 0; i < rm_swapChainImages.size(); i++) {
 		BufferOperations::createBuffer(rm_logicalDevice, rm_physicalDevice, rm_commandPool, bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, m_uniformBuffers[i], m_uniformBuffersMemory[i]);
-	}
-}
-
-void TexturedMesh::createRenderPass() {
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-	subpass.pDepthStencilAttachment = &m_depthComponent->m_depthAttachmentRef;
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	std::array<VkAttachmentDescription, 2> attachments = { colorAttachment, m_depthComponent->m_depthAttachment};
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = attachments.size();
-	renderPassInfo.pAttachments = attachments.data();
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(rm_logicalDevice, &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
 	}
 }
 
@@ -278,14 +240,13 @@ void TexturedMesh::createTextureSampler()
 	}
 }
 
-void TexturedMesh::updateUniformBuffer(uint32_t currentImage) {
+void TexturedMesh::updateUniformBuffer(uint32_t currentImage)
+{
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-	m_ubo.model = glm::mat4(1.0f);
-	m_ubo.view = glm::lookAt(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	m_ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
 	m_ubo.proj[1][1] *= -1;
 
@@ -308,13 +269,13 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 	createDescriptorSetLayout();
 	createDescriptorPool();
 	createDescriptorSet();
-	createRenderPass();
 	createVertexBuffer();
 	createIndexBuffer();
 }
 
-TexturedMesh::~TexturedMesh() {
-	delete m_depthComponent;
+TexturedMesh::~TexturedMesh()
+{
+	m_depthComponent->~DepthBuffer();
 	//texture specific destructors
 	vkFreeMemory(rm_logicalDevice, m_textureImageMemory, nullptr);
 	vkDestroyImage(rm_logicalDevice, m_textureImage, nullptr);
@@ -326,8 +287,6 @@ TexturedMesh::~TexturedMesh() {
 	//vertex buffer
 	vkDestroyBuffer(rm_logicalDevice, m_vertexBuffer, nullptr);
 	vkFreeMemory(rm_logicalDevice, m_vertexBufferMemory, nullptr);
-	//renderpass
-	vkDestroyRenderPass(rm_logicalDevice, m_renderPass, nullptr);
 	//pipeline
 	vkDestroyPipeline(rm_logicalDevice, m_pipeline, nullptr);
 	vkDestroyPipelineLayout(rm_logicalDevice, m_pipelineLayout, nullptr);

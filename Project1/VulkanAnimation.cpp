@@ -1,18 +1,10 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#define GLM_ENABLE_EXPERIMENTAL
 #define GLFW_INCLUDE_VULKAN
-#include <array>
 #include <iostream>
-#include <fstream>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/hash.hpp>
 #include <GLFW/glfw3.h>
-#include <stdexcept>
 #include <vector>
-#include <cstring>
-#include <cstdlib>
 #include <optional>
 #include <set>
 #include "VulkanErrorCheck.h"
@@ -22,6 +14,7 @@
 #include "BufferOperations.h"
 #include "ResourceManager.h"
 #include "GraphicsPipeline.h"
+#include "RenderPass.h"
 
 namespace settings {
 	extern int WIDTH;
@@ -117,7 +110,6 @@ private:
 
 	VkSurfaceKHR surface;
 
-
 	std::vector<VkImage> swapChainImages;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -125,7 +117,9 @@ private:
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;
 
+	//maps for each mesh
 	std::map<GraphicsPipeline*, std::vector<Mesh*>> pipelineMap;
+	std::map<RenderPass*, std::vector<Mesh*>> renderPassMap;
 
 	size_t currentFrame = 0;
 
@@ -402,17 +396,17 @@ private:
 	void createFramebuffers() {
 		swapChainFramebuffers.resize(swapChainImageViews.size());
 
-		for (auto pipeline : pipelineMap)
+		for (auto renderPass : renderPassMap)
 		{
 			for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 				std::array<VkImageView, 2> attachments = {
 					swapChainImageViews[i],
-					pipeline.second[0]->m_depthComponent->m_depthImageView
+					renderPass.second[0]->m_depthComponent->m_depthImageView
 				};
 
 				VkFramebufferCreateInfo framebufferInfo{};
 				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass = pipeline.second[0]->m_renderPass;
+				framebufferInfo.renderPass = renderPass.first->m_renderPass;
 				framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 				framebufferInfo.pAttachments = attachments.data();
 				framebufferInfo.width = swapChainExtent.width;
@@ -768,9 +762,17 @@ private:
 		ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
 		std::string texturePath = "./Textures/viking_room.png";
 		TexturedMesh* a = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
+		
+		TexturedMesh* b = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
 
-		GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, a->m_renderPass, a->m_descriptorSetLayout, swapChainExtent, static_cast<bool>(a->m_depthComponent));
+		a->m_ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0, 1.0));
+
+		RenderPass* renderPass = new RenderPass(logicalDevice, *a->m_depthComponent);
+		renderPassMap[renderPass].push_back(a);
+		renderPassMap[renderPass].push_back(b);
+		GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, renderPass->m_renderPass, a->m_descriptorSetLayout, swapChainExtent, static_cast<bool>(a->m_depthComponent));
 		pipelineMap[pipeline].push_back(a);
+		pipelineMap[pipeline].push_back(b);
 	}
 
 	void bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes ) 
@@ -786,10 +788,10 @@ private:
 			VkRenderPassBeginInfo renderPassInfo{};
 			std::array<VkClearValue, 2> clearValues{};
 			VkDeviceSize offsets[1] = { 0 };
-			for (auto mesh : meshes) 
-			{
+			for (auto renderPass : renderPassMap) {
+
 				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = mesh->m_renderPass;
+				renderPassInfo.renderPass = renderPass.first->m_renderPass;
 				renderPassInfo.framebuffer = swapChainFramebuffers[i];
 				renderPassInfo.renderArea.offset = { 0, 0 };
 				renderPassInfo.renderArea.extent = swapChainExtent;
@@ -803,26 +805,26 @@ private:
 
 				vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-				vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
+				for (auto mesh : renderPass.second) 
+				{
+					vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
 
-				vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
+					vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
 
-				vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+					vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
+					vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
 
-				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
-
+					vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
+				}
 				vkCmdEndRenderPass(commandBuffers[i]);
 			}
-
+			
 			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer!");
 			}
 		}
 	}
-
-
 
 	void init()
 	{
@@ -866,9 +868,6 @@ private:
 		for (auto framebuffer : swapChainFramebuffers) {
 			vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 		}
-		//for (auto mesh : meshes) {
-		//	mesh->~Mesh();
-		//}
 
 		vkFreeCommandBuffers(logicalDevice, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
@@ -894,6 +893,15 @@ private:
 		}
 
 		vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
+
+		for (auto renderPass : renderPassMap)
+		{
+			renderPass.first->~RenderPass();
+		}
+
+		for (auto pipeline : pipelineMap) {
+			pipeline.first->~GraphicsPipeline();
+		}
 
 		for (auto imageView : swapChainImageViews) {
 			vkDestroyImageView(logicalDevice, imageView, nullptr);

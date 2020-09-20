@@ -1,7 +1,6 @@
 #include "DepthBuffer.h"
 #include "VulkanImage.h"
 
-
 DepthBuffer::DepthBuffer(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkFormat depthFormat) : 
 	rm_logicalDevice(logicalDevice),
 	rm_physicalDevice(physicalDevice),

@@ -176,5 +176,6 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 }
 GraphicsPipeline::~GraphicsPipeline()
 {
-
+	vkDestroyPipelineLayout(rm_logicalDevice, m_pipelineLayout, nullptr);
+	vkDestroyPipeline(rm_logicalDevice, m_pipeline, nullptr);
 }

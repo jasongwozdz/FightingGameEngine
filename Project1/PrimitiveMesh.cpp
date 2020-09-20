@@ -75,7 +75,6 @@ PrimitiveMesh::PrimitiveMesh(std::vector<Vertex> verticies,
 	createDescriptorSetLayout();
 	createDescriptorPool();
 	createDescriptorSet();
-	createRenderPass();
 	createVertexBuffer();
 	createIndexBuffer();
 }
@@ -87,11 +86,6 @@ PrimitiveMesh::~PrimitiveMesh() {
 	//vertex buffer
 	vkDestroyBuffer(rm_logicalDevice, m_vertexBuffer, nullptr);
 	vkFreeMemory(rm_logicalDevice, m_vertexBufferMemory, nullptr);
-	//renderpass
-	vkDestroyRenderPass(rm_logicalDevice, m_renderPass, nullptr);
-	//pipeline
-	vkDestroyPipeline(rm_logicalDevice, m_pipeline, nullptr);
-	vkDestroyPipelineLayout(rm_logicalDevice, m_pipelineLayout, nullptr);
 	//uniform buffers
 	for (size_t i = 0; i < rm_swapChainImages.size(); i++) {
 		vkDestroyBuffer(rm_logicalDevice, m_uniformBuffers[i], nullptr);
@@ -100,51 +94,52 @@ PrimitiveMesh::~PrimitiveMesh() {
 	//descriptor pool/set
 	vkDestroyDescriptorPool(rm_logicalDevice, m_descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(rm_logicalDevice, m_descriptorSetLayout, nullptr);
+	m_depthComponent->~DepthBuffer();
 	std::cout << "deleteing PrimitiveMesh" << std::endl;
 }
 
 
-void PrimitiveMesh::createRenderPass() {
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(rm_logicalDevice, &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
-	}
-}
+//void PrimitiveMesh::createRenderPass() {
+//	VkAttachmentDescription colorAttachment{};
+//	colorAttachment.format = VK_FORMAT_B8G8R8A8_SRGB;
+//	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+//	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+//	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+//	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+//	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+//	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+//	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+//
+//	VkAttachmentReference colorAttachmentRef{};
+//	colorAttachmentRef.attachment = 0;
+//	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+//
+//	VkSubpassDescription subpass{};
+//	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+//	subpass.colorAttachmentCount = 1;
+//	subpass.pColorAttachments = &colorAttachmentRef;
+//
+//	VkSubpassDependency dependency{};
+//	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+//	dependency.dstSubpass = 0;
+//	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//	dependency.srcAccessMask = 0;
+//	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+//
+//	VkRenderPassCreateInfo renderPassInfo{};
+//	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+//	renderPassInfo.attachmentCount = 1;
+//	renderPassInfo.pAttachments = &colorAttachment;
+//	renderPassInfo.subpassCount = 1;
+//	renderPassInfo.pSubpasses = &subpass;
+//	renderPassInfo.dependencyCount = 1;
+//	renderPassInfo.pDependencies = &dependency;
+//
+//	if (vkCreateRenderPass(rm_logicalDevice, &renderPassInfo, nullptr, &m_renderPass) != VK_SUCCESS) {
+//		throw std::runtime_error("failed to create render pass!");
+//	}
+//}
 
 
 void PrimitiveMesh::updateUniformBuffer(uint32_t currentImage) {
@@ -283,49 +278,4 @@ void PrimitiveMesh::createIndexBuffer() {
 
 	vkDestroyBuffer(rm_logicalDevice, stagingBuffer, nullptr);
 	vkFreeMemory(rm_logicalDevice, stagingBufferMemory, nullptr);
-}
-
-
-void PrimitiveMesh::bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers) {
-	for (size_t i = 0; i < rm_commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-		if (vkBeginCommandBuffer(rm_commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-			throw std::runtime_error("failed to begin recording command buffer!");
-		}
-
-		VkRenderPassBeginInfo renderPassInfo{};
-		std::array<VkClearValue, 1> clearValues{};
-		VkDeviceSize offsets[1] = { 0 };
-
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_renderPass;
-		renderPassInfo.framebuffer = frameBuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = rm_swapChainExtent;
-
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-
-		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		renderPassInfo.pClearValues = clearValues.data();
-
-		vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-			vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
-
-			vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &m_vertexBuffer, offsets);
-
-			vkCmdBindIndexBuffer(commandBuffers[i], m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-			vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSets[i], 0, nullptr);
-
-			vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(m_indicies.size()), 1, 0, 0, 0);
-
-		vkCmdEndRenderPass(commandBuffers[i]);
-
-		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
-		}
-	}
 }

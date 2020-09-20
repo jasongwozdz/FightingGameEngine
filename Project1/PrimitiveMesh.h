@@ -15,16 +15,8 @@ public:
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
 
-	void bindToCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers, std::vector<VkFramebuffer>& frameBuffers);
-
 
 private:
-
-	/*
-	*****************
-	Member Variables
-	*****************	
-	*/
 		
 	/*
 	*****************
@@ -43,7 +35,6 @@ private:
 
 	void createUniformBuffers();
 
-	void createRenderPass();
 	
 };
 
