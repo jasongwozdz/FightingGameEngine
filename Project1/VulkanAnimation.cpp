@@ -22,7 +22,11 @@
 #include "BufferOperations.h"
 #include "ResourceManager.h"
 #include "GraphicsPipeline.h"
-#include "EngineSettings.h"
+
+namespace settings {
+	extern int WIDTH;
+	extern int HEIGHT;
+}
 
 /*
 Notes Primitives should have the option of being drawn in world space or directly in camera space.  They should also have the option of disabling depth testing
