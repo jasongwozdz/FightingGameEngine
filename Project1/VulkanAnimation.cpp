@@ -22,14 +22,12 @@
 #include "BufferOperations.h"
 #include "ResourceManager.h"
 #include "GraphicsPipeline.h"
+#include "EngineSettings.h"
 
 /*
 Notes Primitives should have the option of being drawn in world space or directly in camera space.  They should also have the option of disabling depth testing
 
 */
-extern const int WIDTH;
-extern const int HEIGHT;
-
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 template<> ResourceManager* Singleton<ResourceManager>::msSingleton = 0;
@@ -848,7 +846,7 @@ private:
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
-		window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+		window = glfwCreateWindow(settings::WIDTH, settings::HEIGHT, "Vulkan", nullptr, nullptr);
 	}
 
 	void draw() {

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include "Vertex.h"
-
+#include "EngineSettings.h"
 
 std::vector<char> GraphicsPipeline::readShaderFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -50,9 +50,6 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
 	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
-
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -66,13 +63,15 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 	fragShaderStageInfo.pName = "main";
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
+	auto bindingDescription = Vertex::getBindingDescription();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
-
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -82,8 +81,8 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)9000;
-	viewport.height = (float)1200;
+	viewport.width = (float)settings::WIDTH;
+	viewport.height = (float)settings::HEIGHT;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 

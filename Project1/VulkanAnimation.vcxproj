@@ -207,6 +207,7 @@
     <ClInclude Include="BufferOperations.h" />
     <ClInclude Include="DepthBuffer.h" />
     <ClInclude Include="GraphicsPipeline.h" />
+    <ClInclude Include="EngineSettings.h" />
     <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ResourceManager.h" />

@@ -9,9 +9,6 @@
 #include "DepthBuffer.h"
 #include "VulkanImage.h"
 
-extern int WIDTH = 1200;
-extern int HEIGHT = 900;
-
 void TexturedMesh::createTextureImageViews() {
 	m_textureImageView = VulkanImage::createImageView(rm_logicalDevice, m_textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
 }
