@@ -38,7 +38,7 @@
     <ClCompile Include="GraphicsPipeline.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass.cpp">
+    <ClCompile Include="RenderPassComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -85,7 +85,7 @@
     <ClInclude Include="EngineSettings.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass.h">
+    <ClInclude Include="RenderPassComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

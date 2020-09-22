@@ -4,6 +4,8 @@
 #include <iostream>
 #include "Vertex.h"
 #include "EngineSettings.h"
+#include "RenderPassComponent.h"
+#include "DepthBuffer.h"
 
 std::vector<char> GraphicsPipeline::readShaderFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -38,11 +40,12 @@ VkShaderModule GraphicsPipeline::createShaderModule(const std::vector<char>& cod
 	return shaderModule;
 }
 
-GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, bool depthEnabled):
+GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPass, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBuffer* depthComponent):
 	rm_logicalDevice(logicalDevice),
-	rm_renderPass(renderPass),
+	rm_renderPassComponent(renderPass),
 	rm_descriptorSetLayout(descriptorSetLayout),
-	rm_swapChainExtent(swapChainExtent)
+	rm_swapChainExtent(swapChainExtent),
+	m_depthComponent(depthComponent)
 {
 	auto vertShaderCode = readShaderFile("shaders/texturedMeshVert.spv");
 	auto fragShaderCode = readShaderFile("shaders/texturedMeshFrag.spv");
@@ -114,7 +117,7 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 	multisampling.minSampleShading = .2f; // min fraction for sample shading; closer to one is smooth
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
-	if (depthEnabled)
+	if (depthComponent)
 	{
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 		depthStencil.depthTestEnable = VK_TRUE;
@@ -157,10 +160,10 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = depthEnabled ? &depthStencil : nullptr;
+	pipelineInfo.pDepthStencilState = depthComponent ? &depthStencil : nullptr;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = m_pipelineLayout;
-	pipelineInfo.renderPass = rm_renderPass;
+	pipelineInfo.renderPass = rm_renderPassComponent.m_renderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
@@ -176,6 +179,7 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& render
 }
 GraphicsPipeline::~GraphicsPipeline()
 {
+	std::cout << "Destroy pipeline" << std::endl;
 	vkDestroyPipelineLayout(rm_logicalDevice, m_pipelineLayout, nullptr);
 	vkDestroyPipeline(rm_logicalDevice, m_pipeline, nullptr);
 }

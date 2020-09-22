@@ -2,13 +2,13 @@
 #include <vulkan/vulkan.h>
 #include "DepthBuffer.h"
 
-class RenderPass
+class RenderPassComponent
 {
 public:
 
-	RenderPass(VkDevice& rm_logicalDevice, DepthBuffer& depthComponent);
+	RenderPassComponent(VkDevice& rm_logicalDevice, DepthBuffer& depthComponent);
 
-	~RenderPass();
+	~RenderPassComponent();
 
 	VkRenderPass m_renderPass;
 private:

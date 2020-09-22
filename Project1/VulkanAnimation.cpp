@@ -14,7 +14,9 @@
 #include "BufferOperations.h"
 #include "ResourceManager.h"
 #include "GraphicsPipeline.h"
-#include "RenderPass.h"
+#include "RenderPassComponent.h"
+#include "VulkanImage.h"
+#include "VulkanErrorCheck.h"
 
 namespace settings {
 	extern int WIDTH;
@@ -23,7 +25,6 @@ namespace settings {
 
 /*
 Notes Primitives should have the option of being drawn in world space or directly in camera space.  They should also have the option of disabling depth testing
-
 */
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -63,7 +64,6 @@ public:
 		draw();
 		cleanup();
 	}
-
 
 private:
 //------------------------------------------
@@ -119,7 +119,6 @@ private:
 
 	//maps for each mesh
 	std::map<GraphicsPipeline*, std::vector<Mesh*>> pipelineMap;
-	std::map<RenderPass*, std::vector<Mesh*>> renderPassMap;
 
 	size_t currentFrame = 0;
 
@@ -268,7 +267,6 @@ private:
 				return false;
 			}
 		}
-
 		return true;
 	}
 
@@ -361,25 +359,6 @@ private:
 		}
 	}
 
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
-		VkImageViewCreateInfo viewInfo{};
-		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image = image;
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		viewInfo.format = format;
-		viewInfo.subresourceRange.aspectMask = aspectFlags;
-		viewInfo.subresourceRange.baseMipLevel = 0;
-		viewInfo.subresourceRange.levelCount = mipLevels;
-		viewInfo.subresourceRange.baseArrayLayer = 0;
-		viewInfo.subresourceRange.layerCount = 1;
-		  
-		VkImageView imageView;
-		if (vkCreateImageView(logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create texture image view!");
-		}
-
-		return imageView;
-	}
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 		VkPhysicalDeviceMemoryProperties memProperties;
@@ -396,17 +375,19 @@ private:
 	void createFramebuffers() {
 		swapChainFramebuffers.resize(swapChainImageViews.size());
 
-		for (auto renderPass : renderPassMap)
+		for (auto pipeline : pipelineMap)
 		{
 			for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-				std::array<VkImageView, 2> attachments = {
+				std::vector<VkImageView> attachments = {
 					swapChainImageViews[i],
-					renderPass.second[0]->m_depthComponent->m_depthImageView
 				};
-
+				if (pipeline.first->m_depthComponent)
+				{
+					attachments.push_back(pipeline.first->m_depthComponent->m_depthImageView);
+				}
 				VkFramebufferCreateInfo framebufferInfo{};
 				framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-				framebufferInfo.renderPass = renderPass.first->m_renderPass;
+				framebufferInfo.renderPass = pipeline.first->rm_renderPassComponent.m_renderPass;
 				framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 				framebufferInfo.pAttachments = attachments.data();
 				framebufferInfo.width = swapChainExtent.width;
@@ -727,11 +708,11 @@ private:
 		return queueFamilyIndices.isComplete() && extensionsSupported && swapChainAdequate  && supportedFeatures.samplerAnisotropy;
 	}
 
-	void createImageViews() {
+	void createSwapChainImageViews() {
 		swapChainImageViews.resize(swapChainImages.size());
 
 		for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-			swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+			swapChainImageViews[i] = VulkanImage::createImageView(logicalDevice, swapChainImages[i], swapChainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 		}
 	}
 
@@ -767,15 +748,17 @@ private:
 
 		a->m_ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0, 1.0));
 
-		RenderPass* renderPass = new RenderPass(logicalDevice, *a->m_depthComponent);
-		renderPassMap[renderPass].push_back(a);
-		renderPassMap[renderPass].push_back(b);
-		GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, renderPass->m_renderPass, a->m_descriptorSetLayout, swapChainExtent, static_cast<bool>(a->m_depthComponent));
+		DepthBuffer* depthComponent = new DepthBuffer(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
+
+		RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, *depthComponent);
+		//renderPassMap[renderPass].push_back(a);
+		//renderPassMap[renderPass].push_back(b);
+		GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, a->m_descriptorSetLayout, swapChainExtent, depthComponent);
 		pipelineMap[pipeline].push_back(a);
 		pipelineMap[pipeline].push_back(b);
 	}
 
-	void bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes ) 
+	void bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes)
 	{
 		for (size_t i = 0; i < commandBuffers.size(); i++) {
 			VkCommandBufferBeginInfo beginInfo{};
@@ -788,38 +771,39 @@ private:
 			VkRenderPassBeginInfo renderPassInfo{};
 			std::array<VkClearValue, 2> clearValues{};
 			VkDeviceSize offsets[1] = { 0 };
-			for (auto renderPass : renderPassMap) {
 
-				renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-				renderPassInfo.renderPass = renderPass.first->m_renderPass;
-				renderPassInfo.framebuffer = swapChainFramebuffers[i];
-				renderPassInfo.renderArea.offset = { 0, 0 };
-				renderPassInfo.renderArea.extent = swapChainExtent;
+			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			renderPassInfo.renderPass = pipeline->rm_renderPassComponent.m_renderPass;
+			renderPassInfo.framebuffer = swapChainFramebuffers[i];
+			renderPassInfo.renderArea.offset = { 0, 0 };
+			renderPassInfo.renderArea.extent = swapChainExtent;
 
-				//values must be in same order as attachments array in createRenderPass in mesh class
-				clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-				clearValues[1].depthStencil = { 1.0f, 0 };//1.0 Far view plane, 0.0 near view plane
+			//values must be in same order as attachments array in createRenderPass in mesh class
+			clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+			clearValues[1].depthStencil = { 1.0f, 0 };//1.0 Far view plane, 0.0 near view plane
 
-				renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-				renderPassInfo.pClearValues = clearValues.data();
+			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+			renderPassInfo.pClearValues = clearValues.data();
 
-				vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-				for (auto mesh : renderPass.second) 
-				{
-					vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
+			for (Mesh* mesh : meshes)
+			{
 
-					vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
+				vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipeline);
 
-					vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+				vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &mesh->m_vertexBuffer, offsets);
 
-					vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
+				vkCmdBindIndexBuffer(commandBuffers[i], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-					vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
-				}
-				vkCmdEndRenderPass(commandBuffers[i]);
-			}
+				vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[i], 0, nullptr);
+
+				vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
 			
+			}
+		
+			vkCmdEndRenderPass(commandBuffers[i]);
+
 			if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to record command buffer!");
 			}
@@ -832,7 +816,7 @@ private:
 		createPhysicalDevice();
 		createLogicalDevice();
 		createSwapChain();
-		createImageViews();
+		createSwapChainImageViews();
 		createCommandPool();
 		initScene();
 		createFramebuffers();
@@ -881,6 +865,8 @@ private:
 		vkFreeCommandBuffers(logicalDevice, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 		
 		for (auto pipeline : pipelineMap) {
+			pipeline.first->rm_renderPassComponent.~RenderPassComponent();
+			pipeline.first->m_depthComponent->~DepthBuffer();
 			for (auto mesh : pipeline.second) {
 				mesh->~Mesh();
 			}
@@ -894,10 +880,6 @@ private:
 
 		vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
 
-		for (auto renderPass : renderPassMap)
-		{
-			renderPass.first->~RenderPass();
-		}
 
 		for (auto pipeline : pipelineMap) {
 			pipeline.first->~GraphicsPipeline();

@@ -1,7 +1,7 @@
-#include "RenderPass.h"
+#include "RenderPassComponent.h"
 #include <array>
 
-RenderPass::RenderPass(VkDevice& logicalDevice, DepthBuffer& depthComponent) :
+RenderPassComponent::RenderPassComponent(VkDevice& logicalDevice, DepthBuffer& depthComponent) :
 	rm_logicalDevice(logicalDevice)
 {
 	VkAttachmentDescription colorAttachment{};
@@ -47,7 +47,7 @@ RenderPass::RenderPass(VkDevice& logicalDevice, DepthBuffer& depthComponent) :
 	}
 }
 
-RenderPass::~RenderPass()
+RenderPassComponent::~RenderPassComponent()
 {
 	vkDestroyRenderPass(rm_logicalDevice, m_renderPass, nullptr);
 }
