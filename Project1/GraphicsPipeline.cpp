@@ -5,7 +5,12 @@
 #include "Vertex.h"
 #include "EngineSettings.h"
 #include "RenderPassComponent.h"
-#include "DepthBuffer.h"
+#include "DepthBufferComponent.h"
+
+namespace EngineSettings {
+	extern int WIDTH;
+	extern int HEIGHT;
+}
 
 std::vector<char> GraphicsPipeline::readShaderFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -40,7 +45,7 @@ VkShaderModule GraphicsPipeline::createShaderModule(const std::vector<char>& cod
 	return shaderModule;
 }
 
-GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPass, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBuffer* depthComponent):
+GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPass, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBufferComponent* depthComponent):
 	rm_logicalDevice(logicalDevice),
 	rm_renderPassComponent(renderPass),
 	rm_descriptorSetLayout(descriptorSetLayout),
@@ -84,8 +89,8 @@ GraphicsPipeline::GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent&
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)settings::WIDTH;
-	viewport.height = (float)settings::HEIGHT;
+	viewport.width = (float)EngineSettings::WIDTH;
+	viewport.height = (float)EngineSettings::HEIGHT;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 

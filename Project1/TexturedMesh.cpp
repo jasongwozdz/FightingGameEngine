@@ -6,7 +6,6 @@
 #include "ResourceManager.h"
 #include "VulkanErrorCheck.h"
 #include "ResourceManager.h"
-#include "DepthBuffer.h"
 #include "VulkanImage.h"
 
 void TexturedMesh::createTextureImageViews()
@@ -263,8 +262,6 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 	createTextureImageViews();
 	createTextureSampler();
 
-	m_depthComponent = new DepthBuffer(rm_logicalDevice, rm_physicalDevice, rm_commandPool, VK_FORMAT_D32_SFLOAT);
-
 	createUniformBuffers();
 	createDescriptorSetLayout();
 	createDescriptorPool();
@@ -275,7 +272,6 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 
 TexturedMesh::~TexturedMesh()
 {
-	m_depthComponent->~DepthBuffer();
 	//texture specific destructors
 	vkFreeMemory(rm_logicalDevice, m_textureImageMemory, nullptr);
 	vkDestroyImage(rm_logicalDevice, m_textureImage, nullptr);

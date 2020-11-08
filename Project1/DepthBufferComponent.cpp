@@ -1,7 +1,7 @@
-#include "DepthBuffer.h"
+#include "DepthBufferComponent.h"
 #include "VulkanImage.h"
 
-DepthBuffer::DepthBuffer(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkFormat depthFormat) : 
+DepthBufferComponent::DepthBufferComponent(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkFormat depthFormat) : 
 	rm_logicalDevice(logicalDevice),
 	rm_physicalDevice(physicalDevice),
 	rm_commandPool(commandPool),
@@ -23,7 +23,7 @@ DepthBuffer::DepthBuffer(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevi
 	m_depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 }
 
-DepthBuffer::~DepthBuffer() {
+DepthBufferComponent::~DepthBufferComponent() {
 	vkFreeMemory(rm_logicalDevice, m_depthImageMemory, nullptr);
 	vkDestroyImage(rm_logicalDevice, m_depthImage, nullptr);
 	vkDestroyImageView(rm_logicalDevice, m_depthImageView, nullptr);

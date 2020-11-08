@@ -1,7 +1,8 @@
-#include "RenderPassComponent.h"
 #include <array>
+#include "RenderPassComponent.h"
+#include "DepthBufferComponent.h"
 
-RenderPassComponent::RenderPassComponent(VkDevice& logicalDevice, DepthBuffer& depthComponent) :
+RenderPassComponent::RenderPassComponent(VkDevice& logicalDevice, DepthBufferComponent& depthComponent) :
 	rm_logicalDevice(logicalDevice)
 {
 	VkAttachmentDescription colorAttachment{};

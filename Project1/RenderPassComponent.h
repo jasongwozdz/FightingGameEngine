@@ -1,12 +1,13 @@
 #pragma once
 #include <vulkan/vulkan.h>
-#include "DepthBuffer.h"
+
+class DepthBufferComponent;
 
 class RenderPassComponent
 {
 public:
 
-	RenderPassComponent(VkDevice& rm_logicalDevice, DepthBuffer& depthComponent);
+	RenderPassComponent(VkDevice& rm_logicalDevice, DepthBufferComponent& depthComponent);
 
 	~RenderPassComponent();
 

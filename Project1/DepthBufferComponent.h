@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-class DepthBuffer
+class DepthBufferComponent
 {
 private:
 	int WIDTH = 1200;
@@ -14,9 +14,9 @@ private:
 
 public:
 
-	DepthBuffer(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkFormat depthFormat);
+	DepthBufferComponent(VkDevice& logicalDevice, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkFormat depthFormat);
 	
-	~DepthBuffer();
+	~DepthBufferComponent();
 
 	//Member Variables
 	VkImage m_depthImage;

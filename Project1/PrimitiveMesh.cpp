@@ -94,7 +94,6 @@ PrimitiveMesh::~PrimitiveMesh() {
 	//descriptor pool/set
 	vkDestroyDescriptorPool(rm_logicalDevice, m_descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(rm_logicalDevice, m_descriptorSetLayout, nullptr);
-	m_depthComponent->~DepthBuffer();
 	std::cout << "deleteing PrimitiveMesh" << std::endl;
 }
 

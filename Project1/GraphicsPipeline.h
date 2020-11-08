@@ -3,14 +3,13 @@
 #include <Vector>
 
 class RenderPassComponent;
-class DepthBuffer;
-
+class DepthBufferComponent;
 
 class GraphicsPipeline
 {
 public:
 
-	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBuffer* depthComponent = nullptr);
+	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBufferComponent* depthComponent = nullptr);
 
 	~GraphicsPipeline();
 
@@ -18,7 +17,7 @@ public:
 
 	VkPipelineLayout m_pipelineLayout;
 
-	DepthBuffer* m_depthComponent;
+	DepthBufferComponent* m_depthComponent;
 	
 	RenderPassComponent& rm_renderPassComponent;
 

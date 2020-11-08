@@ -6,16 +6,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vulkan/vulkan.h>
 #include "Vertex.h"
-#include "DepthBuffer.h"
-
-
 
 //Forward declerations
 class mesh_IndexBufferComp;
 class mesh_NormalComp;
 class mesh_TextureComp;
 class mesh_ShaderComp;
-class DepthBuffer;
 
 class Mesh
 {
@@ -48,8 +44,6 @@ public:
 
 	std::vector<uint32_t> m_indicies;
 
-	DepthBuffer* m_depthComponent = nullptr;
-	
 	void setWorldMatrix(glm::mat4 modelToWorld);
 
 	void setViewMatrix(glm::mat4 worldToView);
