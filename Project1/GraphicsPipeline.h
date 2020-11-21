@@ -21,6 +21,7 @@ public:
 	
 	RenderPassComponent& rm_renderPassComponent;
 
+	static std::vector<char> readShaderFile(const std::string& filename);
 
 private:
 
@@ -29,8 +30,6 @@ private:
 	VkExtent2D& rm_swapChainExtent;
 
 	VkDevice& rm_logicalDevice;
-
-	std::vector<char> readShaderFile(const std::string& filename);
 
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 };

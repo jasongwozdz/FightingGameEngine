@@ -1,5 +1,6 @@
 #pragma once
 #include "Mesh.h"
+#include "ResourceManager.h"
 
 class DepthBuffer;
 

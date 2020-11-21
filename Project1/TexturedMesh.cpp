@@ -7,6 +7,7 @@
 #include "VulkanErrorCheck.h"
 #include "ResourceManager.h"
 #include "VulkanImage.h"
+#include "Renderer.h"
 
 void TexturedMesh::createTextureImageViews()
 {
@@ -62,10 +63,11 @@ void TexturedMesh::createDescriptorPool()
 
 void TexturedMesh::createDescriptorSet()
 {
+	Renderer& renderer = Renderer::getSingleton();
 	std::vector<VkDescriptorSetLayout> layouts(rm_swapChainImages.size(), m_descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = m_descriptorPool;
+	allocInfo.descriptorPool = renderer.getDescriptorPool();
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(rm_swapChainImages.size());
 	allocInfo.pSetLayouts = layouts.data();
 
@@ -165,6 +167,7 @@ void TexturedMesh::createUniformBuffers()
 void TexturedMesh::createTextureImages(std::string texturePath)
 {
 	TextureReturnVals vals;
+	// TODO : need to decide if loading in all texture data is better done outside of this class eg: loading in models.
 	vals = ResourceManager::getSingleton().loadTextureFile(texturePath);
 	VkDeviceSize imageSize = vals.textureWidth * vals.textureHeight * 4;
 
@@ -264,7 +267,7 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 
 	createUniformBuffers();
 	createDescriptorSetLayout();
-	createDescriptorPool();
+	//createDescriptorPool();
 	createDescriptorSet();
 	createVertexBuffer();
 	createIndexBuffer();

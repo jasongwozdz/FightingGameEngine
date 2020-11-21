@@ -1,5 +1,17 @@
 #include "Renderer.h"
 
+template<> Renderer* Singleton<Renderer>::msSingleton = 0;
+
+Renderer* Renderer::getSingletonPtr()
+{
+	return msSingleton;
+}
+
+Renderer& Renderer::getSingleton()
+{
+	assert(msSingleton); return (*msSingleton);
+}
+
 namespace EngineSettings {
 	extern int WIDTH;
 	extern int HEIGHT;
@@ -7,7 +19,7 @@ namespace EngineSettings {
 
 Renderer::Renderer() 
 {
-	initSingletons();
+	//initSingletons();
 	initWindow();
 	createVulkanInstance();
 	init();
@@ -15,6 +27,49 @@ Renderer::Renderer()
 
 Renderer::~Renderer() {
 	cleanup();
+}
+
+void Renderer::bindTexturedMeshToPipeline(Mesh* mesh, GraphicsPipeline*& pipeline)
+{
+	//initalize defualt textured mesh pipeline if pointer is null
+	if (pipeline == nullptr) 
+	{
+		DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
+		RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
+		pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, mesh->m_descriptorSetLayout, swapChainExtent, depthComponent);
+		pipelineMap[pipeline].push_back(mesh);
+	}
+	else 
+	{
+		pipelineMap[pipeline].push_back(mesh);
+	}
+}
+
+void Renderer::bindTexturedMeshToPipeline(std::vector<Mesh*> meshVec, GraphicsPipeline* pipeline)
+{
+	//initalize defualt textured mesh pipeline if pointer is null
+	if (pipeline = nullptr)
+	{
+		DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
+		RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
+		for (Mesh* mesh : meshVec)
+		{
+			pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, mesh->m_descriptorSetLayout, swapChainExtent, depthComponent);
+			pipelineMap[pipeline].push_back(mesh);
+		}
+	}
+	else 
+	{
+		for (Mesh* mesh : meshVec)
+		{
+			pipelineMap[pipeline].push_back(mesh);
+		}
+	}
+}
+
+VkDescriptorPool Renderer::getDescriptorPool()
+{
+	return m_descriptorPool;
 }
 
 void Renderer::init() 
@@ -25,7 +80,35 @@ void Renderer::init()
 	createSwapChain();
 	createSwapChainImageViews();
 	createCommandPool();
-	initScene();
+	{
+        VkDescriptorPoolSize pool_sizes[] =
+        {
+            { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+        };
+        VkDescriptorPoolCreateInfo pool_info = {};
+        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+        pool_info.maxSets = 1000 * ((int)(sizeof(pool_sizes)/sizeof(*(pool_sizes))));
+        pool_info.poolSizeCount = (uint32_t)((int)(sizeof(pool_sizes)/sizeof(*(pool_sizes))));
+        pool_info.pPoolSizes = pool_sizes;
+        vkCreateDescriptorPool(logicalDevice, &pool_info, NULL, &m_descriptorPool);
+    }
+	//initScene();
+	//ResourceManager::getSingleton().freeAllResources();
+}
+
+void Renderer::prepareScene()
+{
 	createFramebuffers();
 	//think of better way to do this
 	for (auto pipeline : pipelineMap) 
@@ -33,25 +116,85 @@ void Renderer::init()
 		bindMeshesToCommandBuffers(pipeline.first, pipeline.second);
 	}
 	createSyncObjects();
-	ResourceManager::getSingleton().freeAllResources();
+
 }
 
 GLFWwindow* Renderer::getWindow()
 {
 	return window;
 }
-VkDevice Renderer::getLogicalDevice()
+VkDevice& Renderer::getLogicalDevice()
 {
 	return logicalDevice;
 }
 
-void Renderer::draw() {
-	while (!glfwWindowShouldClose(window)) {
-		glfwPollEvents();
-		drawFrame();
-	}
-	vkDeviceWaitIdle(logicalDevice);
+VkCommandBuffer& Renderer::getCurrentCommandBuffer()
+{
+	return commandBuffers[currentFrame];
 }
+
+std::vector<VkImage>& Renderer::getSwapChainImages()
+{
+	return swapChainImages;
+}
+VkPhysicalDevice& Renderer::getPhysicalDevice()
+{
+	return physicalDevice;
+}
+
+VkCommandPool& Renderer::getCommandPool()
+{
+	return commandPool;
+}
+
+VkQueue& Renderer::getGraphicsQueue()
+{
+	return graphicsQueue;
+}
+
+VkExtent2D& Renderer::getSwapChainExtent()
+{
+	return swapChainExtent;
+}
+
+VkInstance Renderer::getVulkanInstance()
+{
+	return instance;
+}
+
+uint32_t Renderer::getQueueFamily()
+{
+	return queueFamilyIndices.graphicsFamily.value();
+}
+
+std::vector<VkCommandBuffer>& Renderer::getCommandBuffers()
+{
+	return commandBuffers;
+}
+
+VkRenderPass& Renderer::getRenderPass()
+{
+	return pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
+}
+
+void Renderer::setKeyboardCallback(void* func)
+{
+	keyboardCallback = func;
+	glfwSetKeyCallback(window, static_cast<GLFWkeyfun>(func));
+}
+
+
+void Renderer::setMousePosCallback(void* func)
+{
+	mouseCallback = func;
+	glfwSetCursorPosCallback(window, reinterpret_cast<GLFWcursorposfun>(mouseCallback));
+}
+
+void Renderer::setDrawUi(bool val)
+{
+	drawUi = val;
+}
+
 
 void Renderer::cleanup() 
 {
@@ -70,6 +213,7 @@ void Renderer::cleanup()
 	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+
 		vkDestroySemaphore(logicalDevice, renderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(logicalDevice, imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(logicalDevice, inFlightFences[i], nullptr);
@@ -200,6 +344,54 @@ void Renderer::drawFrame()
 	{
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
+
+	{
+		VkCommandBufferBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		vkBeginCommandBuffer(commandBuffers[imageIndex], &info);
+	}
+	{
+		std::array<VkClearValue, 2> clearValues;
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+		VkRenderPassBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.renderPass = pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
+		info.framebuffer = swapChainFramebuffers[imageIndex];
+		info.renderArea.extent.width = EngineSettings::WIDTH;
+		info.renderArea.extent.height = EngineSettings::HEIGHT;
+		info.clearValueCount = clearValues.size();
+		info.pClearValues = clearValues.data();
+		vkCmdBeginRenderPass(commandBuffers[imageIndex], &info, VK_SUBPASS_CONTENTS_INLINE);
+	}
+	for (auto pipeline : pipelineMap)
+	{
+
+		VkDeviceSize offsets[1] = { 0 };
+		for (Mesh* mesh : pipeline.second)
+		{
+
+			vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipeline);
+
+			vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &mesh->m_vertexBuffer, offsets);
+
+			vkCmdBindIndexBuffer(commandBuffers[imageIndex], mesh->m_indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+			vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[imageIndex], 0, nullptr);
+
+			vkCmdDrawIndexed(commandBuffers[imageIndex], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
+		
+		}
+	}
+	if (ui != nullptr && drawUi)
+	{
+		ui->renderFrame(commandBuffers[imageIndex]);
+	}
+
+	// Submit command buffer
+	vkCmdEndRenderPass(commandBuffers[imageIndex]);
+	vkEndCommandBuffer(commandBuffers[imageIndex]);
 
 	for (auto pipeline : pipelineMap)
 	{
@@ -385,6 +577,7 @@ void Renderer::createCommandPool()
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(logicalDevice, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics command pool!");
@@ -425,7 +618,7 @@ void Renderer::createFramebuffers()
 			std::vector<VkImageView> attachments = {
 				swapChainImageViews[i],
 			};
-			if (pipeline.first->m_depthComponent)
+			if (pipeline.first->m_depthComponent != nullptr)
 			{
 				attachments.push_back(pipeline.first->m_depthComponent->m_depthImageView);
 			}
@@ -597,6 +790,11 @@ VkSampleCountFlagBits Renderer::getMaxUsableSampleCount()
 	if (counts & VK_SAMPLE_COUNT_2_BIT) { return VK_SAMPLE_COUNT_2_BIT; }
 
 	return VK_SAMPLE_COUNT_1_BIT;
+}
+void Renderer::bindUI(UserInterfaceImp* UI)
+{
+	drawUi = true;
+	ui = UI;
 }
 
 VkSurfaceFormatKHR Renderer::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -792,9 +990,7 @@ void Renderer::initScene()
 
 	DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
 
-	RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, *depthComponent);
-	//renderPassMap[renderPass].push_back(a);
-	//renderPassMap[renderPass].push_back(b);
+	RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
 	GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, a->m_descriptorSetLayout, swapChainExtent, depthComponent);
 	pipelineMap[pipeline].push_back(a);
 	pipelineMap[pipeline].push_back(b);
@@ -855,11 +1051,12 @@ void Renderer::bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vecto
 void Renderer::initWindow()
 {
 	glfwInit();
-	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 	window = glfwCreateWindow(EngineSettings::WIDTH, EngineSettings::HEIGHT, "Vulkan", nullptr, nullptr);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	//glfwSetWindowUserPointer(window, this);
 }
 

@@ -19,11 +19,11 @@
 #include "VulkanImage.h"
 #include "VulkanErrorCheck.h"
 #include "DepthBufferComponent.h"
+#include "UserInterfaceImp.h"
 
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
-template<> ResourceManager* Singleton<ResourceManager>::msSingleton = 0;
 
 struct SwapChainSupportDetails {
 	VkSurfaceCapabilitiesKHR capabilities;
@@ -49,7 +49,7 @@ const std::vector<const char*> deviceExtensions = {
 };
 
 
-class Renderer
+class Renderer : Singleton<Renderer>
 {
 public:
 
@@ -59,11 +59,33 @@ public:
 	void drawFrame();
 
 	GLFWwindow* getWindow();
-	VkDevice getLogicalDevice();
+	VkDevice& getLogicalDevice();
+	std::vector<VkCommandBuffer>& getCommandBuffers();
+	VkCommandBuffer& getCurrentCommandBuffer();
+	std::vector<VkImage>& getSwapChainImages();
+	VkPhysicalDevice& getPhysicalDevice();
+	VkCommandPool& getCommandPool();
+	VkQueue& getGraphicsQueue();
+	VkExtent2D& getSwapChainExtent();
+	VkInstance getVulkanInstance();
+	uint32_t getQueueFamily();
+	VkDescriptorPool getDescriptorPool();
+	VkRenderPass& getRenderPass();
+	void bindTexturedMeshToPipeline(Mesh* mesh, GraphicsPipeline*& pipeline);
+	void bindTexturedMeshToPipeline(std::vector<Mesh*> meshVec, GraphicsPipeline* pipeline);
+	void bindUI(UserInterfaceImp* UI);
+	void setDrawUi(bool val);
+	void prepareScene();
+
+
+	void setMousePosCallback(void* mouseCallback);
+	void setKeyboardCallback(void* keyboardCallback);
+
+	static Renderer& getSingleton();
+	static Renderer* getSingletonPtr();
 
 private:
 	void init();
-	void draw();
 	void cleanup();
 	void initSingletons();
 	void recreateSwapChain();
@@ -76,6 +98,7 @@ private:
 	void createCommandPool();
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void createFramebuffers();
+
 	void createSurface();
 	void createLogicalDevice();
 	void createPhysicalDevice();
@@ -100,6 +123,14 @@ private:
 		return VK_FALSE;
 	}
 
+
+	UserInterfaceImp* ui = nullptr;
+
+	void* mouseCallback = nullptr;
+	
+	void* keyboardCallback = nullptr;
+
+	VkDescriptorPool m_descriptorPool;
 
 	ResourceManager* m_resourceManager;
 
@@ -148,12 +179,14 @@ private:
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;;
 
-	//maps for each mesh
+	//maps a pipeline to mesh(s)
 	std::map<GraphicsPipeline*, std::vector<Mesh*>> pipelineMap;
 
 	size_t currentFrame = 0;
 
 	bool framebufferResized = false;
+
+	bool drawUi = false;
 
 };
 

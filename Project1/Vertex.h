@@ -4,8 +4,6 @@
 #include "glm/glm.hpp"
 #include <array>
 
-
-
 //template<class p>
 //struct Vertex{};
 

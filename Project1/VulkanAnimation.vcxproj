@@ -125,7 +125,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\imgui;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -170,7 +170,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\imgui;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -184,7 +184,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\imgui;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -193,25 +193,47 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="BufferOperations.cpp" />
     <ClCompile Include="DepthBufferComponent.cpp" />
+    <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="GameObjectManager.cpp" />
     <ClCompile Include="GraphicsPipeline.cpp" />
+    <ClCompile Include="imgui.cpp" />
+    <ClCompile Include="imgui_demo.cpp" />
+    <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="imgui_impl_glfw.cpp" />
+    <ClCompile Include="imgui_impl_vulkan.cpp" />
+    <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RenderPassComponent.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="PrimitiveMesh.cpp" />
     <ClCompile Include="TexturedMesh.cpp" />
+    <ClCompile Include="UserInterfaceImp.cpp" />
     <ClCompile Include="VulkanAnimation.cpp" />
     <ClCompile Include="VulkanImage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="BufferOperations.h" />
     <ClInclude Include="DepthBufferComponent.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="GameObjectManager.h" />
     <ClInclude Include="GraphicsPipeline.h" />
     <ClInclude Include="EngineSettings.h" />
+    <ClInclude Include="imconfig.h" />
+    <ClInclude Include="imgui.h" />
+    <ClInclude Include="imgui_impl_glfw.h" />
+    <ClInclude Include="imgui_impl_vulkan.h" />
+    <ClInclude Include="imgui_internal.h" />
+    <ClInclude Include="imstb_rectpack.h" />
+    <ClInclude Include="imstb_textedit.h" />
+    <ClInclude Include="imstb_truetype.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RenderPassComponent.h" />
+    <ClInclude Include="UserInterfaceImp.h" />
     <ClInclude Include="VulkanImage.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ResourceManager.h" />
@@ -220,7 +242,6 @@
     <ClInclude Include="TexturedMesh.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanErrorCheck.h" />
-    <ClInclude Include="VulkanWindow.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
