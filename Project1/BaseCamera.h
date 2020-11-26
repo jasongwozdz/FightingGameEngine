@@ -25,13 +25,13 @@ public:
 	
 	void updateMouse(glm::vec2 newMousePosition);
 	
-	void moveForward(float time);
+	void moveForward(uint64_t time);
 
-	void moveBackward(float time);
+	void moveBackward(uint64_t time);
 
-	void strafeLeft(float time);
+	void strafeLeft(uint64_t time);
 
-	void strafeRight(float time);
+	void strafeRight(uint64_t time);
 
 	void setLookDirection(glm::vec3 direction);
 

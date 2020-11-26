@@ -244,11 +244,6 @@ void TexturedMesh::createTextureSampler()
 
 void TexturedMesh::updateUniformBuffer(uint32_t currentImage)
 {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
 	m_ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
 	m_ubo.proj[1][1] *= -1;
 
@@ -267,7 +262,6 @@ TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> 
 
 	createUniformBuffers();
 	createDescriptorSetLayout();
-	//createDescriptorPool();
 	createDescriptorSet();
 	createVertexBuffer();
 	createIndexBuffer();

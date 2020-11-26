@@ -5,6 +5,7 @@
 #include <chrono>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "Renderer.h"
 
 /*
 [09/03/2020 Gwozdz]
@@ -73,7 +74,6 @@ PrimitiveMesh::PrimitiveMesh(std::vector<Vertex> verticies,
 {
 	createUniformBuffers();
 	createDescriptorSetLayout();
-	createDescriptorPool();
 	createDescriptorSet();
 	createVertexBuffer();
 	createIndexBuffer();
@@ -92,7 +92,6 @@ PrimitiveMesh::~PrimitiveMesh() {
 		vkFreeMemory(rm_logicalDevice, m_uniformBuffersMemory[i], nullptr);
 	}
 	//descriptor pool/set
-	vkDestroyDescriptorPool(rm_logicalDevice, m_descriptorPool, nullptr);
 	vkDestroyDescriptorSetLayout(rm_logicalDevice, m_descriptorSetLayout, nullptr);
 	std::cout << "deleteing PrimitiveMesh" << std::endl;
 }
@@ -142,13 +141,7 @@ PrimitiveMesh::~PrimitiveMesh() {
 
 
 void PrimitiveMesh::updateUniformBuffer(uint32_t currentImage) {
-	static auto startTime = std::chrono::high_resolution_clock::now();
-
-	auto currentTime = std::chrono::high_resolution_clock::now();
-	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
-	m_ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	m_ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	
 	m_ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
 	m_ubo.proj[1][1] *= -1;
 
@@ -209,7 +202,7 @@ void PrimitiveMesh::createDescriptorSet() {
 	std::vector<VkDescriptorSetLayout> layouts(rm_swapChainImages.size(), m_descriptorSetLayout);
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = m_descriptorPool;
+	allocInfo.descriptorPool = Renderer::getSingleton().getDescriptorPool();
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(rm_swapChainImages.size());
 	allocInfo.pSetLayouts = layouts.data();
 

@@ -1,9 +1,6 @@
 #pragma once
 #include "Mesh.h"
 
-const int WIDTH = 1200;
-const int HEIGHT = 900;
-
 class PrimitiveMesh :
 	public Mesh
 {
@@ -23,19 +20,17 @@ private:
 	Methods
 	*****************
 	*/
-	void createDescriptorSetLayout();
+	virtual void createDescriptorSetLayout();
 
-	void createDescriptorPool();
+	virtual void createDescriptorPool();
 
-	void createDescriptorSet();
+	virtual void createDescriptorSet();
 
-	void createVertexBuffer();
+	virtual void createVertexBuffer();
 	
-	void createIndexBuffer();
+	virtual void createIndexBuffer();
 
-	void createUniformBuffers();
-
-	
+	virtual void createUniformBuffers();
 };
 
 

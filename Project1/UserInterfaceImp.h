@@ -12,14 +12,6 @@ public:
 	void renderFrame(VkCommandBuffer& currentBuffer); // called form inside renderer
 	void prepareFrame(); //called from engine
 private:
-	struct {
-		VkDeviceSize vertexBufferSize;
-		VkDeviceMemory vertexBufferMemory;
-		VkBuffer vertexBuffer;
-		VkDeviceSize indexBufferSize;
-		VkDeviceMemory indexBufferMemory;
-		VkBuffer indexBuffer;
-	} uiBuffers;
 
 	VkPipeline m_pipeline;
 	RenderPassComponent* m_renderPass;

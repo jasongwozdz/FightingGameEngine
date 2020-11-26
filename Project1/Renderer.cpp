@@ -80,6 +80,8 @@ void Renderer::init()
 	createSwapChain();
 	createSwapChainImageViews();
 	createCommandPool();
+	depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
+	renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
 	{
         VkDescriptorPoolSize pool_sizes[] =
         {
@@ -103,8 +105,6 @@ void Renderer::init()
         pool_info.pPoolSizes = pool_sizes;
         vkCreateDescriptorPool(logicalDevice, &pool_info, NULL, &m_descriptorPool);
     }
-	//initScene();
-	//ResourceManager::getSingleton().freeAllResources();
 }
 
 void Renderer::prepareScene()
@@ -172,9 +172,14 @@ std::vector<VkCommandBuffer>& Renderer::getCommandBuffers()
 	return commandBuffers;
 }
 
-VkRenderPass& Renderer::getRenderPass()
+RenderPassComponent& Renderer::getRenderPass()
 {
-	return pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
+	return pipelineMap.begin()->first->rm_renderPassComponent;
+}
+
+DepthBufferComponent* Renderer::getDepthBufferComp()
+{
+	return depthComponent;
 }
 
 void Renderer::setKeyboardCallback(void* func)
@@ -351,27 +356,27 @@ void Renderer::drawFrame()
 		info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		vkBeginCommandBuffer(commandBuffers[imageIndex], &info);
 	}
-	{
-		std::array<VkClearValue, 2> clearValues;
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-		VkRenderPassBeginInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		info.renderPass = pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
-		info.framebuffer = swapChainFramebuffers[imageIndex];
-		info.renderArea.extent.width = EngineSettings::WIDTH;
-		info.renderArea.extent.height = EngineSettings::HEIGHT;
-		info.clearValueCount = clearValues.size();
-		info.pClearValues = clearValues.data();
-		vkCmdBeginRenderPass(commandBuffers[imageIndex], &info, VK_SUBPASS_CONTENTS_INLINE);
-	}
+	
+	std::array<VkClearValue, 2> clearValues;
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 1.0f };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+	VkRenderPassBeginInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	info.renderPass = pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
+	info.framebuffer = pipelineMap.begin()->first->frameBuffers[imageIndex];
+	info.renderArea.extent.width = EngineSettings::WIDTH;
+	info.renderArea.extent.height = EngineSettings::HEIGHT;
+	info.clearValueCount = clearValues.size();
+	info.pClearValues = clearValues.data();
+	vkCmdBeginRenderPass(commandBuffers[imageIndex], &info, VK_SUBPASS_CONTENTS_INLINE);
+	
+	VkDeviceSize offsets[1] = { 0 };
+	
 	for (auto pipeline : pipelineMap)
 	{
 
-		VkDeviceSize offsets[1] = { 0 };
 		for (Mesh* mesh : pipeline.second)
 		{
-
 			vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipeline);
 
 			vkCmdBindVertexBuffers(commandBuffers[imageIndex], 0, 1, &mesh->m_vertexBuffer, offsets);
@@ -381,15 +386,14 @@ void Renderer::drawFrame()
 			vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[imageIndex], 0, nullptr);
 
 			vkCmdDrawIndexed(commandBuffers[imageIndex], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
-		
 		}
 	}
+	
 	if (ui != nullptr && drawUi)
 	{
 		ui->renderFrame(commandBuffers[imageIndex]);
 	}
 
-	// Submit command buffer
 	vkCmdEndRenderPass(commandBuffers[imageIndex]);
 	vkEndCommandBuffer(commandBuffers[imageIndex]);
 
@@ -611,9 +615,9 @@ uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 
 void Renderer::createFramebuffers() 
 {
-	swapChainFramebuffers.resize(swapChainImageViews.size());
 	for (auto pipeline : pipelineMap)
 	{
+		pipeline.first->frameBuffers.resize(swapChainImageViews.size());
 		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 			std::vector<VkImageView> attachments = {
 				swapChainImageViews[i],
@@ -631,7 +635,7 @@ void Renderer::createFramebuffers()
 			framebufferInfo.height = swapChainExtent.height;
 			framebufferInfo.layers = 1;
 
-			if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+			if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &pipeline.first->frameBuffers[i]) != VK_SUCCESS) {
 				throw std::runtime_error("failed to create framebuffer!");
 			}
 		}
@@ -1012,7 +1016,7 @@ void Renderer::bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vecto
 
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = pipeline->rm_renderPassComponent.m_renderPass;
-		renderPassInfo.framebuffer = swapChainFramebuffers[i];
+		renderPassInfo.framebuffer = pipeline->frameBuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
 

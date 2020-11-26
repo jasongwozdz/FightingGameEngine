@@ -29,23 +29,23 @@ void BaseCamera::updateMouse(glm::vec2 newMousePosition)
 	oldMousePosition = newMousePosition;
 }
 
-void BaseCamera::moveForward(float time) 
+void BaseCamera::moveForward(uint64_t time) 
 {
 	position += time * cameraSpeed * viewDirection;
 }
 
-void BaseCamera::moveBackward(float time) 
+void BaseCamera::moveBackward(uint64_t time) 
 {
 	position -= time * cameraSpeed * viewDirection;
 }
 
-void BaseCamera::strafeLeft(float time) 
+void BaseCamera::strafeLeft(uint64_t time) 
 {
 	glm::vec3 strafeDirection = glm::cross(viewDirection, upDirection);
 	position -= time * cameraSpeed * strafeDirection;
 }
 
-void BaseCamera::strafeRight(float time) 
+void BaseCamera::strafeRight(uint64_t time) 
 {
 	glm::vec3 strafeDirection = glm::cross(viewDirection, upDirection);
 	position += time * cameraSpeed * strafeDirection;

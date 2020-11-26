@@ -11,6 +11,8 @@ public:
 
 	RenderPassComponent(VkDevice& rm_logicalDevice, DepthBufferComponent* depthComponent);
 
+	RenderPassComponent(VkDevice& rm_logicalDevice, DepthBufferComponent* depthComponent, bool debugEnabled);
+
 	~RenderPassComponent();
 
 	VkRenderPass m_renderPass;

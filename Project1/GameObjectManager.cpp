@@ -1,10 +1,21 @@
 #include "GameObjectManager.h"
 #include "Renderer.h"
 
+template <> GameObjectManager* Singleton<GameObjectManager>::msSingleton = 0;
+
+GameObjectManager* GameObjectManager::getSingletonPtr()
+{
+	return msSingleton;
+}
+
+GameObjectManager& GameObjectManager::getSingleton()
+{
+	assert(msSingleton); return (*msSingleton);
+}
 
 GameObjectManager::GameObjectManager() 
 {
-	printf("inside game object manager constructor");
+	printf("Game object manager constructed");
 }
 
 GameObjectManager::~GameObjectManager() 
@@ -12,30 +23,43 @@ GameObjectManager::~GameObjectManager()
 	printf("game object manager deleted");
 }
 
+void GameObjectManager::setCameraId(int id)
+{
+	assert(id < m_cameras.size());
+	m_currentCameraId = id;
+}
+
 int GameObjectManager::addGameObject(GameObject* gameObject)
 {
-	gameObjects.push_back(gameObject);
-	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), pipeline);
-	printf("Graphics pipeline : %p", pipeline);
-	return gameObjects.size()-1;
+	m_gameObjects.push_back(gameObject);
+	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), m_pipeline);
+	return static_cast<int>(m_gameObjects.size()-1);
 }
+
+int GameObjectManager::addGameObject(GameObject* gameObject, GraphicsPipeline* pipeline)
+{
+	m_gameObjects.push_back(gameObject);
+	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), pipeline);
+	return static_cast<int>(m_gameObjects.size()-1);
+}
+
 
 int GameObjectManager::addCamera(BaseCamera* camera)
 {
-	cameras.push_back(camera);
-	return cameras.size()-1;
+	m_cameras.push_back(camera);
+	return static_cast<int>(m_cameras.size()-1);
 }
 
 GameObject* GameObjectManager::getGameObjectPtrById(int id)
 {
-	assert(id < gameObjects.size() && id >= 0);
-	return gameObjects[id];
+	assert(id < m_gameObjects.size() && id >= 0);
+	return m_gameObjects[id];
 }
 
 void GameObjectManager::updateViewMatricies()
 {
-	glm::mat4 currentView = cameras[currentCameraId]->getView();
-	for (GameObject* object : gameObjects)
+	glm::mat4 currentView = m_cameras[m_currentCameraId]->getView();
+	for (GameObject* object : m_gameObjects)
 	{
 		object->getMeshPtr()->setViewMatrix(currentView);
 	}

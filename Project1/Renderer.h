@@ -70,7 +70,9 @@ public:
 	VkInstance getVulkanInstance();
 	uint32_t getQueueFamily();
 	VkDescriptorPool getDescriptorPool();
-	VkRenderPass& getRenderPass();
+	RenderPassComponent& getRenderPass();
+	DepthBufferComponent* getDepthBufferComp();
+
 	void bindTexturedMeshToPipeline(Mesh* mesh, GraphicsPipeline*& pipeline);
 	void bindTexturedMeshToPipeline(std::vector<Mesh*> meshVec, GraphicsPipeline* pipeline);
 	void bindUI(UserInterfaceImp* UI);
@@ -123,12 +125,15 @@ private:
 		return VK_FALSE;
 	}
 
-
 	UserInterfaceImp* ui = nullptr;
 
 	void* mouseCallback = nullptr;
 	
 	void* keyboardCallback = nullptr;
+
+	DepthBufferComponent* depthComponent;
+
+	RenderPassComponent* renderPassComponent;
 
 	VkDescriptorPool m_descriptorPool;
 

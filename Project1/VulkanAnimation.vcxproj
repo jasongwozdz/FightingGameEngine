@@ -190,11 +190,13 @@
     <Link>
       <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="BufferOperations.cpp" />
+    <ClCompile Include="DebugDrawManager.cpp" />
     <ClCompile Include="DepthBufferComponent.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GameObjectManager.cpp" />
@@ -212,12 +214,13 @@
     <ClCompile Include="PrimitiveMesh.cpp" />
     <ClCompile Include="TexturedMesh.cpp" />
     <ClCompile Include="UserInterfaceImp.cpp" />
-    <ClCompile Include="VulkanAnimation.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="VulkanImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="BufferOperations.h" />
+    <ClInclude Include="DebugDrawManager.h" />
     <ClInclude Include="DepthBufferComponent.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameObjectManager.h" />

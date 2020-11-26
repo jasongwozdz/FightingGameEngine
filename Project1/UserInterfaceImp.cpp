@@ -1,7 +1,6 @@
 #include "UserInterfaceImp.h"
 #include "Renderer.h"
 #include "BufferOperations.h"
-#include "GraphicsPipeline.h" // readShaderCode
 
 UserInterfaceImp::UserInterfaceImp(GLFWwindow* window)
 {
@@ -24,9 +23,9 @@ UserInterfaceImp::UserInterfaceImp(GLFWwindow* window)
 
 	m_depthBufferComponenet = new DepthBufferComponent(renderer.getLogicalDevice(), renderer.getPhysicalDevice(), renderer.getCommandPool(), VK_FORMAT_D32_SFLOAT);
 
-	m_renderPass = new RenderPassComponent(renderer.getLogicalDevice(), m_depthBufferComponenet);
+	m_renderPass = new RenderPassComponent(renderer.getLogicalDevice());
 
-    ImGui_ImplVulkan_Init(&init_info, renderer.getRenderPass());
+    ImGui_ImplVulkan_Init(&init_info, renderer.getRenderPass().m_renderPass);
 
 	{
 		VkCommandPool commandPool = renderer.getCommandPool();
@@ -95,5 +94,3 @@ void UserInterfaceImp::renderFrame(VkCommandBuffer& currentBuffer)
 	ImDrawData* drawData = ImGui::GetDrawData();
 	ImGui_ImplVulkan_RenderDrawData(drawData, currentBuffer);
 }
-
-

@@ -2,22 +2,16 @@
 #include "Renderer.h"
 #include "ResourceManager.h"
 #include <memory>
-
-struct Position 
-{
-	float x;
-	float y;
-	float z;
-};
+#include <glm/glm.hpp>
 
 class GameObject
 {
 public:
-	GameObject(std::string modelPath, std::string texturePath, Position position);
-	void setPosition(Position newPosition);
+	GameObject(std::string modelPath, std::string texturePate, glm::vec3 position);
+	GameObject(Mesh* mesh, glm::vec3 pos);
+	void setPosition(glm::vec3 newPosition);
 	Mesh* getMeshPtr();
 private:
 	Mesh* p_mesh;
-	Position position;
+	glm::vec3 position;
 };
-

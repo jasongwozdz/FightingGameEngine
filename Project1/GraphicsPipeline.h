@@ -11,6 +11,10 @@ public:
 
 	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBufferComponent* depthComponent = nullptr);
 
+	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent = nullptr);
+	
+	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent, bool cullingEnabled);
+
 	~GraphicsPipeline();
 
 	VkPipeline m_pipeline;
@@ -23,7 +27,10 @@ public:
 
 	static std::vector<char> readShaderFile(const std::string& filename);
 
+	std::vector<VkFramebuffer> frameBuffers;
+
 private:
+
 
 	VkDescriptorSetLayout& rm_descriptorSetLayout;
 	
