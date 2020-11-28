@@ -33,7 +33,8 @@ enum KEY_FUNCTIONS
 	MOVE_BACKWARD	= 1,
 	STRAFE_LEFT		= 2,
 	STRAFE_RIGHT	= 3,
-	OPEN_UI			= 4
+	OPEN_UI			= 4,
+	DRAW_GRID		= 5
 };
 
  void mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -132,25 +133,41 @@ enum KEY_FUNCTIONS
 			 keysHeld[keyFunc] = false;
 		 }
 		 break;
+	 case DRAW_GRID:
+		 keyFunc = STRAFE_RIGHT;
+		 if (keysHeld.find(keyFunc) == keysHeld.end())
+		 {
+			 keysHeld[keyFunc] = true;
+		 }
+		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 {
+			 keysHeld[keyFunc] = true;
+		 }
+		 else if (glfwGetKey(window, key) == GLFW_RELEASE)
+		 {
+			 keysHeld[keyFunc] = false;
+		 }
+		 break;
 	 }
  }
 
  void setUpKeybinds() {
-	 keyBinds[GLFW_KEY_W]	= KEY_FUNCTIONS::MOVE_FORWARD;
-	 keyBinds[GLFW_KEY_S]	= KEY_FUNCTIONS::MOVE_BACKWARD;
-	 keyBinds[GLFW_KEY_A]	= KEY_FUNCTIONS::STRAFE_LEFT;
-	 keyBinds[GLFW_KEY_D]	= KEY_FUNCTIONS::STRAFE_RIGHT;
+	 keyBinds[GLFW_KEY_W]		= KEY_FUNCTIONS::MOVE_FORWARD;
+	 keyBinds[GLFW_KEY_S]		= KEY_FUNCTIONS::MOVE_BACKWARD;
+	 keyBinds[GLFW_KEY_A]		= KEY_FUNCTIONS::STRAFE_LEFT;
+	 keyBinds[GLFW_KEY_D]		= KEY_FUNCTIONS::STRAFE_RIGHT;
 	 keyBinds[GLFW_KEY_ESCAPE]	= KEY_FUNCTIONS::OPEN_UI;
+	 keyBinds[GLFW_KEY_G]		= KEY_FUNCTIONS::DRAW_GRID;
  }
 
 void initScene() 
 {
 	std::string modelPath = "./Models/viking_room.obj";
 	std::string texturePath = "./Textures/viking_room.png";
-	glm::vec3 pos = { 0, 0, 1 };
+	glm::vec3 pos = { 0, 0, 0 };
 	gameObjectIds.push_back(gObjectManager->addGameObject(new GameObject(modelPath, texturePath, pos)));
 	camera = new BaseCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
-	//debugDrawManager->addLine({ 0,0,1 }, { 1,0,-1 }, { 255, 255, 255 }, 0.01f, 1);
+	debugDrawManager->drawGrid( { 255, 255, 255 }, 1 );
 	gObjectManager->addCamera(camera);
 	gObjectManager->updateViewMatricies();
 }

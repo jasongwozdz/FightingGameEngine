@@ -24,6 +24,11 @@ RenderPassComponent::RenderPassComponent(VkDevice& logicalDevice, DepthBufferCom
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 	subpass.pDepthStencilAttachment = &depthComponent->m_depthAttachmentRef;
+	
+	//VkSubpassDescription noDepthSubpass{};
+	//noDepthSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	//noDepthSubpass.colorAttachmentCount = 1;
+	//noDepthSubpass.pColorAttachments = &colorAttachmentRef;
 
 	VkSubpassDependency dependency{};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -33,7 +38,14 @@ RenderPassComponent::RenderPassComponent(VkDevice& logicalDevice, DepthBufferCom
 	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-
+	//VkSubpassDependency noDepthDependency{};
+	//noDepthDependency.srcSubpass = 0;
+	//noDepthDependency.dstSubpass = 1;
+	//noDepthDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	//noDepthDependency.srcAccessMask = 0;
+	//noDepthDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	//noDepthDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	
 	std::array<VkAttachmentDescription, 2 > attachments = { colorAttachment, depthComponent->m_depthAttachment };
 
 	VkRenderPassCreateInfo renderPassInfo{};

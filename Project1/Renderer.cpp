@@ -174,7 +174,7 @@ std::vector<VkCommandBuffer>& Renderer::getCommandBuffers()
 
 RenderPassComponent& Renderer::getRenderPass()
 {
-	return pipelineMap.begin()->first->rm_renderPassComponent;
+	return *renderPassComponent;
 }
 
 DepthBufferComponent* Renderer::getDepthBufferComp()
@@ -500,7 +500,6 @@ bool Renderer::checkValidationLayerSupport()
 				break;
 			}
 		}
-
 		if (!layerFound) {
 			return false;
 		}
@@ -981,25 +980,6 @@ void Renderer::createSyncObjects()
 	}
 }
 
-void Renderer::initScene()
-{
-	std::string modelPath = "./Models/viking_room.obj";
-	ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
-	std::string texturePath = "./Textures/viking_room.png";
-	TexturedMesh* a = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
-	
-	TexturedMesh* b = new TexturedMesh(vals.vertices, vals.indices, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, texturePath);
-
-	a->m_ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0,0.0, 1.0));
-
-	DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
-
-	RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
-	GraphicsPipeline* pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, a->m_descriptorSetLayout, swapChainExtent, depthComponent);
-	pipelineMap[pipeline].push_back(a);
-	pipelineMap[pipeline].push_back(b);
-}
-
 void Renderer::bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes) 
 {
 	for (size_t i = 0; i < commandBuffers.size(); i++) {
@@ -1058,7 +1038,7 @@ void Renderer::initWindow()
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	window = glfwCreateWindow(EngineSettings::WIDTH, EngineSettings::HEIGHT, "Vulkan", nullptr, nullptr);
+	window = glfwCreateWindow(EngineSettings::WIDTH, EngineSettings::HEIGHT, "Dog Game", nullptr, nullptr);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	//glfwSetWindowUserPointer(window, this);

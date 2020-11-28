@@ -14,6 +14,8 @@ public:
 	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent = nullptr);
 	
 	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent, bool cullingEnabled);
+	
+	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent, bool cullingEnabled, float lineWidth);
 
 	~GraphicsPipeline();
 

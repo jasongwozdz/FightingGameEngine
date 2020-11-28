@@ -80,6 +80,9 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CommandConsole.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="VulkanErrorCheck.h">
@@ -161,6 +164,9 @@
       <Filter>imgui</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

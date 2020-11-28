@@ -61,6 +61,7 @@ inputs:
 	verticies: verticies of mesh
 
 */
+
 PrimitiveMesh::PrimitiveMesh(std::vector<Vertex> verticies, 
 	std::vector<uint32_t> indicies, 
 	std::vector<VkCommandBuffer>& commandBuffers,
@@ -142,7 +143,7 @@ PrimitiveMesh::~PrimitiveMesh() {
 
 void PrimitiveMesh::updateUniformBuffer(uint32_t currentImage) {
 	
-	m_ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 10.0f);
+	m_ubo.proj = glm::perspective(glm::radians(45.0f), rm_swapChainExtent.width / (float)rm_swapChainExtent.height, 0.1f, 100.0f);
 	m_ubo.proj[1][1] *= -1;
 
 	void* data;

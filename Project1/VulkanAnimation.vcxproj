@@ -196,6 +196,7 @@
   <ItemGroup>
     <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="BufferOperations.cpp" />
+    <ClCompile Include="CommandConsole.cpp" />
     <ClCompile Include="DebugDrawManager.cpp" />
     <ClCompile Include="DepthBufferComponent.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -220,6 +221,7 @@
   <ItemGroup>
     <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="BufferOperations.h" />
+    <ClInclude Include="CommandConsole.h" />
     <ClInclude Include="DebugDrawManager.h" />
     <ClInclude Include="DepthBufferComponent.h" />
     <ClInclude Include="GameObject.h" />
