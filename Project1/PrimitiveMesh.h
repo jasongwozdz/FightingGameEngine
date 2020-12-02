@@ -6,12 +6,13 @@ class PrimitiveMesh :
 {
 public:
 
-	PrimitiveMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
+	PrimitiveMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout);
 
 	~PrimitiveMesh();
 
 	virtual void updateUniformBuffer(uint32_t currentImage);
 
+	void getDrawData(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 
 private:
 		

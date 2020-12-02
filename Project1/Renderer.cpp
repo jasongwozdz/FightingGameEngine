@@ -32,40 +32,23 @@ Renderer::~Renderer() {
 void Renderer::bindTexturedMeshToPipeline(Mesh* mesh, GraphicsPipeline*& pipeline)
 {
 	//initalize defualt textured mesh pipeline if pointer is null
-	if (pipeline == nullptr) 
-	{
-		DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
-		RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
-		pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, mesh->m_descriptorSetLayout, swapChainExtent, depthComponent);
+	//if (pipeline == nullptr) 
+	//{
+	//	DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
+	//	RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
+	//	pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, mesh->m_descriptorSetLayout, swapChainExtent, depthComponent);
+	//	pipelineMap[pipeline].push_back(mesh);
+
+	//	ownedDepthBufferComponenet.push_back(depthComponent);
+	//	ownedRenderPassComponent.push_back(renderPassComponent);
+	//	ownedGraphicsPipeline.push_back(pipeline);
+	//}
+	//else 
+	//{
 		pipelineMap[pipeline].push_back(mesh);
-	}
-	else 
-	{
-		pipelineMap[pipeline].push_back(mesh);
-	}
+	//}
 }
 
-void Renderer::bindTexturedMeshToPipeline(std::vector<Mesh*> meshVec, GraphicsPipeline* pipeline)
-{
-	//initalize defualt textured mesh pipeline if pointer is null
-	if (pipeline = nullptr)
-	{
-		DepthBufferComponent* depthComponent = new DepthBufferComponent(logicalDevice, physicalDevice, commandPool, VK_FORMAT_D32_SFLOAT);
-		RenderPassComponent* renderPassComponent = new RenderPassComponent(logicalDevice, depthComponent);
-		for (Mesh* mesh : meshVec)
-		{
-			pipeline = new GraphicsPipeline(logicalDevice, *renderPassComponent, mesh->m_descriptorSetLayout, swapChainExtent, depthComponent);
-			pipelineMap[pipeline].push_back(mesh);
-		}
-	}
-	else 
-	{
-		for (Mesh* mesh : meshVec)
-		{
-			pipelineMap[pipeline].push_back(mesh);
-		}
-	}
-}
 
 VkDescriptorPool Renderer::getDescriptorPool()
 {
@@ -207,15 +190,13 @@ void Renderer::cleanup()
 		vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
 	}
 
+	vkDestroyDescriptorPool(logicalDevice, m_descriptorPool, nullptr);
+
 	vkFreeCommandBuffers(logicalDevice, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 	
-	for (auto pipeline : pipelineMap) {
-		pipeline.first->rm_renderPassComponent.~RenderPassComponent();
-		pipeline.first->m_depthComponent->~DepthBufferComponent();
-		for (auto mesh : pipeline.second) {
-			mesh->~Mesh();
-		}
-	}
+	delete renderPassComponent;
+
+	delete depthComponent;
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 
@@ -225,11 +206,6 @@ void Renderer::cleanup()
 	}
 
 	vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
-
-
-	for (auto pipeline : pipelineMap) {
-		pipeline.first->~GraphicsPipeline();
-	}
 
 	for (auto imageView : swapChainImageViews) {
 		vkDestroyImageView(logicalDevice, imageView, nullptr);
@@ -362,8 +338,8 @@ void Renderer::drawFrame()
 	clearValues[1].depthStencil = { 1.0f, 0 };
 	VkRenderPassBeginInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	info.renderPass = pipelineMap.begin()->first->rm_renderPassComponent.m_renderPass;
-	info.framebuffer = pipelineMap.begin()->first->frameBuffers[imageIndex];
+	info.renderPass = renderPassComponent->m_renderPass;
+	info.framebuffer = swapChainFramebuffers[imageIndex];
 	info.renderArea.extent.width = EngineSettings::WIDTH;
 	info.renderArea.extent.height = EngineSettings::HEIGHT;
 	info.clearValueCount = clearValues.size();
@@ -374,7 +350,7 @@ void Renderer::drawFrame()
 	
 	for (auto pipeline : pipelineMap)
 	{
-
+		
 		for (Mesh* mesh : pipeline.second)
 		{
 			vkCmdBindPipeline(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipeline);
@@ -386,6 +362,7 @@ void Renderer::drawFrame()
 			vkCmdBindDescriptorSets(commandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.first->m_pipelineLayout, 0, 1, &mesh->m_descriptorSets[imageIndex], 0, nullptr);
 
 			vkCmdDrawIndexed(commandBuffers[imageIndex], static_cast<uint32_t>(mesh->m_indicies.size()), 1, 0, 0, 0);
+
 		}
 	}
 	
@@ -453,6 +430,23 @@ void Renderer::drawFrame()
 		throw std::runtime_error("failed to present swap chain image!");
 	}
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::combineVertexData(std::vector<Mesh*> meshes)
+{
+	//std::vector<Vertex> vertices;
+	//std::vector<uint32_t> indices;
+	//std::vector<uint32_t> vertOffset = { 0 };
+	//std::vector<uint32_t> indOffeset = { 0 };
+	//for (Mesh* mesh : meshes)
+	//{
+	//	std::vector<Vertex> meshVerts;
+	//	std::vector<uint32_t> meshIndices;
+	//	vertices.insert(vertices.end(), meshVerts.begin(), meshVerts.end());
+	//	vertOffset.push_back(meshVerts.size());
+	//	indices.insert(indices.end(), meshIndices.begin(), meshIndices.end());
+	//	indOffset.push_back(meshIndices.size());
+	//}
 }
 
 VkResult Renderer::CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) 
@@ -614,29 +608,23 @@ uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 
 void Renderer::createFramebuffers() 
 {
-	for (auto pipeline : pipelineMap)
-	{
-		pipeline.first->frameBuffers.resize(swapChainImageViews.size());
-		for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-			std::vector<VkImageView> attachments = {
-				swapChainImageViews[i],
-			};
-			if (pipeline.first->m_depthComponent != nullptr)
-			{
-				attachments.push_back(pipeline.first->m_depthComponent->m_depthImageView);
-			}
-			VkFramebufferCreateInfo framebufferInfo{};
-			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-			framebufferInfo.renderPass = pipeline.first->rm_renderPassComponent.m_renderPass;
-			framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-			framebufferInfo.pAttachments = attachments.data();
-			framebufferInfo.width = swapChainExtent.width;
-			framebufferInfo.height = swapChainExtent.height;
-			framebufferInfo.layers = 1;
+	swapChainFramebuffers.resize(swapChainImageViews.size());
+	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+		std::vector<VkImageView> attachments = {
+			swapChainImageViews[i], depthComponent->m_depthImageView
+		};
 
-			if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &pipeline.first->frameBuffers[i]) != VK_SUCCESS) {
-				throw std::runtime_error("failed to create framebuffer!");
-			}
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPassComponent->m_renderPass;
+		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebufferInfo.pAttachments = attachments.data();
+		framebufferInfo.width = swapChainExtent.width;
+		framebufferInfo.height = swapChainExtent.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create framebuffer!");
 		}
 	}
 }
@@ -948,6 +936,7 @@ bool Renderer::isDeviceSuitable(VkPhysicalDevice device)
 
 	return queueFamilyIndices.isComplete() && extensionsSupported && swapChainAdequate  && supportedFeatures.samplerAnisotropy;
 }
+
 void Renderer::createSwapChainImageViews()
 {
 	swapChainImageViews.resize(swapChainImages.size());
@@ -995,8 +984,8 @@ void Renderer::bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vecto
 		VkDeviceSize offsets[1] = { 0 };
 
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = pipeline->rm_renderPassComponent.m_renderPass;
-		renderPassInfo.framebuffer = pipeline->frameBuffers[i];
+		renderPassInfo.renderPass = renderPassComponent->m_renderPass;
+		renderPassInfo.framebuffer = swapChainFramebuffers[i];
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChainExtent;
 

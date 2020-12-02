@@ -15,12 +15,15 @@ GameObjectManager& GameObjectManager::getSingleton()
 
 GameObjectManager::GameObjectManager() 
 {
-	printf("Game object manager constructed");
 }
 
 GameObjectManager::~GameObjectManager() 
 {
-	printf("game object manager deleted");
+	std::cout << "delete GameObjectManager" << std::endl;
+	for (auto gObject : m_gameObjects)
+	{
+		delete gObject;
+	}
 }
 
 void GameObjectManager::setCameraId(int id)
@@ -29,20 +32,31 @@ void GameObjectManager::setCameraId(int id)
 	m_currentCameraId = id;
 }
 
-int GameObjectManager::addGameObject(GameObject* gameObject)
+int GameObjectManager::addGameObject(std::string modelPath, std::string texturePath, glm::vec3 pos, PipelineTypes type)
 {
+	VkDescriptorSetLayout layout;
+	GraphicsPipeline* pipeline = PipelineManager::getSingleton().createOrGetPipeline(type, layout);
+	
+	GameObject* gameObject = new GameObject(modelPath, texturePath, pos, layout);
+	gameObject->setPosition(pos);
 	m_gameObjects.push_back(gameObject);
-	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), m_pipeline);
-	return static_cast<int>(m_gameObjects.size()-1);
-}
-
-int GameObjectManager::addGameObject(GameObject* gameObject, GraphicsPipeline* pipeline)
-{
-	m_gameObjects.push_back(gameObject);
+	
 	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), pipeline);
 	return static_cast<int>(m_gameObjects.size()-1);
 }
 
+int GameObjectManager::addGameObject(std::vector<Vertex> vertices, std::vector<uint32_t> indices, glm::vec3 pos, PipelineTypes type)
+{
+	VkDescriptorSetLayout layout;
+	GraphicsPipeline* pipeline = PipelineManager::getSingleton().createOrGetPipeline(type, layout);
+	
+	GameObject* gameObject = new GameObject(vertices, indices, pos, layout);
+	gameObject->setPosition(pos);
+	m_gameObjects.push_back(gameObject);
+	
+	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), pipeline);
+	return static_cast<int>(m_gameObjects.size()-1);
+}
 
 int GameObjectManager::addCamera(BaseCamera* camera)
 {
@@ -63,4 +77,11 @@ void GameObjectManager::updateViewMatricies()
 	{
 		object->getMeshPtr()->setViewMatrix(currentView);
 	}
+}
+
+void GameObjectManager::updateGameObjectPosition(int id, glm::vec3 pos)
+{
+	assert(id < m_gameObjects.size());
+	GameObject* g = getGameObjectPtrById(id);
+	g->setPosition(pos);
 }

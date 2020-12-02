@@ -3,7 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include "GameObject.h"
 
-GameObject::GameObject(std::string modelPath, std::string texturePath, glm::vec3 pos)
+GameObject::GameObject(std::string modelPath, std::string texturePath, glm::vec3 pos, VkDescriptorSetLayout layout)
 {
 	ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
 	Renderer& renderer = Renderer::getSingleton();
@@ -16,15 +16,24 @@ GameObject::GameObject(std::string modelPath, std::string texturePath, glm::vec3
 		renderer.getPhysicalDevice(),
 		renderer.getCommandPool(),
 		renderer.getGraphicsQueue(),
-		texturePath
+		texturePath,
+		layout
 	);
 	position = pos;
 }
 
-GameObject::GameObject(Mesh* mesh, glm::vec3 pos)
+GameObject::GameObject(std::vector<Vertex> vertices, std::vector<uint32_t> indices, glm::vec3 pos, VkDescriptorSetLayout layout)
 {
-	p_mesh = mesh;
+	Renderer& renderer = Renderer::getSingleton();
+
+	p_mesh = new PrimitiveMesh(vertices, indices, renderer.getCommandBuffers(), renderer.getLogicalDevice(), renderer.getSwapChainImages(), renderer.getSwapChainExtent(), renderer.getPhysicalDevice(), renderer.getCommandPool(), renderer.getGraphicsQueue(), layout);
 	position = pos;
+
+}
+
+GameObject::~GameObject()
+{
+	delete p_mesh;
 }
 
 void GameObject::setPosition(glm::vec3 newPosition)

@@ -15,5 +15,5 @@ private:
 
 	VkPipeline m_pipeline;
 	RenderPassComponent* m_renderPass;
-	DepthBufferComponent* m_depthBufferComponenet;
+	DepthBufferComponent* m_depthBufferComponent;
 };

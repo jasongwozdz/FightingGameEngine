@@ -74,7 +74,6 @@ public:
 	DepthBufferComponent* getDepthBufferComp();
 
 	void bindTexturedMeshToPipeline(Mesh* mesh, GraphicsPipeline*& pipeline);
-	void bindTexturedMeshToPipeline(std::vector<Mesh*> meshVec, GraphicsPipeline* pipeline);
 	void bindUI(UserInterfaceImp* UI);
 	void setDrawUi(bool val);
 	void prepareScene();
@@ -100,7 +99,6 @@ private:
 	void createCommandPool();
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	void createFramebuffers();
-
 	void createSurface();
 	void createLogicalDevice();
 	void createPhysicalDevice();
@@ -115,9 +113,10 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice device);
 	void createSwapChainImageViews();
 	void createSyncObjects();
-	void initScene();
 	void bindMeshesToCommandBuffers(GraphicsPipeline* pipeline, std::vector<Mesh*> meshes);
 	void initWindow();
+	void combineVertexData(std::vector<Mesh*> meshes);
+
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
@@ -153,6 +152,13 @@ private:
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
+	// owned* vectors are used to store components and pipelines that were creating in renderer.h so they can be cleanup by it later
+	std::vector<DepthBufferComponent*> ownedDepthBufferComponent; 
+
+	std::vector<RenderPassComponent*> ownedRenderPassComponent;
+
+	std::vector<GraphicsPipeline*> ownedGraphicsPipeline;
+
 	VkDebugUtilsMessengerEXT debugMessenger;
 
 	VkPhysicalDevice physicalDevice;
@@ -179,6 +185,10 @@ private:
 
 	std::vector<VkImage> swapChainImages;
 
+	VkBuffer vertexBuffer;
+
+	VkBuffer indexBuffer;
+
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
 	std::vector<VkFence> inFlightFences;
@@ -192,6 +202,8 @@ private:
 	bool framebufferResized = false;
 
 	bool drawUi = false;
+
+	VkDeviceSize bufferMemoryAlignment = 256;
 
 };
 

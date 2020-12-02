@@ -173,35 +173,17 @@ public:
 
 };
 
-DebugDrawManager::DebugDrawManager() 
+DebugDrawManager::DebugDrawManager()
 {
 	Renderer& renderer = Renderer::getSingleton();
 
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
-
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
-
-	if (vkCreateDescriptorSetLayout(renderer.getLogicalDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
-
-	pipeline = new GraphicsPipeline(renderer.getLogicalDevice(), renderer.getRenderPass(), descriptorSetLayout, renderer.getSwapChainExtent(), "shaders/vert.spv", "shaders/frag.spv", renderer.getDepthBufferComp(), false);
-};
+	PipelineManager& pipelineManager = PipelineManager::getSingleton();
+}
 
 DebugDrawManager::~DebugDrawManager()
 {
-
-};
+	std::cout << "ge" << std::endl;
+}
 
 void DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duration, float depthEnabled)
 {
@@ -209,27 +191,13 @@ void DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duration, 
 
 	ModelReturnVals	returnVals = ResourceManager::getSingleton().loadObjFile(sphereModelLoc);
 
-	Mesh* mesh = new PrimitiveMesh(returnVals.vertices, returnVals.indices, renderer.getCommandBuffers(), renderer.getLogicalDevice(), renderer.getSwapChainImages(), renderer.getSwapChainExtent(), renderer.getPhysicalDevice(), renderer.getCommandPool(), renderer.getGraphicsQueue());
-
-	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::translate(model, pos);
-
-	mesh->m_ubo.model = model;
-
-	GameObject* object = new GameObject(mesh, pos);
 	GameObjectManager& manager = GameObjectManager::getSingleton();
-	manager.addGameObject(object, pipeline);
+	manager.addGameObject(returnVals.vertices, returnVals.indices, pos, DEBUG_PIPELINE);
 }
 
 void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color, float lineWidth, float duration, bool depthEnabled)
 {
 	GameObjectManager& manager = GameObjectManager::getSingleton();
-	Renderer& renderer = Renderer::getSingleton();
-
-	if (linePipeline == nullptr)
-	{
-		linePipeline = new GraphicsPipeline(renderer.getLogicalDevice(), renderer.getRenderPass(), descriptorSetLayout, renderer.getSwapChainExtent(), "shaders/vert.spv", "shaders/frag.spv", renderer.getDepthBufferComp(), false, lineWidth);
-	}
 
 	glm::vec3 dirvec = toPos - fromPos;
 	float len = glm::length(dirvec);
@@ -241,25 +209,17 @@ void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 col
 	
 	std::vector<uint32_t> indices = { 0, 1 };
 
-	Mesh* mesh = new PrimitiveMesh(vertices, indices, renderer.getCommandBuffers(), renderer.getLogicalDevice(), renderer.getSwapChainImages(), renderer.getSwapChainExtent(), renderer.getPhysicalDevice(), renderer.getCommandPool(), renderer.getGraphicsQueue());
-
-	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::translate(model, fromPos);
-	mesh->m_ubo.model = model;
-
-	meshes.push_back(mesh);
-	GameObject* object = new GameObject(mesh, fromPos);
-	manager.addGameObject(object, linePipeline);
+	manager.addGameObject(vertices, indices, { 0,0,0 }, LINE_PIPELINE);
 }
 
 void DebugDrawManager::drawGrid(glm::vec3 color, bool depthEnabled)
 {
-	glm::vec3 x1 = { 50, 0, 0 };
-	glm::vec3 x2 = { -50, 0, 0 };
-	glm::vec3 y1 = { 0, 50, 0 };
-	glm::vec3 y2 = { 0, -50, 0 };
+	glm::vec3 x1 = { 25, 0, 0 };
+	glm::vec3 x2 = { -25, 0, 0 };
+	glm::vec3 y1 = { 0, 25, 0 };
+	glm::vec3 y2 = { 0, -25, 0 };
 
-	for (int i = 0; i < 51; ++i)
+	for (int i = 0; i < 26; ++i)
 	{
 		addLine(x1, x2, color, 1, 1, true);
 		addLine(y1, y2, color, 1, 1, true);
@@ -270,12 +230,12 @@ void DebugDrawManager::drawGrid(glm::vec3 color, bool depthEnabled)
 		y2.x++;
 	}
 	
-	x1 = { 50, 0, 0 };
-	x2 = { -50, 0, 0 };
-	y1 = { 0, 50, 0 };
-	y2 = { 0, -50, 0 };
+	x1 = { 25, 0, 0 };
+	x2 = { -25, 0, 0 };
+	y1 = { 0, 25, 0 };
+	y2 = { 0, -25, 0 };
 	
-	for (int i = 0; i < 51; ++i)
+	for (int i = 0; i < 26; ++i)
 	{
 		addLine(x1, x2, color, 1, 1, true);
 		addLine(y1, y2, color, 1, 1, true);

@@ -253,15 +253,14 @@ void TexturedMesh::updateUniformBuffer(uint32_t currentImage)
 	vkUnmapMemory(rm_logicalDevice, m_uniformBuffersMemory[currentImage]);
 }
 
-TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath):
-	Mesh(verticies, indicies, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue)
+TexturedMesh::TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath, VkDescriptorSetLayout layout):
+	Mesh(verticies, indicies, commandBuffers, logicalDevice, swapChainImages, swapChainExtent, physicalDevice, commandPool, graphicsQueue, layout)
 {
 	createTextureImages(texturePath);
 	createTextureImageViews();
 	createTextureSampler();
 
 	createUniformBuffers();
-	createDescriptorSetLayout();
 	createDescriptorSet();
 	createVertexBuffer();
 	createIndexBuffer();
@@ -290,6 +289,5 @@ TexturedMesh::~TexturedMesh()
 	}
 	//descriptor pool/set
 	vkDestroyDescriptorPool(rm_logicalDevice, m_descriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(rm_logicalDevice, m_descriptorSetLayout, nullptr);
 	std::cout << "deleteing TexturedMesh" << std::endl;
 }

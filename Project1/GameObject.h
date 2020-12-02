@@ -7,8 +7,9 @@
 class GameObject
 {
 public:
-	GameObject(std::string modelPath, std::string texturePate, glm::vec3 position);
-	GameObject(Mesh* mesh, glm::vec3 pos);
+	GameObject(std::string modelPath, std::string texturePate, glm::vec3 position, VkDescriptorSetLayout layout);
+	GameObject(std::vector<Vertex> vertices, std::vector<uint32_t> indices, glm::vec3 pos, VkDescriptorSetLayout layout);
+	~GameObject();
 	void setPosition(glm::vec3 newPosition);
 	Mesh* getMeshPtr();
 private:

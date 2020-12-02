@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 
-Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue) :
+Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout) :
 	m_vertices(verticies),
 	m_indicies(indicies),
 	rm_commandBuffers(commandBuffers),
@@ -11,10 +11,11 @@ Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::v
 	rm_swapChainExtent(swapChainExtent),
 	rm_physicalDevice(physicalDevice),
 	rm_commandPool(commandPool),
-	rm_graphicsQueue(graphicsQueue)
+	rm_graphicsQueue(graphicsQueue),
+	m_descriptorSetLayout(layout)
 {};
 
-Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue) :
+Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout) :
 	m_texturedVertices(verticies),
 	m_indicies(indicies),
 	rm_commandBuffers(commandBuffers),
@@ -23,7 +24,8 @@ Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies
 	rm_swapChainExtent(swapChainExtent),
 	rm_physicalDevice(physicalDevice),
 	rm_commandPool(commandPool),
-	rm_graphicsQueue(graphicsQueue)
+	rm_graphicsQueue(graphicsQueue),
+	m_descriptorSetLayout(layout)
 {};
 
 Mesh::~Mesh() {};

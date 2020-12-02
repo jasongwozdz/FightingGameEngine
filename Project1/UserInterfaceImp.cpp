@@ -21,10 +21,6 @@ UserInterfaceImp::UserInterfaceImp(GLFWwindow* window)
     init_info.ImageCount = renderer.getSwapChainImages().size();
 	init_info.CheckVkResultFn = VK_NULL_HANDLE;
 
-	m_depthBufferComponenet = new DepthBufferComponent(renderer.getLogicalDevice(), renderer.getPhysicalDevice(), renderer.getCommandPool(), VK_FORMAT_D32_SFLOAT);
-
-	m_renderPass = new RenderPassComponent(renderer.getLogicalDevice());
-
     ImGui_ImplVulkan_Init(&init_info, renderer.getRenderPass().m_renderPass);
 
 	{
@@ -52,8 +48,7 @@ UserInterfaceImp::UserInterfaceImp(GLFWwindow* window)
 
 UserInterfaceImp::~UserInterfaceImp()
 {
-	m_renderPass->~RenderPassComponent();
-	delete m_renderPass;
+	ImGui_ImplVulkan_Shutdown();
 }
 
 void UserInterfaceImp::prepareFrame()

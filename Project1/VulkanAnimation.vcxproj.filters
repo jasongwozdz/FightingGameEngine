@@ -80,7 +80,7 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CommandConsole.cpp">
+    <ClCompile Include="PipelineManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -166,7 +166,7 @@
     <ClInclude Include="DebugDrawManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CommandConsole.h">
+    <ClInclude Include="PipelineManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

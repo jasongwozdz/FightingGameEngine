@@ -8,7 +8,7 @@ class TexturedMesh :
 	public Mesh
 {
 public:
-	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath);
+	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath, VkDescriptorSetLayout layout);
 
 	~TexturedMesh();
 

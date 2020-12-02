@@ -22,9 +22,9 @@ public:
 		alignas(16) glm::mat4 proj;
 	}m_ubo;
 
-	Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
+	Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout);
 
-	Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue);
+	Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout);
 
 	virtual ~Mesh();
 
@@ -41,6 +41,8 @@ public:
 	std::vector<VkDescriptorSet> m_descriptorSets;
 
 	VkDescriptorSetLayout m_descriptorSetLayout;
+
+	std::vector<Vertex> m_vertices;
 
 	std::vector<uint32_t> m_indicies;
 
@@ -71,8 +73,7 @@ protected:
 
 	int m_indexCount;
 	
-	std::vector<Vertex> m_vertices;
-
+	
 	std::vector<TexturedVertex> m_texturedVertices;
 
 	VkDeviceMemory m_vertexBufferMemory;

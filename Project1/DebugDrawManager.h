@@ -20,5 +20,4 @@ private:
 	std::vector<Mesh*> meshes;
 	GraphicsPipeline* pipeline;
 	GraphicsPipeline* linePipeline = nullptr;
-	VkDescriptorSetLayout descriptorSetLayout; 
 };

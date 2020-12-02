@@ -13,6 +13,7 @@ ResourceManager* resourceManager;
 Renderer* renderer;
 GameObjectManager* gObjectManager;
 DebugDrawManager* debugDrawManager;
+PipelineManager* pipelineManager;
 BaseCamera* camera;
 UserInterfaceImp* ui;
 bool drawUi = false;
@@ -165,9 +166,11 @@ void initScene()
 	std::string modelPath = "./Models/viking_room.obj";
 	std::string texturePath = "./Textures/viking_room.png";
 	glm::vec3 pos = { 0, 0, 0 };
-	gameObjectIds.push_back(gObjectManager->addGameObject(new GameObject(modelPath, texturePath, pos)));
+	
+	gameObjectIds.push_back(gObjectManager->addGameObject(modelPath, texturePath, pos,BASIC_PIPELINE));
 	camera = new BaseCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
 	debugDrawManager->drawGrid( { 255, 255, 255 }, 1 );
+	debugDrawManager->addPoint({ 0,0,0 }, { 255, 0, 0 }, 1, true);
 	gObjectManager->addCamera(camera);
 	gObjectManager->updateViewMatricies();
 }
@@ -181,6 +184,7 @@ void initUi()
 
 void initSingletons() 
 {
+	pipelineManager = new PipelineManager();
 	resourceManager = new ResourceManager();
 	renderer = new Renderer();
 	gObjectManager = new GameObjectManager();
@@ -207,6 +211,17 @@ void handleCameraMovement(uint64_t time)
 	{
 		camera->strafeRight(time);
 	}
+}
+
+void cleanup()
+{
+	delete pipelineManager;
+	delete resourceManager;
+	delete gObjectManager;
+	delete debugDrawManager;
+	delete camera;
+	delete ui;
+	delete renderer;
 }
 
 int main()
@@ -260,4 +275,6 @@ int main()
 		deltaTime = endTime - start;
 	}
 	vkDeviceWaitIdle(renderer->getLogicalDevice());
+
+	cleanup();
 }
