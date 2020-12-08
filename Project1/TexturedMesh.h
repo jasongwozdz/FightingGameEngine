@@ -10,6 +10,8 @@ class TexturedMesh :
 public:
 	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& m_logicalDevice, std::vector<VkImage>& m_swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath, VkDescriptorSetLayout layout);
 
+	TexturedMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, std::string& texturePath, VkDescriptorSetLayout layout, bool animated);
+
 	~TexturedMesh();
 
 private:
@@ -31,9 +33,6 @@ private:
 	*****************
 	*/
 	//required methods
-	virtual void createDescriptorSetLayout();
-
-	virtual void createDescriptorPool();
 
 	virtual void createDescriptorSet();
 

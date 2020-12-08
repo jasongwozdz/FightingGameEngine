@@ -1,17 +1,19 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "ResourceManager.h"
 #include "BufferOperations.h"
-#include "Vertex.h"
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <glm/gtx/hash.hpp>
+#include <array>
+#include <glm/gtc/type_ptr.hpp>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#define MAX_BONES 64
 
 /*
 should write a load texture file that loads in textures pixel data given a path to it.
@@ -19,6 +21,20 @@ should write a load texture file that loads in textures pixel data given a path 
 Should also handle referential integrity between game objects
 
 */
+
+glm::mat4 ResourceManager::aiMatToGlmMat(aiMatrix4x4& a)
+{
+	glm::mat4 mat;
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
+			mat[i][j] = a[j][i];
+		}
+	}
+	return mat;
+}
+
 
 template<> ResourceManager* Singleton<ResourceManager>::msSingleton = 0;
 
@@ -102,6 +118,116 @@ ModelReturnVals& ResourceManager::loadObjFile(std::string& filePath) {
 	return *vals;
 }
 
+AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
+{
+	auto find = m_resourceRegistry.find(filePath);
+	AnimationReturnVals* vals;
+	if (find == m_resourceRegistry.end())
+	{
+		std::map<std::string, uint32_t> boneMapping;
+		std::vector<BoneInfo> boneInfo;
+		std::vector<VertexBoneInfo> vertexBoneInfo;
+
+		const aiScene* scene = importer.ReadFile(filePath
+			.c_str(), 0);
+
+		uint32_t vertexCount(0);		
+		for (uint32_t m = 0; m < scene->mNumMeshes; m++) {
+			vertexCount += scene->mMeshes[m]->mNumVertices;
+		};
+		vertexBoneInfo.resize(vertexCount);
+		int numBones(0);
+
+		int vertexOffset(0);
+		for (uint32_t i = 0; i < scene->mNumMeshes; ++i)
+		{
+			aiMesh* pAiMesh = scene->mMeshes[i];
+			for (uint32_t j = 0; j < pAiMesh->mNumBones; ++j)
+			{
+				aiBone* currBone = pAiMesh->mBones[j];
+				uint32_t index = 0;
+				assert(pAiMesh->mNumBones <= MAX_BONES);
+				std::string name(currBone->mName.data);
+				 
+				if (boneMapping.find(name) == boneMapping.end())
+				{
+					index = numBones;
+					numBones++;
+					boneMapping[name] = index;
+					BoneInfo bone;
+					boneInfo.push_back(bone);
+					//boneInfo[index].offset = aiMatToGlmMat(currBone->mOffsetMatrix);
+					boneInfo[index].offset = (currBone->mOffsetMatrix);
+				}
+				else
+				{
+					index = boneMapping[name];
+				}
+
+				const uint32_t numWeights = currBone->mNumWeights;
+				//add boneIDs/weights for each vertex 
+				for (uint32_t k = 0; k < numWeights; ++k)
+				{
+					uint32_t vertexIdx = currBone->mWeights[k].mVertexId + vertexOffset;
+					vertexBoneInfo[vertexIdx].add(index, currBone->mWeights[k].mWeight);//bone index, bone weight
+				}
+			}
+			vertexOffset += pAiMesh->mNumVertices;
+		}
+
+		//generate Vertex and index vectors
+		std::vector<Vertex> vertices;
+		std::vector<uint32_t> indices;
+
+		int vertexBase(0);
+		for (int i = 0; i < scene->mNumMeshes; ++i)
+		{
+			aiMesh* pAiMesh = scene->mMeshes[i];
+			for (uint32_t j = 0; j < pAiMesh->mNumVertices; ++j)
+			{
+				Vertex vertex{};
+				vertex.pos = glm::make_vec3(&pAiMesh->mVertices[j].x);
+				vertex.normal = glm::make_vec3(&pAiMesh->mNormals[j].x);
+				vertex.texCoord = glm::make_vec2(&pAiMesh->mTextureCoords[0][j].x);
+				vertex.color = { 255, 0, 0 };
+				
+				for (uint32_t k = 0; k < MAX_BONES_PER_VERTEX; ++k)
+				{
+					vertex.boneIds[k] = vertexBoneInfo[vertexBase + j].ids[k];
+					vertex.boneWeights[k] = vertexBoneInfo[vertexBase + j].weights[k];
+				}
+
+				vertices.push_back(vertex);
+			}
+
+			vertexBase += pAiMesh->mNumVertices;
+
+			uint32_t indexBase = static_cast<uint32_t>(indices.size());
+			for (uint32_t j = 0; j < pAiMesh->mNumFaces; ++j)
+			{
+				for (uint32_t f = 0; f < 3; ++f)
+				{
+					indices.push_back(pAiMesh->mFaces[j].mIndices[f] + indexBase);
+				}
+			}
+		}
+
+		vals = new AnimationReturnVals();
+		vals->boneMapping = boneMapping;
+		vals->boneInfo = boneInfo;
+		vals->vertices = vertices;
+		vals->indices = indices;
+		vals->scene = scene;
+		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
+	}
+	else
+	{
+		vals = reinterpret_cast<AnimationReturnVals*>(m_resourceRegistry[filePath]);
+	}
+	
+	return *vals;
+}
+
 TextureReturnVals& ResourceManager::loadTextureFile(std::string& filePath)
 {
 	TextureReturnVals* returnVals;
@@ -122,6 +248,7 @@ TextureReturnVals& ResourceManager::loadTextureFile(std::string& filePath)
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(returnVals);
 	}
 	else
+#include "Vertex.h"
 	{
 		returnVals = reinterpret_cast<TextureReturnVals*>(find->second);
 	}

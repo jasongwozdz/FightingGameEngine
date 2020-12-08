@@ -15,19 +15,6 @@ Mesh::Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::v
 	m_descriptorSetLayout(layout)
 {};
 
-Mesh::Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout) :
-	m_texturedVertices(verticies),
-	m_indicies(indicies),
-	rm_commandBuffers(commandBuffers),
-	rm_logicalDevice(logicalDevice),
-	rm_swapChainImages(swapChainImages),
-	rm_swapChainExtent(swapChainExtent),
-	rm_physicalDevice(physicalDevice),
-	rm_commandPool(commandPool),
-	rm_graphicsQueue(graphicsQueue),
-	m_descriptorSetLayout(layout)
-{};
-
 Mesh::~Mesh() {};
 
 void Mesh::setWorldMatrix(glm::mat4 modelToWorld)

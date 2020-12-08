@@ -89,12 +89,17 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -125,15 +130,21 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -170,7 +181,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -178,22 +189,38 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimatedGameObject.cpp" />
+    <ClCompile Include="AnimatedMesh.cpp" />
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="Animator.cpp" />
     <ClCompile Include="BaseCamera.cpp" />
     <ClCompile Include="BufferOperations.cpp" />
     <ClCompile Include="DebugDrawManager.cpp" />
@@ -219,6 +246,10 @@
     <ClCompile Include="VulkanImage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedGameObject.h" />
+    <ClInclude Include="AnimatedMesh.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="Animator.h" />
     <ClInclude Include="BaseCamera.h" />
     <ClInclude Include="BufferOperations.h" />
     <ClInclude Include="DebugDrawManager.h" />
@@ -247,6 +278,16 @@
     <ClInclude Include="TexturedMesh.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanErrorCheck.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\animatedMesh.frag" />
+    <None Include="shaders\animatedMesh.vert" />
+    <None Include="shaders\imgui.frag" />
+    <None Include="shaders\imgui.vert" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\texturedMeshShader.frag" />
+    <None Include="shaders\texturedMeshShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

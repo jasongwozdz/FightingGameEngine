@@ -123,6 +123,37 @@ GraphicsPipeline* PipelineManager::createOrGetPipeline(PipelineTypes type, VkDes
 
 		break;
 	}
+	case PipelineTypes::ANIMATION_PIPELINE:
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		if (vkCreateDescriptorSetLayout(renderer.getLogicalDevice(), &layoutInfo, nullptr, &descriptorLayouts[ANIMATION_PIPELINE]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create descriptor set layout!");
+		}
+
+		graphicsPipelines[ANIMATION_PIPELINE] = new GraphicsPipeline(renderer.getLogicalDevice(), renderer.getRenderPass(), descriptorLayouts[ANIMATION_PIPELINE], renderer.getSwapChainExtent(), "shaders/animatedMesh.vert.spv", "shaders/animatedMesh.frag.spv", renderer.getDepthBufferComp(), false);
+
+		pipelinesToDelete.push_back(ANIMATION_PIPELINE);
+		break;
+	}
 	default:
 		std::cerr << "ERROR : Undefined Pipeline type.  Pipeline not created" << std::endl;
 		return nullptr;

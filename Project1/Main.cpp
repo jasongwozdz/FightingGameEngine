@@ -28,14 +28,17 @@ std::vector<int> gameObjectIds;
 
 std::map<int, int> keyBinds;
 
+AnimatedGameObject* goblin;
+
 enum KEY_FUNCTIONS
 {
-	MOVE_FORWARD	= 0,
-	MOVE_BACKWARD	= 1,
-	STRAFE_LEFT		= 2,
-	STRAFE_RIGHT	= 3,
-	OPEN_UI			= 4,
-	DRAW_GRID		= 5
+	MOVE_FORWARD	= 1,
+	MOVE_BACKWARD	= 2,
+	STRAFE_LEFT		= 3,
+	STRAFE_RIGHT	= 4,
+	OPEN_UI			= 5,
+	DRAW_GRID		= 6,
+	STOP_ANIMATION  = 7
 };
 
  void mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -53,13 +56,7 @@ enum KEY_FUNCTIONS
 	 {
 	 case OPEN_UI:
 		 keyFunc = OPEN_UI;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 drawUi = !drawUi;
-			 renderer->setDrawUi(drawUi);
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			 drawUi = !drawUi;
 			 renderer->setDrawUi(drawUi);
@@ -73,11 +70,7 @@ enum KEY_FUNCTIONS
 
 	 case MOVE_FORWARD:
 		 keyFunc = MOVE_FORWARD;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			keysHeld[keyFunc] = true;
 		 }
@@ -89,11 +82,7 @@ enum KEY_FUNCTIONS
 
 	 case MOVE_BACKWARD:
 		 keyFunc = MOVE_BACKWARD;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			 keysHeld[keyFunc] = true;
 		 }
@@ -105,11 +94,7 @@ enum KEY_FUNCTIONS
 
 	 case STRAFE_LEFT:
 		 keyFunc = STRAFE_LEFT;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			 keysHeld[keyFunc] = true;
 		 }
@@ -121,11 +106,7 @@ enum KEY_FUNCTIONS
 
 	 case STRAFE_RIGHT:
 		 keyFunc = STRAFE_RIGHT;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			 keysHeld[keyFunc] = true;
 		 }
@@ -136,11 +117,7 @@ enum KEY_FUNCTIONS
 		 break;
 	 case DRAW_GRID:
 		 keyFunc = STRAFE_RIGHT;
-		 if (keysHeld.find(keyFunc) == keysHeld.end())
-		 {
-			 keysHeld[keyFunc] = true;
-		 }
-		 else if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
 		 {
 			 keysHeld[keyFunc] = true;
 		 }
@@ -149,25 +126,54 @@ enum KEY_FUNCTIONS
 			 keysHeld[keyFunc] = false;
 		 }
 		 break;
+	 case STOP_ANIMATION:
+		 keyFunc = STOP_ANIMATION;
+		 if (glfwGetKey(window, key) == GLFW_PRESS  && !keysHeld[keyFunc])
+		 {
+			 keysHeld[keyFunc] = true;
+			 goblin->setAnimation(0);
+		 }
+		 else if (glfwGetKey(window, key) == GLFW_RELEASE)
+		 {
+			 goblin->setAnimation(-1);
+			 keysHeld[keyFunc] = false;
+		 }
+		 break;
 	 }
  }
 
  void setUpKeybinds() {
-	 keyBinds[GLFW_KEY_W]		= KEY_FUNCTIONS::MOVE_FORWARD;
-	 keyBinds[GLFW_KEY_S]		= KEY_FUNCTIONS::MOVE_BACKWARD;
-	 keyBinds[GLFW_KEY_A]		= KEY_FUNCTIONS::STRAFE_LEFT;
-	 keyBinds[GLFW_KEY_D]		= KEY_FUNCTIONS::STRAFE_RIGHT;
-	 keyBinds[GLFW_KEY_ESCAPE]	= KEY_FUNCTIONS::OPEN_UI;
-	 keyBinds[GLFW_KEY_G]		= KEY_FUNCTIONS::DRAW_GRID;
+	keyBinds[GLFW_KEY_W]		= KEY_FUNCTIONS::MOVE_FORWARD;
+	keyBinds[GLFW_KEY_S]		= KEY_FUNCTIONS::MOVE_BACKWARD;
+	keyBinds[GLFW_KEY_A]		= KEY_FUNCTIONS::STRAFE_LEFT;
+	keyBinds[GLFW_KEY_D]		= KEY_FUNCTIONS::STRAFE_RIGHT;
+	keyBinds[GLFW_KEY_ESCAPE]	= KEY_FUNCTIONS::OPEN_UI;
+	keyBinds[GLFW_KEY_G]		= KEY_FUNCTIONS::DRAW_GRID;
+	keyBinds[GLFW_KEY_K]		= KEY_FUNCTIONS::STOP_ANIMATION;
+	keysHeld[MOVE_FORWARD]		= false;
+	keysHeld[MOVE_BACKWARD]		= false;
+	keysHeld[STRAFE_LEFT]		= false;
+	keysHeld[STRAFE_RIGHT]		= false;
+	keysHeld[OPEN_UI]			= false;
+	keysHeld[DRAW_GRID]			= false;
+	keysHeld[STOP_ANIMATION]	= false;
  }
 
 void initScene() 
 {
+	std::string animationModelPath("./Models/goblin.dae");
+	int goblinId = gObjectManager->addAnimatedGameObject(animationModelPath, "./Textures/viking_room.png", {0,0,0}, ANIMATION_PIPELINE);
+
+	goblin = reinterpret_cast<AnimatedGameObject*>(gObjectManager->getGameObjectPtrById(goblinId));
+	goblin->setAnimation(-1);
+	gObjectManager->getGameObjectPtrById(goblinId)->setScale({0.005, 0.005, 0.005});
+
 	std::string modelPath = "./Models/viking_room.obj";
 	std::string texturePath = "./Textures/viking_room.png";
 	glm::vec3 pos = { 0, 0, 0 };
+	int houseId = (gObjectManager->addGameObject(modelPath, texturePath, pos,BASIC_PIPELINE));
 	
-	gameObjectIds.push_back(gObjectManager->addGameObject(modelPath, texturePath, pos,BASIC_PIPELINE));
+
 	camera = new BaseCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
 	debugDrawManager->drawGrid( { 255, 255, 255 }, 1 );
 	debugDrawManager->addPoint({ 0,0,0 }, { 255, 0, 0 }, 1, true);
@@ -234,6 +240,7 @@ int main()
 	while (!glfwWindowShouldClose(renderer->getWindow())) {
 		uint64_t start = endTime;
 		gObjectManager->updateViewMatricies();
+		gObjectManager->upateAnimatedObjects(deltaTime);
 		glfwPollEvents();
 		if (ui != nullptr && drawUi)
 		{

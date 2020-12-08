@@ -97,8 +97,6 @@ PrimitiveMesh::~PrimitiveMesh() {
 		vkDestroyBuffer(rm_logicalDevice, m_uniformBuffers[i], nullptr);
 		vkFreeMemory(rm_logicalDevice, m_uniformBuffersMemory[i], nullptr);
 	}
-	//descriptor pool/set
-	std::cout << "deleteing PrimitiveMesh" << std::endl;
 }
 
 void PrimitiveMesh::updateUniformBuffer(uint32_t currentImage) {

@@ -58,6 +58,26 @@ int GameObjectManager::addGameObject(std::vector<Vertex> vertices, std::vector<u
 	return static_cast<int>(m_gameObjects.size()-1);
 }
 
+int GameObjectManager::addAnimatedGameObject(std::string modelPath, std::string texturePath, glm::vec3 pos, PipelineTypes type)
+{
+	VkDescriptorSetLayout layout;
+	GraphicsPipeline* pipeline = PipelineManager::getSingleton().createOrGetPipeline(type, layout);
+
+	AnimationReturnVals vals = ResourceManager::getSingleton().loadAnimationFile(modelPath);
+	
+	AnimatedGameObject* gameObject = new AnimatedGameObject(vals.vertices, vals.indices, pos, layout, 0, vals.scene, vals.boneMapping, vals.boneInfo);
+	gameObject->setPosition(pos);
+	m_gameObjects.push_back(gameObject);
+	int id = static_cast<int>(m_gameObjects.size() - 1);
+	
+	Animator* animator = new Animator(*gameObject);
+
+	m_animators[id] = animator;
+
+	Renderer::getSingleton().bindTexturedMeshToPipeline(gameObject->getMeshPtr(), pipeline);
+	return id;
+}
+
 int GameObjectManager::addCamera(BaseCamera* camera)
 {
 	m_cameras.push_back(camera);
@@ -76,6 +96,14 @@ void GameObjectManager::updateViewMatricies()
 	for (GameObject* object : m_gameObjects)
 	{
 		object->getMeshPtr()->setViewMatrix(currentView);
+	}
+}
+
+void GameObjectManager::upateAnimatedObjects(float deltaTime)
+{
+	for (auto anim : m_animators)
+	{
+		anim.second->update(deltaTime);
 	}
 }
 

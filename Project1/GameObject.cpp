@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include "GameObject.h"
 
+GameObject::GameObject(){};
+
 GameObject::GameObject(std::string modelPath, std::string texturePath, glm::vec3 pos, VkDescriptorSetLayout layout)
 {
 	ModelReturnVals vals = ResourceManager::getSingleton().loadObjFile(modelPath);
@@ -40,6 +42,14 @@ void GameObject::setPosition(glm::vec3 newPosition)
 {
 	position = newPosition;
 	p_mesh->m_ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, position.z));
+	p_mesh->m_ubo.model = glm::scale(p_mesh->m_ubo.model, scale);
+}
+
+void GameObject::setScale(glm::vec3 newScale)
+{
+	scale = newScale;
+	p_mesh->m_ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, position.z));
+	p_mesh->m_ubo.model = glm::scale(p_mesh->m_ubo.model, scale);
 }
 
 Mesh* GameObject::getMeshPtr()

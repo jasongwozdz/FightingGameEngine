@@ -13,18 +13,21 @@ class mesh_NormalComp;
 class mesh_TextureComp;
 class mesh_ShaderComp;
 
+struct UBO{
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
+
+	UBO() {model = glm::mat4(1.0f);  view = glm::lookAt(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); };
+
+	UBO(glm::mat4 m, glm::mat4 v, glm::mat4 p) : model(m), view(v), proj(p) {};
+};
+
 class Mesh
 {
 public:
-	struct {
-		alignas(16) glm::mat4 model = glm::mat4(1.0f);
-		alignas(16) glm::mat4 view = glm::lookAt(glm::vec3(1.0f, 3.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		alignas(16) glm::mat4 proj;
-	}m_ubo;
-
+	UBO m_ubo;
 	Mesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout);
-
-	Mesh(std::vector<TexturedVertex> verticies, std::vector<uint32_t> indicies, std::vector<VkCommandBuffer>& commandBuffers, VkDevice& logicalDevice, std::vector<VkImage>& swapChainImages, VkExtent2D& swapChainExtent, VkPhysicalDevice& physicalDevice, VkCommandPool& commandPool, VkQueue& graphicsQueue, VkDescriptorSetLayout layout);
 
 	virtual ~Mesh();
 
@@ -72,9 +75,6 @@ protected:
 	int m_uniformBufferSize;
 
 	int m_indexCount;
-	
-	
-	std::vector<TexturedVertex> m_texturedVertices;
 
 	VkDeviceMemory m_vertexBufferMemory;
 

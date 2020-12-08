@@ -10,7 +10,8 @@ enum PipelineTypes
 	BASIC_PIPELINE,
 	LINE_PIPELINE,
 	DEBUG_PIPELINE,
-	NUM_PIPELINE_TYPES = 3
+	ANIMATION_PIPELINE,
+	NUM_PIPELINE_TYPES = 4
 };
 
 class PipelineManager : Singleton<PipelineManager>
