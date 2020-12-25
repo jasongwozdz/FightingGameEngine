@@ -2,11 +2,28 @@
 #include <array>
 #include <ctime>
 #include <GLFW/glfw3.h>
-#include "Renderer.h"
-#include "ResourceManager.h"
-#include "GameObject.h"
-#include "GameObjectManager.h"
-#include "DebugDrawManager.h"
+#include <functional>
+#include <crtdbg.h>
+#include "Engine/Renderer/Renderer.h"
+#include "Engine/ResourceManager.h"
+#include "Engine/GameObject.h"
+#include "Engine/GameObjectManager.h"
+#include "Engine/DebugDrawManager.h"
+#include "Engine/EngineSettings.h"
+#include "Engine/Window.h"
+
+#define MEMORY_LEAK_STATS_START _CrtMemState sOld; _CrtMemState sNew; _CrtMemState sDiff; _CrtMemCheckpoint(&sOld); //take a snapshot
+#define MEMORY_LEAK_STATS_END \
+	if (_CrtMemDifference(&sDiff, &sOld, &sNew)) \
+    { \
+        std::cerr<<"-----------_CrtMemDumpStatistics ---------/n";\
+        _CrtMemDumpStatistics(&sDiff);\
+        std::cerr<<"-----------_CrtMemDumpAllObjectsSince ---------/n";\
+        _CrtMemDumpAllObjectsSince(&sOld);\
+        std::cerr<<"-----------_CrtDumpMemoryLeaks ---------/n";\
+        _CrtDumpMemoryLeaks();\
+    }
+
 
 // Singletons
 ResourceManager* resourceManager;
@@ -14,13 +31,17 @@ Renderer* renderer;
 GameObjectManager* gObjectManager;
 DebugDrawManager* debugDrawManager;
 PipelineManager* pipelineManager;
+EngineSettings* engineSettings;
+
+Window* window;
+
 BaseCamera* camera;
-UserInterfaceImp* ui;
+UserInterface* ui;
 bool drawUi = false;
 std::map<int, bool> keysHeld;
 
-uint64_t endTime = 0;
-uint64_t deltaTime = 0;
+float endTime = 0;
+float deltaTime = 0;
 
 double lastMousePos[2] = { 0,0 };
 
@@ -41,13 +62,13 @@ enum KEY_FUNCTIONS
 	STOP_ANIMATION  = 7
 };
 
- void mouseCallback(GLFWwindow* window, double xpos, double ypos)
- {
-	 if (!drawUi)
-	 {
-		 camera->updateMouse({ xpos, ypos });
-	 }
- }
+void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	if (!drawUi)
+	{
+		camera->updateMouse({ xpos, ypos });
+	}
+}
 
  void keyboardCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
  {
@@ -161,12 +182,12 @@ enum KEY_FUNCTIONS
 
 void initScene() 
 {
-	std::string animationModelPath("./Models/goblin.dae");
-	int goblinId = gObjectManager->addAnimatedGameObject(animationModelPath, "./Textures/viking_room.png", {0,0,0}, ANIMATION_PIPELINE);
+	//std::string animationModelPath("./Models/goblin.dae");
+	//int goblinId = gObjectManager->addAnimatedGameObject(animationModelPath, "./Textures/viking_room.png", {0,0,0}, ANIMATION_PIPELINE);
 
-	goblin = reinterpret_cast<AnimatedGameObject*>(gObjectManager->getGameObjectPtrById(goblinId));
-	goblin->setAnimation(-1);
-	gObjectManager->getGameObjectPtrById(goblinId)->setScale({0.005, 0.005, 0.005});
+	//AnimatedGameObject* goblin  = dynamic_cast<AnimatedGameObject*>(gObjectManager->getGameObjectPtrById(goblinId));
+	//goblin->setAnimation(-1);
+	//gObjectManager->getGameObjectPtrById(goblinId)->setScale({0.005, 0.005, 0.005});
 
 	std::string modelPath = "./Models/viking_room.obj";
 	std::string texturePath = "./Textures/viking_room.png";
@@ -176,30 +197,41 @@ void initScene()
 
 	camera = new BaseCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
 	debugDrawManager->drawGrid( { 255, 255, 255 }, 1 );
-	debugDrawManager->addPoint({ 0,0,0 }, { 255, 0, 0 }, 1, true);
+	//debugDrawManager->addPoint({ 0,0,0 }, { 255, 0, 0 }, 1, true);
 	gObjectManager->addCamera(camera);
 	gObjectManager->updateViewMatricies();
 }
 
 void initUi()
 {
-	ui = new UserInterfaceImp(renderer->getWindow());
+	ui = new UserInterface(window->getGLFWWindow());
 	renderer->bindUI(ui);
 	renderer->setDrawUi(drawUi);
 }
 
-void initSingletons() 
+void onEvent(Events::Event& e)
 {
-	pipelineManager = new PipelineManager();
-	resourceManager = new ResourceManager();
-	renderer = new Renderer();
-	gObjectManager = new GameObjectManager();
-	debugDrawManager = new DebugDrawManager();
-	renderer->setMousePosCallback(mouseCallback);
-	renderer->setKeyboardCallback(keyboardCallback);
+	std::cout << e.getEventType() << std::endl;
 }
 
-void handleCameraMovement(uint64_t time)
+void initSingletons() 
+{
+	gObjectManager = new GameObjectManager();
+	resourceManager = new ResourceManager();
+	engineSettings = new EngineSettings();
+	engineSettings->init();
+	pipelineManager = new PipelineManager();
+	window = new Window();
+	renderer = new Renderer();
+	debugDrawManager = new DebugDrawManager();
+
+	window->setEventCallback(onEvent);
+	pipelineManager->init();
+	renderer->init(window);
+	debugDrawManager->init();
+}
+
+void handleCameraMovement(float time)
 {
 	if (keysHeld[MOVE_FORWARD])
 	{
@@ -221,67 +253,77 @@ void handleCameraMovement(uint64_t time)
 
 void cleanup()
 {
-	delete pipelineManager;
-	delete resourceManager;
 	delete gObjectManager;
-	delete debugDrawManager;
-	delete camera;
+	delete engineSettings;
+	delete pipelineManager;
+	delete window;
 	delete ui;
 	delete renderer;
+	delete debugDrawManager;
+	delete camera;
+	delete resourceManager;
 }
 
-int main()
-{
-	initSingletons();
-	initScene();
-	Renderer::getSingleton().prepareScene();
-	initUi();
-	setUpKeybinds();
-	while (!glfwWindowShouldClose(renderer->getWindow())) {
-		uint64_t start = endTime;
-		gObjectManager->updateViewMatricies();
-		gObjectManager->upateAnimatedObjects(deltaTime);
-		glfwPollEvents();
-		if (ui != nullptr && drawUi)
-		{
-			ImGui_ImplVulkan_NewFrame();
-			ImGui_ImplGlfw_NewFrame();
-			ImGui::NewFrame();	
-			ImGui::ShowDemoWindow();
-			bool show_demo_window = true;
-			bool show_another_window = false;
-			ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-			{
-				static float f = 0.0f;
-				static int counter = 0;
+//int main()
+//{
+//	initSingletons();
+//	initScene();
+//	//Renderer::getSingleton().prepareScene();
+//	initUi();
+//	setUpKeybinds();
+//	while (!glfwWindowShouldClose(window->getGLFWWindow())) {
+//		float start = endTime;
+//		window->onUpdate();
+//		gObjectManager->update(deltaTime);
+//		if (ui != nullptr && drawUi)
+//		{
+//			ImGui_ImplVulkan_NewFrame();
+//			ImGui_ImplGlfw_NewFrame();
+//			ImGui::NewFrame();	
+//			ImGui::ShowDemoWindow();
+//			bool show_demo_window = true;
+//			bool show_another_window = false;
+//			ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+//			{
+//				static float f = 0.0f;
+//				static int counter = 0;
+//
+//				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+//
+//				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+//				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+//				ImGui::Checkbox("Another Window", &show_another_window);
+//
+//				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+//				ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+//
+//				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+//					counter++;
+//				ImGui::SameLine();
+//				ImGui::Text("counter = %d", counter);
+//
+//				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+//				ImGui::End();
+//			}
+//		}
+//		else
+//		{
+//			handleCameraMovement(deltaTime);
+//		}
+//		renderer->drawFrame();
+//		endTime = std::clock();
+//		deltaTime = endTime - start;
+//	}
+//	
+//	vkDeviceWaitIdle(renderer->getLogicalDevice());
+//
+//	cleanup();
+//	_CrtDumpMemoryLeaks();
+//	return 0;
+//}
 
-				ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-				ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-				ImGui::Checkbox("Another Window", &show_another_window);
-
-				ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-				ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-				if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-					counter++;
-				ImGui::SameLine();
-				ImGui::Text("counter = %d", counter);
-
-				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-				ImGui::End();
-			}
-		}
-		else
-		{
-			handleCameraMovement(deltaTime);
-		}
-		renderer->drawFrame();
-		endTime = std::clock();
-		deltaTime = endTime - start;
-	}
-	vkDeviceWaitIdle(renderer->getLogicalDevice());
-
-	cleanup();
-}
+//#include "Application.h"
+//
+//int main(int argc, char** argv)
+//{
+//}
