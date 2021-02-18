@@ -2,20 +2,15 @@
 #include <vulkan/vulkan.h>
 #include <Vector>
 
-class RenderPassComponent;
-class DepthBufferComponent;
-
 class GraphicsPipeline
 {
 public:
 
-	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, DepthBufferComponent* depthComponent = nullptr);
+	GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, bool depthEnabled);
 
-	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent = nullptr);
+	GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, bool depthEnabled);
 	
-	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent, bool cullingEnabled);
-	
-	GraphicsPipeline(VkDevice& logicalDevice, RenderPassComponent& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, DepthBufferComponent* depthComponent, bool cullingEnabled, float lineWidth);
+	GraphicsPipeline(VkDevice& logicalDevice, VkRenderPass& renderPassComponent, VkDescriptorSetLayout& descriptorSetLayout, VkExtent2D& swapChainExtent, std::string vertexShader, std::string fragmentShader, bool depthEnabled, bool cullingEnabled, float lineWidth);
 
 	~GraphicsPipeline();
 
@@ -23,9 +18,7 @@ public:
 
 	VkPipelineLayout m_pipelineLayout;
 
-	DepthBufferComponent* m_depthComponent;
-	
-	RenderPassComponent& rm_renderPassComponent;
+	VkRenderPass& renderPass_;
 
 	static std::vector<char> readShaderFile(const std::string& filename);
 

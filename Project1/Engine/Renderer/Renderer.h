@@ -49,7 +49,6 @@ const std::vector<const char*> deviceExtensions = {
 	"VK_KHR_swapchain"
 };
 
-
 class Renderer : Singleton<Renderer>
 {
 public:
@@ -133,6 +132,7 @@ private:
 	DepthBufferComponent* depthComponent;
 
 	RenderPassComponent* renderPassComponent;
+
 
 	VkDescriptorPool m_descriptorPool;
 

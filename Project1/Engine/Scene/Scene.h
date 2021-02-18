@@ -3,18 +3,21 @@
 #include "../libs/entt/entt.hpp"
 #include "Entity.h"
 #include "../BaseCamera.h"
-#include "Componenets/TexturedMesh.h"
 #include "Componenets/Transform.h"
+#include <NewRenderer/Renderable.h>
+#include <NewRenderer/VkRenderer.h>
+#include <NewRenderer/Textured.h>
 
 
 class Scene
 {
 public:
+	Scene();
 	~Scene();
 	void update(float deltaTime);
 	Entity& addEntity(std::string entityName);
 	entt::entity& getEntity(std::string name);
-	int addCamera(BaseCamera camera);//returns position of camera in camera vector
+	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
 
 	//void each(std::function<void(entt::entity, entt::registry)>);
@@ -43,7 +46,9 @@ private:
 	entt::registry registry_;
 	std::vector<Entity*> entitys_;
 
-	std::vector<BaseCamera> cameras_;
+	std::vector<BaseCamera*> cameras_;
 	int currentCamera_;
+
+	VkRenderer* renderer_;
 };
 

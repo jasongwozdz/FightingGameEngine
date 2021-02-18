@@ -15,7 +15,7 @@ private:
 	void onEvent(Events::Event& e);
 	void handleMouseClick(Events::MousePressedEvent& e);
 	void handleMouseMove(Events::MouseMoveEvent& e);
+	void handleKeyButtonDown(Events::KeyPressedEvent& e);
 	void transformVel(entt::entity e, entt::registry& r, ...);
-	Scene* scene_;
 };
 

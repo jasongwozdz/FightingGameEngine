@@ -1,8 +1,7 @@
 #pragma once
-#include "Engine/Renderer/Renderer.h"
+#include <NewRenderer/VkRenderer.h>
+#include <Scene/Scene.h>
 #include "Engine/ResourceManager.h"
-#include "Engine/GameObjectManager.h"
-#include "Engine/DebugDrawManager.h"
 #include "Engine/EngineSettings.h"
 
 class Application
@@ -17,19 +16,15 @@ public:
 	void run();
 	// Singletons
 	ResourceManager* resourceManager;
-	Renderer* renderer;
-	GameObjectManager* gObjectManager;
-	DebugDrawManager* debugDrawManager;
-	PipelineManager* pipelineManager;
+	VkRenderer* renderer;
 	EngineSettings* engineSettings;
-	UserInterface* ui;
 	Window* window;
+	Scene* scene_;
 private:
 	std::vector<std::function<void(Events::Event&)>> callbacks;
 	float endTime;
 	std::map<int, int> keyBinds;
 	bool drawUi;
-
 	void onEvent(Events::Event& e);
 	void cleanup();
 };

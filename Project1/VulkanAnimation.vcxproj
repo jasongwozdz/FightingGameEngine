@@ -31,7 +31,7 @@
     <ProjectGuid>{4451C2FA-6E5B-45E7-AC44-02214EA73C78}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>VulkanAnimation</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -130,7 +130,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\AnimationTest\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -181,7 +181,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\AnimationTest\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -201,7 +201,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\AnimationTest\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -248,12 +248,20 @@
     <ClCompile Include="Engine\Scene\Componenets\TexturedMesh.cpp" />
     <ClCompile Include="Engine\UserInterfaceImp.cpp" />
     <ClCompile Include="Engine\Window.cpp" />
+    <ClCompile Include="Engine\NewRenderer\Renderable.cpp" />
+    <ClCompile Include="Engine\NewRenderer\PipelineBuilder.cpp" />
     <ClCompile Include="Sandbox\Sandbox.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Transform.cpp" />
+    <ClCompile Include="Engine\NewRenderer\VkRenderer.cpp" />
+    <ClCompile Include="Engine\libs\vk-bootstrap\VkBootstrap.cpp" />
+    <ClCompile Include="Engine\NewRenderer\vkinit.cpp" />
+    <ClCompile Include="Engine\NewRenderer\Textured.cpp" />
+    <ClCompile Include="Engine\NewRenderer\UIInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\AnimatedGameObject.h" />
     <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
+    <ClInclude Include="Engine\NewRenderer\VkTypes.h" />
     <ClInclude Include="Engine\Scene\Componenets\AnimatedMesh.h" />
     <ClInclude Include="Engine\Scene\Componenets\Animator.h" />
     <ClInclude Include="Application.h" />
@@ -290,8 +298,15 @@
     <ClInclude Include="Engine\UserInterfaceImp.h" />
     <ClInclude Include="Engine\Vertex.h" />
     <ClInclude Include="Engine\Window.h" />
+    <ClInclude Include="Engine\NewRenderer\Renderable.h" />
+    <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
     <ClInclude Include="Sandbox\Sandbox.h" />
     <ClInclude Include="Engine\Scene\Componenets\Transform.h" />
+    <ClInclude Include="Engine\NewRenderer\VkRenderer.h" />
+    <ClInclude Include="Engine\libs\vk-bootstrap\VkBootstrap.h" />
+    <ClInclude Include="Engine\NewRenderer\vkinit.h" />
+    <ClInclude Include="Engine\NewRenderer\Textured.h" />
+    <ClInclude Include="Engine\NewRenderer\UIInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />

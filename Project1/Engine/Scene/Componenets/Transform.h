@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <NewRenderer/Renderable.h>
 #include "Mesh.h"
 class Transform
 {
@@ -23,6 +24,8 @@ public:
 		return v;
 	}
 
-	void applyTransformToMesh(Mesh& mesh);
+	void drawDebugGui(bool draw);
+
+	void applyTransformToMesh(Renderable& mesh);
 };
 

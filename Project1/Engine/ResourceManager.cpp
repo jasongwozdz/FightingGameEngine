@@ -255,7 +255,6 @@ TextureReturnVals& ResourceManager::loadTextureFile(std::string& filePath)
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(returnVals);
 	}
 	else
-#include "Vertex.h"
 	{
 		returnVals = reinterpret_cast<TextureReturnVals*>(find->second);
 	}

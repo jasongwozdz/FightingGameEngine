@@ -100,6 +100,13 @@ namespace Events
 	};
 }
 
+struct WindowInfo
+{
+	float width;
+	float height;
+	std::function<void(Events::Event&)> callback;
+};
+
 class Window
 {
 public:
@@ -111,16 +118,8 @@ public:
 	void setCursor(bool cursorEnabled);
 	void onUpdate();
 	void setEventCallback(const std::function<void(Events::Event&)> e);
-private:
-	struct WindowInfo
-	{
-		float width;
-		float height;
-		std::function<void(Events::Event&)> callback;
-	};
-
 	WindowInfo windowInfo;
-
+private:
 	GLFWwindow* window;
 };
 
