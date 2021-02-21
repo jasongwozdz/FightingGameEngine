@@ -2,7 +2,7 @@
 #include <Vertex.h>
 #include <iostream>
 
-PipelineBuilder::PipelineResources* PipelineBuilder::createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout& layout, bool depthEnabled, bool cullingEnabled)
+PipelineBuilder::PipelineResources* PipelineBuilder::createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout& layout, bool depthEnabled, bool cullingEnabled, bool isLine)
 {
 	PipelineBuilder::PipelineResources* retVals = new PipelineBuilder::PipelineResources;
 
@@ -18,7 +18,7 @@ PipelineBuilder::PipelineResources* PipelineBuilder::createPipeline(VkDevice& lo
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.topology = isLine ? VK_PRIMITIVE_TOPOLOGY_LINE_LIST : VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
 	VkViewport viewport{};

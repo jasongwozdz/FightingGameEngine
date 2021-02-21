@@ -222,7 +222,7 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		vals->boneInfo = boneInfo;
 		vals->vertices = vertices;
 		vals->indices = indices;
-		vals->scene = scene;
+		vals->scene = (aiScene*)scene;
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
 	}
 	else

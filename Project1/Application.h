@@ -3,6 +3,7 @@
 #include <Scene/Scene.h>
 #include "Engine/ResourceManager.h"
 #include "Engine/EngineSettings.h"
+#include "DebugDrawManager.h"
 
 class Application
 {
@@ -12,6 +13,7 @@ public:
 	virtual void onUpdate(float timeDelta) = 0;
 	virtual void onStartup() = 0;
 	void addEventCallback(std::function<void(Events::Event&)>);
+	void setCursor(bool showCursor);
 
 	void run();
 	// Singletons
@@ -20,6 +22,8 @@ public:
 	EngineSettings* engineSettings;
 	Window* window;
 	Scene* scene_;
+	DebugDrawManager* debugManager_;
+
 private:
 	std::vector<std::function<void(Events::Event&)>> callbacks;
 	float endTime;

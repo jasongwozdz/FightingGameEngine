@@ -8,10 +8,11 @@ Application::Application()
 	engineSettings->init();
 	window = new Window();
 	window->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
-	window->setCursor(true);
 	renderer = new VkRenderer();
 	renderer->init(*window);
 	scene_ = new Scene();
+	debugManager_ = new DebugDrawManager();
+	debugManager_->init(scene_);
 }
 
 Application::~Application()
@@ -34,6 +35,11 @@ void Application::onEvent(Events::Event& e)
 	}
 }
 
+void Application::setCursor(bool showCursor)
+{
+	window->setCursor(showCursor);
+}
+
 void Application::cleanup()
 {
 	delete resourceManager;
@@ -50,8 +56,8 @@ void Application::run()
 	while (!glfwWindowShouldClose(window->getGLFWWindow()))
 	{
 		float start = endTime;
-		onUpdate(deltaTime);
 		window->onUpdate();
+		onUpdate(deltaTime);
 		renderer->prepareFrame();
 		scene_->update(deltaTime);
 		renderer->draw();

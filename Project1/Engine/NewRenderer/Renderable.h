@@ -18,6 +18,7 @@ public:
 		alignas(16)glm::mat4 model;
 		alignas(16)glm::mat4 view;
 		alignas(16)glm::mat4 proj;
+		alignas(16)glm::mat4 bones[MAX_BONES];
 	}ubo_;
 	
 	std::vector<Vertex> vertices_;
@@ -27,4 +28,5 @@ public:
 	bool draw_;
 	bool uploaded_;
 	bool delete_;
+	bool isLine_ = false;
 };

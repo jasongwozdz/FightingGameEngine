@@ -311,6 +311,15 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	RenderableObject* o = new RenderableObject();
 	o->renderable_ = mesh;
 
+	if (mesh->isLine_)
+	{
+		o->pipelineType = LINE_PIPELINE;
+	}
+	else
+	{
+		o->pipelineType = DEBUG_PIPELINE;
+	}
+
 	//======= Vertices ======
 	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
 
@@ -368,14 +377,18 @@ void VkRenderer::uploadObject(Renderable* mesh)
 
 	createDescriptorSet(*o);
 	updateUniformBuffer(*o);
-
 	pipelineMap_[o->pipelineType].push_back(o);
 }
 
-void VkRenderer::uploadObject(Renderable* mesh, Textured* texture)
+void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated)
 {
 	RenderableObject* o = new RenderableObject();
 	o->renderable_ = mesh;
+
+	if (o->renderable_->isLine_)
+		o->pipelineType = LINE_PIPELINE;
+	else if (animated)
+		o->pipelineType = ANIMATION_PIPELINE;
 
 	//======= Vertices ======
 	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
@@ -487,6 +500,127 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 
 				vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 			}
+
+			break;
+		}
+
+		case PipelineTypes::LINE_PIPELINE:
+		{
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = descriptorPool_;
+			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
+			allocInfo.pSetLayouts = layouts.data();
+
+			o.descriptorSets_.resize(swapChainResources_.imageCount_);
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o.descriptorSets_.data()));
+			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) {
+				VkDescriptorBufferInfo bufferInfo{};
+				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(o.renderable_->ubo_);
+
+				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+
+				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstBinding = 0;
+				descriptorWrites[0].dstArrayElement = 0;
+				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrites[0].descriptorCount = 1;
+				descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+				vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			}
+
+			break;
+		}
+
+		case PipelineTypes::DEBUG_PIPELINE :
+		{
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = descriptorPool_;
+			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
+			allocInfo.pSetLayouts = layouts.data();
+
+			o.descriptorSets_.resize(swapChainResources_.imageCount_);
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o.descriptorSets_.data()));
+			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) 
+			{
+				VkDescriptorBufferInfo bufferInfo{};
+				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(o.renderable_->ubo_);
+
+				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+
+				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstBinding = 0;
+				descriptorWrites[0].dstArrayElement = 0;
+				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrites[0].descriptorCount = 1;
+				descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+				vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			}
+
+			break;
+		}
+		case PipelineTypes::ANIMATION_PIPELINE:
+		{
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
+			VkDescriptorSetAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+			allocInfo.descriptorPool = descriptorPool_;
+			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
+			allocInfo.pSetLayouts = layouts.data();
+
+			o.descriptorSets_.resize(swapChainResources_.imageCount_);
+			if (vkAllocateDescriptorSets(logicalDevice_ , &allocInfo, o.descriptorSets_.data()) != VK_SUCCESS) {
+				throw std::runtime_error("failed to allocate descriptor sets!");
+			}
+
+			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) 
+			{
+				VkDescriptorBufferInfo bufferInfo{};
+				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.offset = 0;
+				bufferInfo.range = sizeof(o.renderable_->ubo_);
+
+				VkDescriptorImageInfo imageInfo{};
+				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				imageInfo.imageView = o.textureResources_.view_;
+				imageInfo.sampler = o.textureResources_.sampler_;
+
+				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstBinding = 0;
+				descriptorWrites[0].dstArrayElement = 0;
+				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				descriptorWrites[0].descriptorCount = 1;
+				descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+				descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				descriptorWrites[1].dstSet = o.descriptorSets_[i];
+				descriptorWrites[1].dstBinding = 1;
+				descriptorWrites[1].dstArrayElement = 0;
+				descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				descriptorWrites[1].descriptorCount = 1;
+				descriptorWrites[1].pImageInfo = &imageInfo;
+
+				vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+			}
+
+			break;
 		}
 	}
 }
@@ -528,61 +662,201 @@ void VkRenderer::initPipelines()
 {
 	descriptorLayouts_.resize(PipelineTypes::NUM_PIPELINE_TYPES);
 	// BASIC_PIPELINE
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
 
-	VkDescriptorSetLayout descriptorLayout;
-	VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayout));
+		VkDescriptorSetLayout descriptorLayout;
+		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayout));
 
-	descriptorLayouts_[0] = descriptorLayout;
+		descriptorLayouts_[0] = descriptorLayout;
 
-	std::vector<char> vertexShaderCode = readShaderFile("./shaders/texturedMeshVert.spv");
-	std::vector<char> fragmentShaderCode = readShaderFile("./shaders/texturedMeshFrag.spv");
-	
-	VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
-	VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
+		std::vector<char> vertexShaderCode = readShaderFile("./shaders/texturedMeshVert.spv");
+		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/texturedMeshFrag.spv");
+		
+		VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
+		VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
 
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = vertexShader;
-	vertShaderStageInfo.pName = "main";
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
 
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = fragmentShader;
-	fragShaderStageInfo.pName = "main";
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
 
-	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayout, true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayout, true, true);
 
-	pipelines_.push_back(r);
+		pipelines_.push_back(r);
+	}
 
-	//DEBUG_PIPELINE
+	//LINE_PIPELINE
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
+		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
 
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE]));
+
+		std::vector<char> vertexShaderCode = readShaderFile("./shaders/vert.spv");
+		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/frag.spv");
+
+		VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
+		VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
+
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::LINE_PIPELINE], true, true, true);
+
+		pipelines_.push_back(r);
+	}
+
+	//Debug pipeline
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE]));
+
+		std::vector<char> vertexShaderCode = readShaderFile("./shaders/vert.spv");
+		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/frag.spv");
+
+		VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
+		VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
+
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE], true, true);
+
+		pipelines_.push_back(r);
+	}
+
+	//Animation pipeline
+	{
+		VkDescriptorSetLayoutBinding uboLayoutBinding{};
+		uboLayoutBinding.binding = 0;
+		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboLayoutBinding.pImmutableSamplers = nullptr;
+		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.descriptorCount = 1;
+		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		samplerLayoutBinding.pImmutableSamplers = nullptr;
+		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		//VkDescriptorSetLayoutBinding bonesLayoutBinding{};
+		//uboLayoutBinding.binding = 3;
+		//uboLayoutBinding.descriptorCount = 1;
+		//uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		//uboLayoutBinding.pImmutableSamplers = nullptr;
+		//uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding};
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+		layoutInfo.pBindings = bindings.data();
+
+		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE]));
+
+		std::vector<char> vertexShaderCode = readShaderFile("./shaders/animatedMesh.vert.spv");
+		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/animatedMesh.frag.spv");
+
+		VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
+		VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
+
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], true, true);
+
+		pipelines_.push_back(r);
+	}
 }
 
-void VkRenderer::updateUniformBuffer(RenderableObject o)
+void VkRenderer::updateUniformBuffer(RenderableObject& o)
 {
 
 	o.renderable_->ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
@@ -611,6 +885,7 @@ void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageInde
 
 			vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(mesh->renderable_->indices_.size()), 1, 0, 0, 0);
 
+			updateUniformBuffer(*mesh);
 		}
 	}
 }

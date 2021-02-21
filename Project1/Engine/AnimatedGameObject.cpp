@@ -42,8 +42,6 @@ void AnimatedGameObject::setPose(std::vector<aiMatrix4x4> pose)
 	for (int i = 0; i < pose.size(); ++i)
 	{
 		mesh->animUbo.bones[i] =  glm::transpose(glm::make_mat4(&pose[i].a1));
-		//mesh->animUbo.bones[i] = glm::transpose(pose[i]);
-		//mesh->animUbo.bones[i] = glm::mat4(1.0f);
 	}
 	for (size_t i = MAX_BONES - (MAX_BONES - pose.size()); i < MAX_BONES; i++)
 	{

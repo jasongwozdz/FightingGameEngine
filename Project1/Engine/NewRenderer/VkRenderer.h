@@ -54,7 +54,7 @@ public:
 	void draw();
 	void cleanup();
 	void uploadObject(Renderable* renderableObject);
-	void uploadObject(Renderable* renderableObject, Textured* texture);
+	void uploadObject(Renderable* renderableObject, Textured* texture, bool animated = false);
 	void prepareFrame();
 
 	static VkRenderer& getSingleton();
@@ -142,7 +142,7 @@ private:
 
 	void createSynchronizationResources();
 
-	void updateUniformBuffer(RenderableObject mesh);
+	void updateUniformBuffer(RenderableObject& mesh);
 
 	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex);
 

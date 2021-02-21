@@ -1,13 +1,23 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <NewRenderer/Renderable.h>
-#include "Mesh.h"
-class Transform
+
+class Transform 
 {
 public:
-	float x_;
-	float y_;
-	float z_;
+	float x_ = 1.0f;
+	float y_ = 1.0f;
+	float z_ = 1.0f;
+
+	float scaleX_ = 1.0f;
+	float scaleY_ = 1.0f;
+	float scaleZ_ = 1.0f;
+
+	float rotateX_ = 0.0f;
+	float rotateY_ = 0.0f;
+	float rotateZ_ = 0.0f;
+
+	float drawDebugGui_ = false;
 
 	Transform(float x, float y, float z);
 
@@ -24,7 +34,9 @@ public:
 		return v;
 	}
 
-	void drawDebugGui(bool draw);
+	void setScale(float scale);
+
+	void drawDebugGui();
 
 	void applyTransformToMesh(Renderable& mesh);
 };

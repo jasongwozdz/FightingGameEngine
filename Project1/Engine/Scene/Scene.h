@@ -4,6 +4,8 @@
 #include "Entity.h"
 #include "../BaseCamera.h"
 #include "Componenets/Transform.h"
+#include "Componenets/BoneStructure.h"
+#include "Componenets/Animator.h"
 #include <NewRenderer/Renderable.h>
 #include <NewRenderer/VkRenderer.h>
 #include <NewRenderer/Textured.h>

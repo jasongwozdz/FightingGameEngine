@@ -1,26 +1,47 @@
 #pragma once
-#include "../../AnimatedGameObject.h"
+#include "assimp/scene.h"
+#include "Scene/Componenets/BoneStructure.h"
+#include <vector>
 
 class Animator
 {
 public:
-	Animator(AnimatedGameObject& gameObject);
 
-	void update(float deltaTime);
+	Animator(Animator&& animator);
 
-private:
+	Animator& operator=(Animator const& other)
+	{
+		this->scene_ = other.scene_;
+		this->boneStructure_ = other.boneStructure_;
+		this->globalInverseTransform_ = (other.scene_->mRootNode->mTransformation),
+		this->animationSpeed_ = (other.animationSpeed_);
+		this->runningTime_ = (other.runningTime_);
+		this->currentAnimation_ = (other.currentAnimation_);
+		this->boneTransforms_ = (other.boneTransforms_);
+		return *this;
+	}
 
-	float runningTime;
+	Animator(aiScene* scene, BoneStructure& boneStructure);
 
-	float animationSpeed;
+	std::vector<aiMatrix4x4> update(float deltaTime);
 
-	AnimatedGameObject& m_gameObject;
+	bool playAnimation(std::string animationName);
 
-	std::vector<aiMatrix4x4> boneTransforms;
+	aiScene* scene_;
 
-	aiMatrix4x4 globalInverseTransform;
+	float startTime_ = 0;
 
-	void readNodeHierarchy(float animationTime, aiNode* node, glm::mat4 parentTransform);
+	float runningTime_;
+
+	float animationSpeed_;
+
+	int currentAnimation_ = -1;
+
+	BoneStructure& boneStructure_;
+
+	std::vector<aiMatrix4x4> boneTransforms_;
+
+	aiMatrix4x4 globalInverseTransform_;
 
 	void readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4 parentTransform);
 

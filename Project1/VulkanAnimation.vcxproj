@@ -217,6 +217,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp" />
+    <ClCompile Include="Sandbox\DebugCamera.cpp" />
     <ClCompile Include="Engine\AnimatedGameObject.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\AnimatedMesh.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Animator.cpp" />
@@ -259,6 +261,9 @@
     <ClCompile Include="Engine\NewRenderer\UIInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Scene\Componenets\BoneStructure.h" />
+    <ClInclude Include="Engine\Events.h" />
+    <ClInclude Include="Sandbox\DebugCamera.h" />
     <ClInclude Include="Engine\AnimatedGameObject.h" />
     <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
     <ClInclude Include="Engine\NewRenderer\VkTypes.h" />

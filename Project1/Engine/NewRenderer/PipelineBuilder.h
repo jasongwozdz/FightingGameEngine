@@ -10,5 +10,5 @@ namespace PipelineBuilder
 		VkPipelineLayout pipelineLayout_;
 	};
 
-	PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout& layout, bool depthEnabled, bool cullingEnabled);
+	PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout& layout, bool depthEnabled, bool cullingEnabled, bool isLine = false);
 }

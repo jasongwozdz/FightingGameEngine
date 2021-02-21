@@ -137,7 +137,7 @@ struct AnimationReturnVals : ReturnVals
 	std::vector<BoneInfo> boneInfo;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	const aiScene* scene;
+	aiScene* scene;
 };
 
 

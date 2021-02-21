@@ -1,5 +1,6 @@
 #include "Scene.h"
 
+
 Scene::Scene()
 {
 	renderer_ = VkRenderer::getSingletonPtr();
@@ -14,21 +15,34 @@ Scene::~Scene()
 
 void Scene::update(float deltaTime)
 {
-	auto v = registry_.view<Transform, Renderable, Textured>();
+	auto v = registry_.view<Transform, Renderable>();
 	for (auto entity : v)
 	{
-		auto [transform, mesh, texture] = v.get<Transform, Renderable, Textured>(entity);
+		auto [transform, mesh] = v.get<Transform, Renderable>(entity);
 
-		transform.drawDebugGui(true);
+		transform.drawDebugGui();
 
 		transform.applyTransformToMesh(mesh);
 
 		if (cameras_.size() != 0)
 			mesh.ubo_.view = cameras_[currentCamera_]->getView();
 		
+
+		auto[animator, bones] = registry_.try_get<Animator, BoneStructure>(entity); 
+		if (animator && bones)
+		{
+			std::vector<aiMatrix4x4> boneTransforms = animator->update(deltaTime);
+			bones->setPose(boneTransforms);
+		}
+
 		if (!mesh.uploaded_)
 		{
-			renderer_->uploadObject(&mesh, &texture);
+			Textured* texture = registry_.try_get<Textured>(entity);
+			if (texture != 0)
+				renderer_->uploadObject(&mesh, texture, animator);
+			else
+				renderer_->uploadObject(&mesh);
+
 			mesh.uploaded_ = true;
 		}
 	}

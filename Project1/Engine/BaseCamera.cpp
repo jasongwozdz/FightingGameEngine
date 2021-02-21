@@ -1,4 +1,5 @@
 #include "BaseCamera.h"
+#include <iostream>
 
 BaseCamera::BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDir)
 {
@@ -12,6 +13,11 @@ BaseCamera::~BaseCamera() {};
 void BaseCamera::setPosition(glm::vec3 pos) 
 {
 	position = pos;
+}
+
+void BaseCamera::setOldMousePosition(glm::vec2 oldMouse)
+{
+	oldMousePosition = oldMouse;
 }
 
 void BaseCamera::updateMouse(glm::vec2 newMousePosition) 
@@ -31,6 +37,7 @@ void BaseCamera::updateMouse(glm::vec2 newMousePosition)
 
 void BaseCamera::moveForward(float time) 
 {
+	std::cout << "move forward" << std::endl;
 	position += time * cameraSpeed * viewDirection;
 }
 
@@ -60,5 +67,10 @@ glm::mat4 BaseCamera::getView()
 {
 	glm::mat4 view = glm::lookAt(position, position + viewDirection, upDirection);
 	return view;
+}
+
+void BaseCamera::update(float deltaTime)
+{
+
 }
 
