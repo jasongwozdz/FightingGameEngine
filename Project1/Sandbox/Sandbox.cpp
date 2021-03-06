@@ -10,8 +10,9 @@ DO THIS TO FIX
 taskkill /F /IM VulkanAnimation.exe
 
 */
-
-
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 
 Sandbox::~Sandbox()
 {
@@ -26,31 +27,40 @@ void Sandbox::initScene()
 	ModelReturnVals vals = resourceManager->loadObjFile(modelPath);
 	TextureReturnVals texVals = resourceManager->loadTextureFile(texturePath);
 
+
 	Entity& e = scene_->addEntity("Temp");
 	Transform& t = e.addComponent<Transform>( 1.0f,0.0f,0.0f );
 	t.setScale(0.5f);
 	Renderable& r = e.addComponent<Renderable>(vals.vertices, vals.indices, true, "Viking_Room");
 	Textured& tex = e.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
 
-	Entity& goblin = scene_->addEntity("goblin");
 	std::string goblinPath = "./Models/goblin.dae";
+	Entity& goblin = scene_->addEntity("goblin");
 
-	retVals = resourceManager->loadAnimationFile(goblinPath);
+	AnimationReturnVals retVals = resourceManager->loadAnimationFile(goblinPath);
+
 	Renderable& gRenderable = goblin.addComponent<Renderable>(retVals.vertices, retVals.indices, true, "goblin");
 	Transform& goblinT = goblin.addComponent<Transform>( 1.0f,0.0f,0.0f );
 	goblin.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
 	goblinT.setScale(0.001f);
 	goblinT.drawDebugGui_ = true;
+	BoneStructure& gBones = goblin.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
+	goblin.addComponent<Animator>(*retVals.scene).playAnimation("dog");
 
-	BoneStructure& gBones = goblin.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo, gRenderable);
-
-	goblin.addComponent<Animator>(retVals.scene, gBones).playAnimation("dog");
+	Entity& goblin2 = scene_->addEntity("goblin2");
+	Renderable& gRenderable2 = goblin2.addComponent<Renderable>(retVals.vertices, retVals.indices, true, "goblin2");
+	Transform& t2 = goblin2.addComponent<Transform>(5000.0f,0.0f,0.0f );
+	goblin2.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
+	t2.setScale(0.001f);
+	BoneStructure& gBones2 = goblin2.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
+	goblin2.addComponent<Animator>(*retVals.scene).playAnimation("dog");
 
 
 	baseCamera = new DebugCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
 
 
 	scene_->addCamera(baseCamera);
+
 	//debugManager_->drawGrid({ 255, 255, 255 }, true);
 }
 
@@ -67,6 +77,7 @@ void Sandbox::handleKeyButtonDown(Events::KeyPressedEvent& e)
 	case 256: //esc
 		drawDebug = !drawDebug;
 		setCursor(drawDebug);
+
 	}
 }
 

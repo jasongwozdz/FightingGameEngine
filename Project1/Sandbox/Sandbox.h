@@ -11,7 +11,6 @@ public:
 private:
 	BaseCamera* baseCamera;
 	bool drawDebug;
-	AnimationReturnVals retVals;
 
 	void initScene();
 	void onEvent(Events::Event& e);

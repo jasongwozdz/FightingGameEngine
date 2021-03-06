@@ -360,7 +360,7 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	vmaUnmapMemory(allocator_, o->indexMem);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(o->renderable_->ubo_);
+	size_t uniformBufferSize = sizeof(o->renderable_->ubo());
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -430,7 +430,7 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 	vmaUnmapMemory(allocator_, o->indexMem);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(o->renderable_->ubo_);
+	size_t uniformBufferSize = sizeof(o->renderable_->ubo());
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -472,7 +472,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o.uniformBuffer[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo_);
+				bufferInfo.range = sizeof(o.renderable_->ubo());
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -520,7 +520,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o.uniformBuffer[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo_);
+				bufferInfo.range = sizeof(o.renderable_->ubo());
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
@@ -555,7 +555,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o.uniformBuffer[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo_);
+				bufferInfo.range = sizeof(o.renderable_->ubo());
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
@@ -592,7 +592,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o.uniformBuffer[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo_);
+				bufferInfo.range = sizeof(o.renderable_->ubo());
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -859,12 +859,13 @@ void VkRenderer::initPipelines()
 void VkRenderer::updateUniformBuffer(RenderableObject& o)
 {
 
-	o.renderable_->ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	o.renderable_->ubo_.proj[1][1] *= -1;
+	o.renderable_->ubo().proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+	o.renderable_->ubo().proj[1][1] *= -1;
 
 	void *data;
+	size_t y = sizeof(Ubo);
 	vmaMapMemory(allocator_, o.uniformMem[frameNumber_%swapChainResources_.imageCount_], &data);
-	memcpy(data, &o.renderable_->ubo_, sizeof(o.renderable_->ubo_));
+	memcpy(data, &o.renderable_->ubo(), sizeof(Ubo));
 	vmaUnmapMemory(allocator_, o.uniformMem[frameNumber_%swapChainResources_.imageCount_]);
 }
 

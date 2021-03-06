@@ -3,6 +3,12 @@
 #include "Scene/Componenets/BoneStructure.h"
 #include <vector>
 
+class Animation
+{
+
+};
+
+
 class Animator
 {
 public:
@@ -12,8 +18,7 @@ public:
 	Animator& operator=(Animator const& other)
 	{
 		this->scene_ = other.scene_;
-		this->boneStructure_ = other.boneStructure_;
-		this->globalInverseTransform_ = (other.scene_->mRootNode->mTransformation),
+		this->globalInverseTransform_ = (other.scene_.mRootNode->mTransformation),
 		this->animationSpeed_ = (other.animationSpeed_);
 		this->runningTime_ = (other.runningTime_);
 		this->currentAnimation_ = (other.currentAnimation_);
@@ -21,13 +26,13 @@ public:
 		return *this;
 	}
 
-	Animator(aiScene* scene, BoneStructure& boneStructure);
+	Animator(aiScene& scene);
 
-	std::vector<aiMatrix4x4> update(float deltaTime);
+	std::vector<aiMatrix4x4> update(float deltaTime, BoneStructure& boneStructure);
 
 	bool playAnimation(std::string animationName);
 
-	aiScene* scene_;
+	aiScene& scene_;
 
 	float startTime_ = 0;
 
@@ -37,13 +42,11 @@ public:
 
 	int currentAnimation_ = -1;
 
-	BoneStructure& boneStructure_;
-
 	std::vector<aiMatrix4x4> boneTransforms_;
 
 	aiMatrix4x4 globalInverseTransform_;
 
-	void readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4 parentTransform);
+	void readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4 parentTransform, BoneStructure& boneStructure);
 
 	const aiNodeAnim* findNodeAnim(std::string nodeName);
 

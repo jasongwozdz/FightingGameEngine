@@ -35,6 +35,6 @@ void Transform::applyTransformToMesh(Renderable& mesh)
 {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), { scaleX_, scaleY_, scaleZ_ });
 	glm::mat4 trans = glm::translate(scale, (glm::vec3)*this);
-	mesh.ubo_.model = trans;
+	mesh.ubo().model = trans;
 	return;
 }

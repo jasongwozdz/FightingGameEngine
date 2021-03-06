@@ -1,6 +1,10 @@
 #include <ctime>
 #include "Application.h"
 
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 Application::Application()
 {
 	resourceManager = new ResourceManager();
@@ -18,6 +22,7 @@ Application::Application()
 Application::~Application()
 {
 	cleanup();
+	_CrtDumpMemoryLeaks();
 }
 
 void Application::addEventCallback(std::function<void(Events::Event&)> fn)
@@ -46,6 +51,7 @@ void Application::cleanup()
 	delete engineSettings;
 	delete window;
 	delete renderer;
+	delete scene_;
 }
 
 void Application::run()

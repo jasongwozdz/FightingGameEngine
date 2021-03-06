@@ -4,22 +4,20 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-Animator::Animator(Animator&& animator) :
-	boneStructure_(animator.boneStructure_),
-	scene_(animator.scene_),
-	globalInverseTransform_(animator.scene_->mRootNode->mTransformation),
-	animationSpeed_(animator.animationSpeed_),
-	runningTime_(animator.runningTime_),
-	currentAnimation_(animator.currentAnimation_),
-	boneTransforms_(animator.boneTransforms_)
+Animator::Animator(Animator&& other) :
+	scene_(other.scene_),
+	globalInverseTransform_(other.scene_.mRootNode->mTransformation),
+	animationSpeed_(other.animationSpeed_),
+	runningTime_(other.runningTime_),
+	currentAnimation_(other.currentAnimation_),
+	boneTransforms_(other.boneTransforms_)
 {
 }
 
-Animator::Animator(aiScene* scene, BoneStructure& boneStructure) :
-	scene_(scene),
-	boneStructure_(boneStructure)
+Animator::Animator(aiScene& scene):
+	scene_(scene)
 {
-	globalInverseTransform_ = scene_->mRootNode->mTransformation;
+	globalInverseTransform_ = scene_.mRootNode->mTransformation;
 	globalInverseTransform_.Inverse();
 	runningTime_ = 0.0f;
 	animationSpeed_= 0.00075f;
@@ -27,8 +25,8 @@ Animator::Animator(aiScene* scene, BoneStructure& boneStructure) :
 
 bool Animator::playAnimation(std::string animationName)
 {
-	int numAnimations = scene_->mNumAnimations;
-	aiAnimation** animations = scene_->mAnimations;
+	int numAnimations = scene_.mNumAnimations;
+	aiAnimation** animations = scene_.mAnimations;
 	for (int i = 0; i < numAnimations; i++)
 	{
 		if (std::strcmp(animations[i]->mName.C_Str(), animationName.c_str()) == 0)
@@ -57,20 +55,20 @@ void outputMatrixToFile(std::vector<aiMatrix4x4> boneTransforms)
 	std::cout << output << std::endl;
 }
 
-std::vector<aiMatrix4x4> Animator::update(float deltaTime)
+std::vector<aiMatrix4x4> Animator::update(float deltaTime, BoneStructure& boneStructure)
 {
-	boneTransforms_.resize(boneStructure_.boneInfo_.size());
+	boneTransforms_.resize(boneStructure.boneInfo_.size());
 	if (currentAnimation_ == -1)
 	{
 		aiMatrix4x4 ident = aiMatrix4x4();
-		for (uint32_t i = 0; i < boneStructure_.boneInfo_.size(); i++)
+		for (uint32_t i = 0; i < boneStructure.boneInfo_.size(); i++)
 		{
 			boneTransforms_[i] = ident;
 		}
 	}
 	else
 	{
-		aiAnimation* m_animation = scene_->mAnimations[currentAnimation_];
+		aiAnimation* m_animation = scene_.mAnimations[currentAnimation_];
 
 		runningTime_ += deltaTime * animationSpeed_;
 
@@ -79,12 +77,12 @@ std::vector<aiMatrix4x4> Animator::update(float deltaTime)
 		float AnimationTime = fmod(TimeInTicks, (float)m_animation->mDuration);
 
 		aiMatrix4x4 identity = aiMatrix4x4();
-		readNodeHierarchy(AnimationTime, scene_->mRootNode, identity);
+		readNodeHierarchy(AnimationTime, scene_.mRootNode, identity, boneStructure);
 
 		
-		for (uint32_t i = 0; i < boneStructure_.boneInfo_.size(); i++)
+		for (uint32_t i = 0; i < boneStructure.boneInfo_.size(); i++)
 		{
-			boneTransforms_[i] = boneStructure_.boneInfo_[i].finalTransformation;
+			boneTransforms_[i] = boneStructure.boneInfo_[i].finalTransformation;
 		}
 	}
 
@@ -207,7 +205,7 @@ aiMatrix4x4 Animator::interpolateScale(float time, const aiNodeAnim* pNodeAnim)
 
 const aiNodeAnim* Animator::findNodeAnim(std::string nodeName)
 {
-	aiAnimation* m_animation = scene_->mAnimations[currentAnimation_];
+	aiAnimation* m_animation = scene_.mAnimations[currentAnimation_];
 	for (uint32_t i = 0; i < m_animation->mNumChannels; i++)
 	{
 		const aiNodeAnim* nodeAnim = m_animation->mChannels[i];
@@ -219,7 +217,7 @@ const aiNodeAnim* Animator::findNodeAnim(std::string nodeName)
 	return nullptr;
 }
 
-void Animator::readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4 parentTransform)
+void Animator::readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4 parentTransform, BoneStructure& boneStructure)
 {
 	std::string NodeName(pNode->mName.data);
 
@@ -239,15 +237,15 @@ void Animator::readNodeHierarchy(float animationTime, aiNode* pNode, aiMatrix4x4
 
 	aiMatrix4x4 GlobalTransformation = parentTransform * NodeTransformation;
 
-	auto boneMapping = boneStructure_.boneMapping_;
+	auto boneMapping = boneStructure.boneMapping_;
 	if (boneMapping.find(NodeName) != boneMapping.end())
 	{
 		uint32_t BoneIndex = boneMapping[NodeName];
-		boneStructure_.boneInfo_[BoneIndex].finalTransformation = globalInverseTransform_ * GlobalTransformation * boneStructure_.boneInfo_[BoneIndex].offset;
+		boneStructure.boneInfo_[BoneIndex].finalTransformation = globalInverseTransform_ * GlobalTransformation * boneStructure.boneInfo_[BoneIndex].offset;
 	}
 
 	for (uint32_t i = 0; i < pNode->mNumChildren; i++)
 	{
-		readNodeHierarchy(animationTime, pNode->mChildren[i], GlobalTransformation);
+		readNodeHierarchy(animationTime, pNode->mChildren[i], GlobalTransformation, boneStructure);
 	}
 }

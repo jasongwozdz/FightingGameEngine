@@ -37,7 +37,6 @@ void BaseCamera::updateMouse(glm::vec2 newMousePosition)
 
 void BaseCamera::moveForward(float time) 
 {
-	std::cout << "move forward" << std::endl;
 	position += time * cameraSpeed * viewDirection;
 }
 
