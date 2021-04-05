@@ -1,27 +1,43 @@
 #pragma once
 #include "NewRenderer/Renderable.h"
 #include "assimp/scene.h"
-#include "ResourceManager.h"
+#include "glm/glm.hpp"
 
 #include <map>
 #include <vector>
 
+struct Joint
+{
+	glm::mat4 invBindPose_; //inverse bind pose
+	std::string name_; //name of joint
+	int parent_; //name of parent
+	glm::mat4 offset_ = glm::mat4(1.0f); //bone offset
+	bool animated_ = false;
+};
 
 class BoneStructure
 {
 public:
-	BoneStructure(std::map<std::string, uint32_t> boneMapping, std::vector<BoneInfo> boneInfo);
+	BoneStructure(int numBones);
 
-	BoneStructure& operator=(BoneStructure const& other)
+	BoneStructure(std::vector<Joint> boneInfo);
+
+	//returns index of bone with name.  If not found return -1
+	int findBoneByBoneName(std::string boneName);
+
+	std::vector<int> getChildIndicies(std::string parentName);
+
+	glm::mat4 globalInverseTransform_;
+
+	inline int getRootIndex()
 	{
-		this->boneMapping_ = other.boneMapping_;
-		this->boneInfo_ = other.boneInfo_;
-		return *this;
+		for (int i = 0; i < boneInfo_.size(); i++)
+		{
+			if (boneInfo_[i].parent_ == -1)
+				return i;
+		}
 	}
 
-	void setPose(std::vector<aiMatrix4x4>& pose, Renderable& renderable);
-
-	std::map<std::string, uint32_t> boneMapping_;
-	std::vector<BoneInfo> boneInfo_;
+	std::vector<Joint> boneInfo_;
 };
 

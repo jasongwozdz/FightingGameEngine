@@ -235,7 +235,6 @@
     <ClCompile Include="Engine\libs\imgui\imgui_impl_vulkan.cpp" />
     <ClCompile Include="Engine\libs\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Scene\Entity.cpp" />
-    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Mesh.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\PrimitiveMesh.cpp" />
     <ClCompile Include="Engine\Renderer\BufferOperations.cpp" />

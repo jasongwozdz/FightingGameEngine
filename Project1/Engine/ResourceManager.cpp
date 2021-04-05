@@ -1,12 +1,14 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "ResourceManager.h"
 #include "Renderer/BufferOperations.h"
+#include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <glm/gtx/hash.hpp>
 #include <array>
 #include <glm/gtc/type_ptr.hpp>
+#include <assert.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -123,6 +125,144 @@ ModelReturnVals& ResourceManager::loadObjFile(std::string& filePath) {
 	return *vals;
 }
 
+bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** animationNodes, int numChannels, BoneStructure& bones)
+{
+	sample.positions_.resize(bones.boneInfo_.size());
+	sample.rotations_.resize(bones.boneInfo_.size());
+	sample.scale_.resize(bones.boneInfo_.size());
+	for (int i = 0; i < numChannels; i++)
+	{
+		aiNodeAnim* currentNode = animationNodes[i];
+		int boneIndex = bones.findBoneByBoneName(currentNode->mNodeName.C_Str());
+		bones.boneInfo_[boneIndex].animated_ = true;
+		if (boneIndex == -1)
+		{
+			std::cout << "ERROR: could not populate animation sample" << std::endl;
+			return false;
+		}
+		
+		//populate positions
+		for (int j = 0; j < currentNode->mNumPositionKeys; j++)
+		{
+			glm::vec3 pos = glm::make_vec3(&currentNode->mPositionKeys[j].mValue.x);
+			float time = currentNode->mPositionKeys[j].mTime;
+			sample.positions_[boneIndex].push_back({ time, pos });
+		}
+
+		//populate rotations 
+		for (int j = 0; j < currentNode->mNumRotationKeys; j++)
+		{
+			glm::quat rot;
+			rot.x = currentNode->mRotationKeys[j].mValue.x;
+			rot.y = currentNode->mRotationKeys[j].mValue.y;
+			rot.z = currentNode->mRotationKeys[j].mValue.z;
+			rot.w = currentNode->mRotationKeys[j].mValue.w;
+			//{ currentNode->mRotationKeys[j].mValue.x, currentNode->mRotationKeys[j].mValue.y, currentNode->mRotationKeys[j].mValue.z, currentNode->mRotationKeys[j].mValue.w };
+			float time = currentNode->mRotationKeys[j].mTime;
+			sample.rotations_[boneIndex].push_back({ time, rot });
+		}
+
+		//populate scale 
+		for (int j = 0; j < currentNode->mNumScalingKeys; j++)
+		{
+			float scale = currentNode->mScalingKeys[j].mValue.x;
+			float time = currentNode->mRotationKeys[j].mTime;
+			sample.scale_[boneIndex].push_back({ time, scale });
+		}
+
+	}
+	return true;
+}
+
+
+ bool ResourceManager::populateAnimationClips(aiAnimation** animations, int numAnimations, BoneStructure& bones, std::vector<AnimationClip>& animationClips)
+{
+	for (int i = 0; i < numAnimations; i++)
+	{
+		AnimationClip a;
+		a.name_ = animations[i]->mName.C_Str();
+		a.duration_ = animations[i]->mDuration;
+		a.framesPerSecond_ = animations[i]->mTicksPerSecond;
+		if (!populateAnimationClip(a, animations[i]->mChannels, animations[i]->mNumChannels, bones))
+		{
+			std::cout << "ERROR: failed to populate animation clip" << std::endl;
+			return false;
+		}
+		else
+		{
+			animationClips.push_back(a);
+		}
+	}
+	return true;
+}
+
+void ResourceManager::recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure, int parentIndex)
+{
+	Joint j = { glm::transpose(glm::make_mat4(&node->mTransformation.a1)), node->mName.C_Str(), parentIndex };
+	boneStructure.boneInfo_.push_back(j);
+	int currentIndex = boneStructure.boneInfo_.size()-1;
+	aiNode** children = node->mChildren;
+	for (int i = 0; i < node->mNumChildren; i++)
+	{
+		recursivePopulateBoneStructure(children[i], mesh, boneStructure, currentIndex);
+	}
+	
+}
+
+void ResourceManager::recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure)
+{
+	aiNode** children = node->mChildren;
+	for (int i = 0; i < node->mNumChildren; i++)
+	{
+		std::string childName = children[i]->mName.C_Str();
+		
+		Joint j = {glm::transpose(glm::make_mat4(&children[i]->mTransformation.a1)), children[i]->mName.C_Str(), boneStructure.findBoneByBoneName(node->mName.C_Str())};
+
+		aiBone* childBone = findBoneName(childName, mesh->mBones, mesh->mNumBones);
+
+		if (childBone)
+		{
+			j.invBindPose_ = glm::transpose(glm::make_mat4(&childBone->mOffsetMatrix.a1));
+		}
+
+		boneStructure.boneInfo_.push_back(j);
+
+		recursivePopulateBoneStructure(children[i], mesh, boneStructure);
+	}
+
+}
+
+aiBone* ResourceManager::findRootBone(aiNode* node, aiMesh* mesh)
+{
+	aiBone* bone = findBoneName(node->mName.C_Str(), mesh->mBones, mesh->mNumBones);
+	if(bone)
+	{
+		aiBone* parent = findBoneName(node->mParent->mName.C_Str(), mesh->mBones, mesh->mNumBones);
+		if (parent)
+		{
+			return bone;
+		}
+	}
+
+	for (int i = 0; i < node->mNumChildren; i++)
+	{
+		aiBone* ret = findRootBone(node->mChildren[i], mesh);
+		if (ret)
+		{
+			return ret;
+		}
+	}
+	return nullptr;
+}
+
+void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStructure& boneStructure)
+{
+	boneStructure.globalInverseTransform_ = glm::inverse(glm::transpose(glm::make_mat4(&root->mTransformation.a1)));
+	//boneStructure.boneInfo_.push_back({ glm::transpose(glm::make_mat4(&root->mTransformation.a1)), root->mName.C_Str(), -1});
+	//recursivePopulateBoneStructure(root, mesh, boneStructure);
+	recursivePopulateBoneStructure(root, mesh, boneStructure, 0);
+}
+
 AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 {
 	auto find = m_resourceRegistry.find(filePath);
@@ -132,6 +272,8 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		std::map<std::string, uint32_t> boneMapping;
 		std::vector<BoneInfo> boneInfo;
 		std::vector<VertexBoneInfo> vertexBoneInfo;
+		std::vector<AnimationClip> animationClips;
+		BoneStructure* boneStructure = new BoneStructure(0);
 
 		const aiScene* scene = importer.ReadFile(filePath
 			.c_str(), 0);
@@ -147,34 +289,23 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		for (uint32_t i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh* pAiMesh = scene->mMeshes[i];
+
+			populateBoneStructure(scene->mRootNode, pAiMesh, *boneStructure);
+			populateAnimationClips(scene->mAnimations, scene->mNumAnimations, *boneStructure, animationClips);
 			for (uint32_t j = 0; j < pAiMesh->mNumBones; ++j)
 			{
 				aiBone* currBone = pAiMesh->mBones[j];
-				uint32_t index = 0;
 				assert(pAiMesh->mNumBones <= MAX_BONES);
-				std::string name(currBone->mName.data);
 				 
-				if (boneMapping.find(name) == boneMapping.end())
-				{
-					index = numBones;
-					numBones++;
-					boneMapping[name] = index;
-					BoneInfo bone;
-					boneInfo.push_back(bone);
-					//boneInfo[index].offset = aiMatToGlmMat(currBone->mOffsetMatrix);
-					boneInfo[index].offset = (currBone->mOffsetMatrix);
-				}
-				else
-				{
-					index = boneMapping[name];
-				}
-
 				const uint32_t numWeights = currBone->mNumWeights;
 				//add boneIDs/weights for each vertex 
+				std::string boneNameS = std::string(currBone->mName.C_Str());
+				int boneIndex = boneStructure->findBoneByBoneName(boneNameS);
+				boneStructure->boneInfo_[boneIndex].offset_ = glm::transpose(glm::make_mat4(&currBone->mOffsetMatrix.a1));
 				for (uint32_t k = 0; k < numWeights; ++k)
 				{
 					uint32_t vertexIdx = currBone->mWeights[k].mVertexId + vertexOffset;
-					vertexBoneInfo[vertexIdx].add(index, currBone->mWeights[k].mWeight);//bone index, bone weight
+					vertexBoneInfo[vertexIdx].add(boneIndex, currBone->mWeights[k].mWeight);//bone index, bone weight
 				}
 			}
 			vertexOffset += pAiMesh->mNumVertices;
@@ -218,11 +349,10 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		}
 
 		vals = new AnimationReturnVals();
-		vals->boneMapping = boneMapping;
-		vals->boneInfo = boneInfo;
 		vals->vertices = vertices;
 		vals->indices = indices;
-		vals->scene = (aiScene*)scene;
+		vals->boneStructure = boneStructure;
+		vals->animations = animationClips;
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
 	}
 	else

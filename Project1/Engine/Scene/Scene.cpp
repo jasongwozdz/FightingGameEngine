@@ -28,11 +28,10 @@ void Scene::update(float deltaTime)
 			mesh.ubo().view = cameras_[currentCamera_]->getView();
 		
 
-		auto[animator, bones] = registry_.try_get<Animator, BoneStructure>(entity); 
-		if (animator && bones)
+		auto animator = registry_.try_get<Animator>(entity); 
+		if (animator)
 		{
-			std::vector<aiMatrix4x4> boneTransforms = animator->update(deltaTime, *bones);
-			bones->setPose(boneTransforms, mesh);
+			animator->update(deltaTime, mesh);
 		}
 
 		if (!mesh.uploaded_)

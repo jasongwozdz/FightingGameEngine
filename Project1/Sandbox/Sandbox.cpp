@@ -30,11 +30,15 @@ void Sandbox::initScene()
 
 	Entity& e = scene_->addEntity("Temp");
 	Transform& t = e.addComponent<Transform>( 1.0f,0.0f,0.0f );
+	t.drawDebugGui_ = true;
 	t.setScale(0.5f);
 	Renderable& r = e.addComponent<Renderable>(vals.vertices, vals.indices, true, "Viking_Room");
 	Textured& tex = e.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
 
 	std::string goblinPath = "./Models/goblin.dae";
+	std::string goblinTexturePath = "./Textures/missingTexture.jpg";
+	texVals = resourceManager->loadTextureFile(goblinTexturePath);
+
 	Entity& goblin = scene_->addEntity("goblin");
 
 	AnimationReturnVals retVals = resourceManager->loadAnimationFile(goblinPath);
@@ -43,17 +47,17 @@ void Sandbox::initScene()
 	Transform& goblinT = goblin.addComponent<Transform>( 1.0f,0.0f,0.0f );
 	goblin.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
 	goblinT.setScale(0.001f);
-	goblinT.drawDebugGui_ = true;
-	BoneStructure& gBones = goblin.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
-	goblin.addComponent<Animator>(*retVals.scene).playAnimation("dog");
+	//goblinT.drawDebugGui_ = true;
+	goblin.addComponent<Animator>(retVals.animations, retVals.boneStructure).setAnimation(0);
+
 
 	Entity& goblin2 = scene_->addEntity("goblin2");
 	Renderable& gRenderable2 = goblin2.addComponent<Renderable>(retVals.vertices, retVals.indices, true, "goblin2");
 	Transform& t2 = goblin2.addComponent<Transform>(5000.0f,0.0f,0.0f );
 	goblin2.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
 	t2.setScale(0.001f);
-	BoneStructure& gBones2 = goblin2.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
-	goblin2.addComponent<Animator>(*retVals.scene).playAnimation("dog");
+	//BoneStructure& gBones2 = goblin2.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
+	goblin2.addComponent<Animator>(retVals.animations, retVals.boneStructure).setAnimation(0);
 
 
 	baseCamera = new DebugCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, {0.0f, 0.0f, 1.0f});
@@ -61,7 +65,7 @@ void Sandbox::initScene()
 
 	scene_->addCamera(baseCamera);
 
-	//debugManager_->drawGrid({ 255, 255, 255 }, true);
+	debugManager_->drawGrid({ 255, 255, 255 }, true);
 }
 
 void Sandbox::handleMouseClick(Events::MousePressedEvent& e)

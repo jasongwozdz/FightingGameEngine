@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <NewRenderer/Renderable.h>
+#include <glm/gtx/quaternion.hpp>
 
 class Transform 
 {
@@ -16,6 +17,10 @@ public:
 	float rotateX_ = 0.0f;
 	float rotateY_ = 0.0f;
 	float rotateZ_ = 0.0f;
+
+	glm::mat4 rotationMatrix_ = glm::mat4(1.0f);
+
+	glm::quat quaternion_ = { 1.0f, 1.0f, 1.0f, 0.0f };
 
 	float drawDebugGui_ = false;
 

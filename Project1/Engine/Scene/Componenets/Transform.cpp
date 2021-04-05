@@ -17,6 +17,13 @@ void Transform::drawDebugGui()
 		//ImGui::SliderFloat("x", &x_, 0.0f, 100.0f);
 		//ImGui::SliderFloat("y", &y_, 0.0f, 100.0f);
 		//ImGui::SliderFloat("z", &z_, 0.0f, 100.0f);
+		ImGui::InputFloat("quat x", &quaternion_.x);
+		ImGui::InputFloat("quat y", &quaternion_.y);
+		ImGui::InputFloat("quat z", &quaternion_.z);
+		ImGui::InputFloat("quat w", &quaternion_.w);
+		glm::quat normalizeQuat = glm::normalize(quaternion_);
+		rotationMatrix_ = glm::toMat4(normalizeQuat);
+
 		ImGui::InputFloat("scale", &scaleX_);
 		scaleY_ = scaleX_;
 		scaleZ_ = scaleX_;
@@ -34,7 +41,9 @@ void Transform::setScale(float scale)
 void Transform::applyTransformToMesh(Renderable& mesh)
 {
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), { scaleX_, scaleY_, scaleZ_ });
-	glm::mat4 trans = glm::translate(scale, (glm::vec3)*this);
+	glm::mat4 rotationAndScale = rotationMatrix_ * scale;
+	glm::mat4 trans = glm::translate(rotationAndScale, (glm::vec3)*this);
+	
 	mesh.ubo().model = trans;
 	return;
 }

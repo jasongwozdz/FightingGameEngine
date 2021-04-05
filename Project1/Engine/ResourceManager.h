@@ -12,25 +12,17 @@
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
 #include "Vertex.h"
+#include "Scene/Componenets/Animator.h"
+
 
 #define MAX_BONES_PER_VERTEX 4
 #define MAX_BONES 64
 
-struct JointTransform
-{
-	glm::vec3 position;
-	glm::quat quat;
-};
-
-struct KeyFrame
-{
-	std::vector<JointTransform> transforms;
-	float timeStamp;
-};
+class BoneStructure;
 
 struct VertexBoneInfo
 {
-	glm::uvec4 ids = {0, 0, 0, 0}; //bone indices that effect this vertex
+	glm::uvec4 ids = {0, 0, 0, 0}; //bone indices that affect this vertex
 	glm::vec4 weights = {0.0, 0.0, 0.0, 0.0}; //weights of each bones transformation on this vertex
 
 	void add(uint32_t id, float weight)
@@ -113,16 +105,13 @@ struct ModelReturnVals : ReturnVals{
 	{
 		vertices = vals.vertices;
 		indices = vals.indices;
-		joints = vals.joints;
 	}
 
 	~ModelReturnVals() {
-		std::cout << "delete model returns" << std::endl;
 	}
 
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	std::vector<JointTransform> joints;
 };
 
 struct AnimationReturnVals : ReturnVals
@@ -133,11 +122,10 @@ struct AnimationReturnVals : ReturnVals
 	}
 
 	~AnimationReturnVals() {};
-	std::map<std::string, uint32_t> boneMapping;
-	std::vector<BoneInfo> boneInfo;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	aiScene* scene;
+	BoneStructure* boneStructure;
+	std::vector<AnimationClip> animations;
 };
 
 
@@ -152,10 +140,12 @@ public:
 	std::map<std::string, uintptr_t> m_resourceRegistry;
 
 	ModelReturnVals& loadObjFile(std::string& filePath);
-	
+
 	TextureReturnVals& loadTextureFile(std::string& filePath);
 
 	AnimationReturnVals& loadAnimationFile(std::string& filePath);
+
+	BoneStructure& getBoneStructure(int index); //get Bone structure by index
 
 	void freeResource(std::string filePath);
 
@@ -167,5 +157,31 @@ public:
 
 	Assimp::Importer importer; //importer owns scene object so need to keep a copy of it
 
-};
+private:
 
+	std::vector<BoneStructure> boneStructures_;
+
+	inline aiBone* findBoneName(std::string boneName, aiBone** bones, int numBones)
+	{
+		for (int i = 0; i < numBones; i++)
+		{
+			if (strcmp(bones[i]->mName.C_Str(), boneName.c_str()) == 0)
+			{
+				return bones[i];
+			}
+		}
+		return nullptr;
+	}
+
+	aiBone* findRootBone(aiNode* node, aiMesh* mesh);
+
+	void populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStructure& boneStructure);
+
+	void recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure);
+
+	void recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure, int parentIndex);
+
+	bool populateAnimationClips(aiAnimation** animations, int numAnimations, BoneStructure& bones, std::vector<AnimationClip>& animationClips);
+
+	bool populateAnimationClip(AnimationClip& sample, aiNodeAnim** animationNodes, int numChannels, BoneStructure& bones);
+};
