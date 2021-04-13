@@ -7,13 +7,13 @@
 
 Application::Application()
 {
-	resourceManager = new ResourceManager();
-	engineSettings = new EngineSettings();
-	engineSettings->init();
-	window = new Window();
-	window->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
-	renderer = new VkRenderer();
-	renderer->init(*window);
+	resourceManager_ = new ResourceManager();
+	engineSettings_ = new EngineSettings();
+	engineSettings_->init();
+	window_ = new Window();
+	window_->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
+	renderer_ = new VkRenderer(*window_);
+	renderer_->init();
 	scene_ = new Scene();
 	debugManager_ = new DebugDrawManager();
 	debugManager_->init(scene_);
@@ -27,14 +27,15 @@ Application::~Application()
 
 void Application::addEventCallback(std::function<void(Events::Event&)> fn)
 {
-	callbacks.push_back(fn);
+	callbacks_.push_back(fn);
 }
 
 void Application::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher dispatcher(e);
+	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&VkRenderer::frameBufferResizeCallback, renderer_, std::placeholders::_1));
 	//callbacks defined in client
-	for (auto fn : callbacks)
+	for (auto fn : callbacks_)
 	{
 		fn(e);
 	}
@@ -42,16 +43,16 @@ void Application::onEvent(Events::Event& e)
 
 void Application::setCursor(bool showCursor)
 {
-	window->setCursor(showCursor);
+	window_->setCursor(showCursor);
 }
 
 void Application::cleanup()
 {
-	delete resourceManager;
-	delete engineSettings;
-	delete window;
-	delete renderer;
 	delete scene_;
+	delete resourceManager_;
+	delete engineSettings_;
+	delete window_;
+	delete renderer_;
 }
 
 void Application::run()
@@ -59,16 +60,16 @@ void Application::run()
 	float endTime = 0;
 	float deltaTime = 0;
 	onStartup();
-	while (!glfwWindowShouldClose(window->getGLFWWindow()))
+	while (!glfwWindowShouldClose(window_->getGLFWWindow()))
 	{
 		float start = endTime;
-		window->onUpdate();
+		window_->onUpdate();
 		onUpdate(deltaTime);
-		renderer->prepareFrame();
+		renderer_->prepareFrame();
 		scene_->update(deltaTime);
-		renderer->draw();
+		//renderer_->draw();
 		endTime = std::clock();
 		deltaTime = endTime - start;
 	}
-	vkDeviceWaitIdle(renderer->logicalDevice_);
+	vkDeviceWaitIdle(renderer_->logicalDevice_);
 }

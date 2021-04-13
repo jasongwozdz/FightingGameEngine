@@ -20,8 +20,9 @@ public:
 	void setCursor(bool cursorEnabled);
 	void onUpdate();
 	void setEventCallback(const std::function<void(Events::Event&)> e);
-	WindowInfo windowInfo;
+	void setWindowResizeCallback(const std::function<void(GLFWwindow* window, int width, int height)> fn);
+	WindowInfo windowInfo_;
 private:
-	GLFWwindow* window;
+	GLFWwindow* window_;
 };
 

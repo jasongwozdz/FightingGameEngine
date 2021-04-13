@@ -1,6 +1,5 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include "ResourceManager.h"
-#include "Renderer/BufferOperations.h"
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>

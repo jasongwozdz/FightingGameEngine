@@ -14,7 +14,8 @@ namespace Events
 		KeyReleased,
 		MousePressed,
 		MouseReleased,
-		MouseMoved
+		MouseMoved,
+		FrameBufferResized
 	};
 
 	struct Event
@@ -80,6 +81,19 @@ namespace Events
 		EVENT_TYPE_FUNCS(MouseReleased)
 	};
 	//********************************************
+
+	struct FrameBufferResizedEvent : Event
+	{
+		int width_;
+		int height_;
+
+		FrameBufferResizedEvent(int width, int height) :
+			width_(width),
+			height_(height)
+		{}
+
+		EVENT_TYPE_FUNCS(FrameBufferResized)
+	};
 
 	struct EventDispatcher
 	{

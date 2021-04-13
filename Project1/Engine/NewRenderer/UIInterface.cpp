@@ -7,7 +7,7 @@ UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice,
 {
 	ImGui::CreateContext();
 
-	ImGui_ImplGlfw_InitForVulkan(window, true);
+	ImGui_ImplGlfw_InitForVulkan(window, false);
 	ImGui_ImplVulkan_InitInfo init_info = {};
 	init_info.Instance = instance;
     init_info.PhysicalDevice = physicalDevice;

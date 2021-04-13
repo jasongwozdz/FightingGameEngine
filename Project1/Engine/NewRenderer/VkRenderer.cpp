@@ -5,9 +5,10 @@
 #include <fstream>
 #include <vector>
 #include <NewRenderer/vkinit.h>
+#include <glm/gtc/matrix_transform.hpp>
 #define VMA_IMPLEMENTATION
 #include <libs/VulkanMemoryAllocator/vk_mem_alloc.h>
-#include <glm/gtc/matrix_transform.hpp>
+
 
 #define VK_CHECK(x) \
 	do \
@@ -22,6 +23,68 @@
 
 template<> VkRenderer* Singleton<VkRenderer>::msSingleton = 0;
 
+VkRenderer::VkRenderer(Window& window) :
+	window_(window)
+{}
+
+void VkRenderer::frameBufferResizeCallback(Events::FrameBufferResizedEvent& event)
+{
+	width_ = event.width_;
+	height_ = event.height_;
+	windowExtent_ = { width_, height_ };
+	recreateSwapchain_ = true;
+}
+
+void VkRenderer::cleanupSwapchain()
+{
+	for (auto framebuffer : frameBuffers_) {
+		vkDestroyFramebuffer(logicalDevice_, framebuffer, nullptr);
+	}
+
+	for (auto imageViews : swapChainResources_.swapChainImageViews_)
+	{
+		vkDestroyImageView(logicalDevice_, imageViews, nullptr);
+	}
+
+	vkDestroyImage(logicalDevice_, depthResources_.image_, nullptr);
+	vkDestroyImageView(logicalDevice_, depthResources_.depthImageView_, nullptr);
+
+	vkFreeCommandBuffers(logicalDevice_, cmdPool_, 1, &cmdBuffer_);
+
+	for (int i = 0; i < PipelineTypes::NUM_PIPELINE_TYPES; i++)
+	{
+		delete pipelines_[i];
+	}
+
+	vkDestroyRenderPass(logicalDevice_, renderPass_, nullptr);
+
+	vkDestroySwapchainKHR(logicalDevice_, swapchain_, nullptr);
+
+	delete ui_;
+}
+
+void VkRenderer::recreateSwapchain()
+{
+	if (width_ == 0 || height_ == 0)
+	{
+		recreateSwapchain_ = true;
+		return;
+	}
+
+	cleanupSwapchain();
+	vkDeviceWaitIdle(logicalDevice_);
+	createSwapchainResources();
+	createDefaultRenderPass();
+	createDefualtDepthResources();
+	createDefaultFramebuffers();
+	initPipelines();
+
+	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(cmdPool_, 1);
+	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
+
+	ui_ = new UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+}
+
 VkRenderer* VkRenderer::getSingletonPtr()
 {
 	return msSingleton;
@@ -32,10 +95,10 @@ VkRenderer& VkRenderer::getSingleton()
 	assert(msSingleton); return (*msSingleton);
 }
 
-void VkRenderer::init(Window& window)
+void VkRenderer::init()
 {
-	width_ = window.windowInfo.width;
-	height_ = window.windowInfo.height;
+	width_ = window_.windowInfo_.width;
+	height_ = window_.windowInfo_.height;
 
 	vkb::InstanceBuilder builder;
 
@@ -60,7 +123,7 @@ void VkRenderer::init(Window& window)
 	instance_ = vkb_inst.instance;
 	debugMessenger_ = vkb_inst.debug_messenger;
 
-	glfwCreateWindowSurface(instance_, window.getGLFWWindow(), nullptr, &surface_);
+	glfwCreateWindowSurface(instance_, window_.getGLFWWindow(), nullptr, &surface_);
 
 	//use vkbootstrap to select a gpu. 
 	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
@@ -139,7 +202,7 @@ void VkRenderer::init(Window& window)
 
 	createSynchronizationResources();
 
-	ui_ = new UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window.getGLFWWindow(), renderPass_);
+	ui_ = new UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
 }
 
 void VkRenderer::createDefaultRenderPass()
@@ -230,8 +293,6 @@ void VkRenderer::createDefualtDepthResources()
 void VkRenderer::createDefaultFramebuffers()
 {
 	//create the framebuffers for the swapchain images. This will connect the render-pass to the images for rendering
-	VkFramebufferCreateInfo fb_info = vkinit::framebuffer_create_info(renderPass_, {width_, height_});
-
 	const uint32_t swapchain_imagecount = swapChainResources_.imageCount_;
 	frameBuffers_ = std::vector<VkFramebuffer>(swapchain_imagecount);
 
@@ -308,16 +369,13 @@ void VkRenderer::prepareFrame()
 
 void VkRenderer::uploadObject(Renderable* mesh)
 {
-	RenderableObject* o = new RenderableObject();
-	o->renderable_ = mesh;
-
 	if (mesh->isLine_)
 	{
-		o->pipelineType = LINE_PIPELINE;
+		mesh->pipelineType_ = LINE_PIPELINE;
 	}
 	else
 	{
-		o->pipelineType = DEBUG_PIPELINE;
+		mesh->pipelineType_ = DEBUG_PIPELINE;
 	}
 
 	//======= Vertices ======
@@ -333,12 +391,12 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &o->vertexBuffer, &o->vertexMem, nullptr));
+	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
 
 	void *vertexData;
-	vmaMapMemory(allocator_, o->vertexMem, &vertexData);
+	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
 	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
-	vmaUnmapMemory(allocator_, o->vertexMem);
+	vmaUnmapMemory(allocator_, mesh->vertexMem_);
 
 	//======= Indicies ======
 	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
@@ -352,15 +410,15 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &o->indexBuffer, &o->indexMem, nullptr));
+	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
 
 	void *indexData;
-	vmaMapMemory(allocator_, o->indexMem, &indexData);
+	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
 	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
-	vmaUnmapMemory(allocator_, o->indexMem);
+	vmaUnmapMemory(allocator_, mesh->indexMem_);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(o->renderable_->ubo());
+	size_t uniformBufferSize = sizeof(mesh->ubo());
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -370,25 +428,24 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	o->uniformBuffer.resize(swapChainResources_.imageCount_);
-	o->uniformMem.resize(swapChainResources_.imageCount_);
+	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
+	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
 	for(int i = 0; i < swapChainResources_.imageCount_; i++)
-		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &o->uniformBuffer[i], &o->uniformMem[i], nullptr));
+		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
 
-	createDescriptorSet(*o);
-	updateUniformBuffer(*o);
-	pipelineMap_[o->pipelineType].push_back(o);
+	createDescriptorSet(mesh);
+	updateUniformBuffer(*mesh);
+
+	mesh->allocator_ = allocator_;
+	mesh->logicalDevice_ = logicalDevice_;
 }
 
 void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated)
 {
-	RenderableObject* o = new RenderableObject();
-	o->renderable_ = mesh;
-
-	if (o->renderable_->isLine_)
-		o->pipelineType = LINE_PIPELINE;
+	if (mesh->isLine_)
+		mesh->pipelineType_ = LINE_PIPELINE;
 	else if (animated)
-		o->pipelineType = ANIMATION_PIPELINE;
+		mesh->pipelineType_ = ANIMATION_PIPELINE;
 
 	//======= Vertices ======
 	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
@@ -403,12 +460,12 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &o->vertexBuffer, &o->vertexMem, nullptr));
+	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
 
 	void *vertexData;
-	vmaMapMemory(allocator_, o->vertexMem, &vertexData);
+	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
 	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
-	vmaUnmapMemory(allocator_, o->vertexMem);
+	vmaUnmapMemory(allocator_, mesh->vertexMem_);
 
 	//======= Indicies ======
 	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
@@ -422,15 +479,15 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &o->indexBuffer, &o->indexMem, nullptr));
+	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
 
 	void *indexData;
-	vmaMapMemory(allocator_, o->indexMem, &indexData);
+	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
 	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
-	vmaUnmapMemory(allocator_, o->indexMem);
+	vmaUnmapMemory(allocator_, mesh->indexMem_);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(o->renderable_->ubo());
+	size_t uniformBufferSize = sizeof(mesh->ubo());
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -440,25 +497,27 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	//=DELETE=
-	o->uniformBuffer.resize(swapChainResources_.imageCount_);
-	o->uniformMem.resize(swapChainResources_.imageCount_);
+	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
+	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
 	for(int i = 0; i < swapChainResources_.imageCount_; i++)
-		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &o->uniformBuffer[i], &o->uniformMem[i], nullptr));
+		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
 
-	createTextureResources(*o, *texture);
+	createTextureResources(*mesh, *texture);
 	
-	createDescriptorSet(*o);
-	updateUniformBuffer(*o);
-	pipelineMap_[o->pipelineType].push_back(o);
+	createDescriptorSet(mesh);
+	updateUniformBuffer(*mesh);
+
+	mesh->allocator_ = allocator_;
+	mesh->logicalDevice_ = logicalDevice_;
 }
 
-void VkRenderer::createDescriptorSet(RenderableObject& o)
+void VkRenderer::createDescriptorSet(Renderable* o)
 {
-	switch (o.pipelineType)
+	switch (o->pipelineType_)
 	{
 		case PipelineTypes::BASIC_PIPELINE :
 		{
-			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o->pipelineType_];
 			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
 			VkDescriptorSetAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -466,23 +525,23 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
 			allocInfo.pSetLayouts = layouts.data();
 
-			o.descriptorSets_.resize(swapChainResources_.imageCount_);
-			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o.descriptorSets_.data()));
+			o->descriptorSets_.resize(swapChainResources_.imageCount_);
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o->descriptorSets_.data()));
 			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) {
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo());
+				bufferInfo.range = sizeof(o->ubo());
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = o.textureResources_.view_;
-				imageInfo.sampler = o.textureResources_.sampler_;
+				imageInfo.imageView = o->textureResources_->view_;
+				imageInfo.sampler = o->textureResources_->sampler_;
 
 				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
 				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstSet = o->descriptorSets_[i];
 				descriptorWrites[0].dstBinding = 0;
 				descriptorWrites[0].dstArrayElement = 0;
 				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -491,7 +550,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 
 
 				descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[1].dstSet = o.descriptorSets_[i];
+				descriptorWrites[1].dstSet = o->descriptorSets_[i];
 				descriptorWrites[1].dstBinding = 1;
 				descriptorWrites[1].dstArrayElement = 0;
 				descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -506,7 +565,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 
 		case PipelineTypes::LINE_PIPELINE:
 		{
-			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o->pipelineType_];
 			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
 			VkDescriptorSetAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -514,18 +573,18 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
 			allocInfo.pSetLayouts = layouts.data();
 
-			o.descriptorSets_.resize(swapChainResources_.imageCount_);
-			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o.descriptorSets_.data()));
+			o->descriptorSets_.resize(swapChainResources_.imageCount_);
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o->descriptorSets_.data()));
 			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) {
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo());
+				bufferInfo.range = sizeof(o->ubo());
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
 				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstSet = o->descriptorSets_[i];
 				descriptorWrites[0].dstBinding = 0;
 				descriptorWrites[0].dstArrayElement = 0;
 				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -540,7 +599,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 
 		case PipelineTypes::DEBUG_PIPELINE :
 		{
-			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o->pipelineType_];
 			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
 			VkDescriptorSetAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -548,19 +607,19 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
 			allocInfo.pSetLayouts = layouts.data();
 
-			o.descriptorSets_.resize(swapChainResources_.imageCount_);
-			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o.descriptorSets_.data()));
+			o->descriptorSets_.resize(swapChainResources_.imageCount_);
+			VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, o->descriptorSets_.data()));
 			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) 
 			{
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo());
+				bufferInfo.range = sizeof(o->ubo());
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
 				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstSet = o->descriptorSets_[i];
 				descriptorWrites[0].dstBinding = 0;
 				descriptorWrites[0].dstArrayElement = 0;
 				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -574,7 +633,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 		}
 		case PipelineTypes::ANIMATION_PIPELINE:
 		{
-			VkDescriptorSetLayout currLayout = descriptorLayouts_[o.pipelineType];
+			VkDescriptorSetLayout currLayout = descriptorLayouts_[o->pipelineType_];
 			std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
 			VkDescriptorSetAllocateInfo allocInfo{};
 			allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -582,27 +641,27 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 			allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
 			allocInfo.pSetLayouts = layouts.data();
 
-			o.descriptorSets_.resize(swapChainResources_.imageCount_);
-			if (vkAllocateDescriptorSets(logicalDevice_ , &allocInfo, o.descriptorSets_.data()) != VK_SUCCESS) {
+			o->descriptorSets_.resize(swapChainResources_.imageCount_);
+			if (vkAllocateDescriptorSets(logicalDevice_ , &allocInfo, o->descriptorSets_.data()) != VK_SUCCESS) {
 				throw std::runtime_error("failed to allocate descriptor sets!");
 			}
 
 			for (size_t i = 0; i < swapChainResources_.imageCount_; i++) 
 			{
 				VkDescriptorBufferInfo bufferInfo{};
-				bufferInfo.buffer = o.uniformBuffer[i];
+				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o.renderable_->ubo());
+				bufferInfo.range = sizeof(o->ubo());
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = o.textureResources_.view_;
-				imageInfo.sampler = o.textureResources_.sampler_;
+				imageInfo.imageView = o->textureResources_->view_;
+				imageInfo.sampler = o->textureResources_->sampler_;
 
 				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
 				descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[0].dstSet = o.descriptorSets_[i];
+				descriptorWrites[0].dstSet = o->descriptorSets_[i];
 				descriptorWrites[0].dstBinding = 0;
 				descriptorWrites[0].dstArrayElement = 0;
 				descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -610,7 +669,7 @@ void VkRenderer::createDescriptorSet(RenderableObject& o)
 				descriptorWrites[0].pBufferInfo = &bufferInfo;
 
 				descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				descriptorWrites[1].dstSet = o.descriptorSets_[i];
+				descriptorWrites[1].dstSet = o->descriptorSets_[i];
 				descriptorWrites[1].dstBinding = 1;
 				descriptorWrites[1].dstArrayElement = 0;
 				descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -660,6 +719,7 @@ VkShaderModule VkRenderer::createShaderModule(const std::vector<char>& code)
 
 void VkRenderer::initPipelines()
 {
+	pipelines_.resize(PipelineTypes::NUM_PIPELINE_TYPES);
 	descriptorLayouts_.resize(PipelineTypes::NUM_PIPELINE_TYPES);
 	// BASIC_PIPELINE
 	{
@@ -686,7 +746,7 @@ void VkRenderer::initPipelines()
 		VkDescriptorSetLayout descriptorLayout;
 		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayout));
 
-		descriptorLayouts_[0] = descriptorLayout;
+		descriptorLayouts_[PipelineTypes::BASIC_PIPELINE] = descriptorLayout;
 
 		std::vector<char> vertexShaderCode = readShaderFile("./shaders/texturedMeshVert.spv");
 		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/texturedMeshFrag.spv");
@@ -710,7 +770,7 @@ void VkRenderer::initPipelines()
 
 		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayout, true, true);
 
-		pipelines_.push_back(r);
+		pipelines_[PipelineTypes::BASIC_PIPELINE] = r;
 	}
 
 	//LINE_PIPELINE
@@ -753,7 +813,7 @@ void VkRenderer::initPipelines()
 
 		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::LINE_PIPELINE], true, true, true);
 
-		pipelines_.push_back(r);
+		pipelines_[PipelineTypes::LINE_PIPELINE] = r;
 	}
 
 	//Debug pipeline
@@ -796,7 +856,7 @@ void VkRenderer::initPipelines()
 
 		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE], true, true);
 
-		pipelines_.push_back(r);
+		pipelines_[PipelineTypes::DEBUG_PIPELINE] = r;
 	}
 
 	//Animation pipeline
@@ -852,56 +912,66 @@ void VkRenderer::initPipelines()
 
 		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], true, true);
 
-		pipelines_.push_back(r);
+		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
 	}
 }
 
-void VkRenderer::updateUniformBuffer(RenderableObject& o)
+//void VkRenderer::updateUniformBuffer(RenderableObject& o)
+void VkRenderer::updateUniformBuffer(Renderable& renderable)
 {
-
-	o.renderable_->ubo().proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	o.renderable_->ubo().proj[1][1] *= -1;
+	renderable.ubo().proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+	renderable.ubo().proj[1][1] *= -1;
 
 	void *data;
 	size_t y = sizeof(Ubo);
-	vmaMapMemory(allocator_, o.uniformMem[frameNumber_%swapChainResources_.imageCount_], &data);
-	memcpy(data, &o.renderable_->ubo(), sizeof(Ubo));
-	vmaUnmapMemory(allocator_, o.uniformMem[frameNumber_%swapChainResources_.imageCount_]);
+	vmaMapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_], &data);
+	memcpy(data, &renderable.ubo(), sizeof(Ubo));
+	vmaUnmapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_]);
 }
 
-void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex)
+void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw)
 {
 	VkDeviceSize offsets[1] = { 0 };
-	for (auto pipeline : pipelineMap_)
+	for (auto object : objectsToDraw)
 	{
-		for (RenderableObject* mesh : pipeline.second)
-		{
-			vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[pipeline.first]->pipeline_);
+		//for (RenderableObject* mesh : pipeline.second)
+		//{
+			vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipeline_);
 
-			vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &mesh->vertexBuffer, offsets);
+			vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &object->vertexBuffer_, offsets);
 
-			vkCmdBindIndexBuffer(currentCommandBuffer, mesh->indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdBindIndexBuffer(currentCommandBuffer, object->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[pipeline.first]->pipelineLayout_, 0, 1, &mesh->descriptorSets_[imageIndex], 0, nullptr);
+			vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipelineLayout_, 0, 1, &object->descriptorSets_[imageIndex], 0, nullptr);
 
-			vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(mesh->renderable_->indices_.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(object->indices_.size()), 1, 0, 0, 0);
 
-			updateUniformBuffer(*mesh);
-		}
+			updateUniformBuffer(*object);
+		//}
 	}
 }
 
-void VkRenderer::draw()
+void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 {
+
+	if (recreateSwapchain_)
+	{
+		ui_->renderFrame(cmdBuffer_);
+		recreateSwapchain_ = false;
+		recreateSwapchain();
+		
+		return;
+	}
+
 	//wait until the gpu has finished rendering the last frame. Timeout of 1 second
 	VK_CHECK(vkWaitForFences(logicalDevice_, 1, &renderFence_, true, 1000000000));
-	VK_CHECK(vkResetFences(logicalDevice_ , 1, &renderFence_));
+	VK_CHECK(vkResetFences(logicalDevice_, 1, &renderFence_));
 
 	VK_CHECK(vkResetCommandBuffer(cmdBuffer_, 0));
 
 	//request image from the swapchain
 	uint32_t swapchainImageIndex;
-	VK_CHECK(vkAcquireNextImageKHR(logicalDevice_, swapchain_, 1000000000, presentSemaphore_, nullptr, &swapchainImageIndex));
+	VkResult result = (vkAcquireNextImageKHR(logicalDevice_, swapchain_, 1000000000, presentSemaphore_, nullptr, &swapchainImageIndex));
 
 	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
@@ -922,7 +992,7 @@ void VkRenderer::draw()
 	
 	vkCmdBeginRenderPass(cmdBuffer_, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	drawObjects(cmdBuffer_, 0);
+	drawObjects(cmdBuffer_, 0, objectsToDraw);
 	ui_->renderFrame(cmdBuffer_);
 
 	//finalize the render pass
@@ -969,22 +1039,11 @@ void VkRenderer::cleanup()
 {
 	delete ui_;
 
-	for (auto o : renderObjects_)
-	{
-		vmaDestroyBuffer(allocator_, o.vertexBuffer, o.vertexMem);
-		vmaDestroyBuffer(allocator_, o.indexBuffer, o.indexMem);
-		for (int i = 0; i < o.uniformBuffer.size(); i++)
-		{
-			vmaDestroyBuffer(allocator_, o.uniformBuffer[i], o.uniformMem[i]);
-		}
-		vkDestroyDescriptorSetLayout(logicalDevice_, o.descriptorLayout_, nullptr);
-	}
-
 	vkDestroyDescriptorPool(logicalDevice_, descriptorPool_, nullptr);
 	
-	for (auto framebuffer : swapChainResources_.swapChainFramebuffers_) {
-		vkDestroyFramebuffer(logicalDevice_, framebuffer, nullptr);
-	}
+	//for (auto framebuffer : swapChainResources_.swapChainFramebuffers_) {
+	//	vkDestroyFramebuffer(logicalDevice_, framebuffer, nullptr);
+	//}
 
 	vkFreeCommandBuffers(logicalDevice_, cmdPool_, 1, &cmdBuffer_);
 	vkDestroyCommandPool(logicalDevice_, cmdPool_, nullptr);
@@ -1010,7 +1069,7 @@ void VkRenderer::cleanup()
 	vkDestroyInstance(instance_, nullptr);
 }
 
-void VkRenderer::createTextureResources(RenderableObject& o, Textured& texture)
+void VkRenderer::createTextureResources(Renderable& o, Textured& texture)
 {
 	VkExtent3D extent = { texture.textureHeight_, texture.textureWidth_, 1};
 	VkImageCreateInfo textureInfo = vkinit::image_create_info(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent);
@@ -1018,7 +1077,7 @@ void VkRenderer::createTextureResources(RenderableObject& o, Textured& texture)
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-	vmaCreateImage(allocator_, &textureInfo, &allocInfo, &o.textureResources_.image_.image_, &o.textureResources_.image_.mem_, nullptr);
+	vmaCreateImage(allocator_, &textureInfo, &allocInfo, &o.textureResources_->image_.image_, &o.textureResources_->image_.mem_, nullptr);
 
 	VmaAllocationCreateInfo vmaInfo{};
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
@@ -1055,7 +1114,7 @@ void VkRenderer::createTextureResources(RenderableObject& o, Textured& texture)
 
 		imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageBarrier_toTransfer.image = o.textureResources_.image_.image_;
+		imageBarrier_toTransfer.image = o.textureResources_->image_.image_;
 		imageBarrier_toTransfer.subresourceRange = range;
 
 		imageBarrier_toTransfer.srcAccessMask = 0;
@@ -1075,7 +1134,7 @@ void VkRenderer::createTextureResources(RenderableObject& o, Textured& texture)
 		copyRegion.imageSubresource.layerCount = 1;
 		copyRegion.imageExtent = extent;
 
-		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer_, o.textureResources_.image_.image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer_, o.textureResources_->image_.image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		//transition the image back into shader readable
 		VkImageMemoryBarrier toReadable = imageBarrier_toTransfer;
@@ -1089,13 +1148,13 @@ void VkRenderer::createTextureResources(RenderableObject& o, Textured& texture)
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	});
 
-	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, o.textureResources_.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, o.textureResources_->image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
 
-	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &o.textureResources_.view_)); //needs to be deleted
+	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &o.textureResources_->view_)); //needs to be deleted
 
 	VkSamplerCreateInfo samplerInfo = vkinit::sampler_create_info(VK_FILTER_NEAREST);
 
-	VK_CHECK(vkCreateSampler(logicalDevice_, &samplerInfo, nullptr, &o.textureResources_.sampler_));
+	VK_CHECK(vkCreateSampler(logicalDevice_, &samplerInfo, nullptr, &o.textureResources_->sampler_));
 
 	vmaDestroyBuffer(allocator_, stagingBuffer.buffer_, stagingBuffer.mem_);
 }

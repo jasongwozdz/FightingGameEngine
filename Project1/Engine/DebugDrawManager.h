@@ -3,8 +3,6 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "Scene/Componenets/PrimitiveMesh.h"
-#include "Renderer/RenderPassComponent.h"
 #include "Scene/Scene.h"
 
 class GraphicsPipeline;

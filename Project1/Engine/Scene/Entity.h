@@ -5,8 +5,15 @@ class Entity
 {
 public:
 	Entity(entt::registry& registry, std::string& name);
-	Entity(const Entity& e) = default;
-	virtual ~Entity();
+	~Entity();
+
+	Entity& operator=(const Entity& other)
+	{
+		enttId_ = other.enttId_;
+		registry_ = std::move(other.registry_);
+		name_ = other.name_;
+		return *this;
+	}
 
 	template<typename T, typename ...Args>
 	T& addComponent(Args&&... args)
@@ -18,6 +25,12 @@ public:
 	T& getComponent()
 	{
 		return registry_.get<T>(enttId_);
+	}
+
+	template<typename T>
+	void removeComponent()
+	{
+		registry_.remove<T>(enttId_);
 	}
 	
 private:

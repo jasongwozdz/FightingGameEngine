@@ -47,7 +47,8 @@ Animator::Animator(Animator&& other) :
 
 void Animator::setAnimation(int animationIndex)
 {
-	if (animationIndex < animations_.size() && animationIndex > -1)
+	int size = animations_.size();
+	if (animationIndex < size && animationIndex >= -1)
 	{
 		currentAnimation_ = animationIndex;
 		startTime_ = std::clock();
@@ -60,24 +61,7 @@ void Animator::setAnimation(int animationIndex)
 
 Animator::~Animator()
 {
-	//delete boneStructure_;
-}
-
-bool Animator::playAnimation(float currentTime, std::string animationName)
-{
-	int numAnimations = animations_.size();
-	for (int i = 0; i < numAnimations; i++)
-	{
-		if (std::strcmp(animations_[i].name_.c_str(), animationName.c_str()) == 0)
-		{
-			currentAnimation_ = i;
-			startTime_ = std::clock();
-			return true;
-		}
-	}
-	std::cout << "animation not found" << std::endl;
-	currentAnimation_ = 0;
-	return false;
+	delete boneStructure_;
 }
 
 void outputMatrixToFile(std::vector<aiMatrix4x4> boneTransforms)

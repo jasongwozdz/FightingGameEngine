@@ -40,10 +40,32 @@ void Transform::setScale(float scale)
 
 void Transform::applyTransformToMesh(Renderable& mesh)
 {
+	glm::mat4 finalTranform = calculateTransform();
+	if (parent)
+	{
+		finalTranform = parent->calculateTransform() * finalTranform;
+	}
+	
+	mesh.ubo().model = finalTranform;
+	return;
+}
+
+glm::vec3 Transform::getPosition()
+{
+	return *this;
+}
+
+void Transform::setPosition(glm::vec3 pos)
+{
+	x_ = pos.x;
+	y_ = pos.y;
+	z_ = pos.z;
+}
+
+glm::mat4 Transform::calculateTransform()
+{
 	glm::mat4 scale = glm::scale(glm::mat4(1.0f), { scaleX_, scaleY_, scaleZ_ });
 	glm::mat4 rotationAndScale = rotationMatrix_ * scale;
 	glm::mat4 trans = glm::translate(rotationAndScale, (glm::vec3)*this);
-	
-	mesh.ubo().model = trans;
-	return;
+	return trans;
 }

@@ -4,8 +4,6 @@
 Scene::Scene()
 {
 	renderer_ = VkRenderer::getSingletonPtr();
-
-
 }
 
 Scene::~Scene()
@@ -13,12 +11,25 @@ Scene::~Scene()
 	registry_.clear();
 }
 
+BaseCamera* Scene::getCurrentCamera()
+{
+	if (cameras_.size() > 0)
+	{
+		return  cameras_[currentCamera_];
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
 void Scene::update(float deltaTime)
 {
 	auto v = registry_.view<Transform, Renderable>();
 	for (auto entity : v)
 	{
-		auto [transform, mesh] = v.get<Transform, Renderable>(entity);
+		auto& transform  = v.get<Transform>(entity);
+		auto& mesh = v.get<Renderable>(entity);
 
 		transform.drawDebugGui();
 
@@ -44,7 +55,11 @@ void Scene::update(float deltaTime)
 
 			mesh.uploaded_ = true;
 		}
+		if(mesh.render_)
+			objectsToDraw_.push_back(&mesh);
 	}
+	renderer_->draw(objectsToDraw_);
+	objectsToDraw_.clear();
 }
 
 Entity& Scene::addEntity(std::string name)

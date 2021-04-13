@@ -5,8 +5,7 @@
 #include "Engine/EngineSettings.h"
 #include "DebugDrawManager.h"
 
-class Application
-{
+class Application{
 public:
 	Application();
 	virtual ~Application();
@@ -17,18 +16,18 @@ public:
 
 	void run();
 	// Singletons
-	ResourceManager* resourceManager;
-	VkRenderer* renderer;
-	EngineSettings* engineSettings;
-	Window* window;
+	ResourceManager* resourceManager_;
+	VkRenderer* renderer_;
+	EngineSettings* engineSettings_;
+	Window* window_;
 	Scene* scene_;
 	DebugDrawManager* debugManager_;
 
 private:
-	std::vector<std::function<void(Events::Event&)>> callbacks;
-	float endTime;
-	std::map<int, int> keyBinds;
-	bool drawUi;
+	std::vector<std::function<void(Events::Event&)>> callbacks_;
+	float endTime_;
+	std::map<int, int> keyBinds_;
+	bool drawUi_;
 	void onEvent(Events::Event& e);
 	void cleanup();
 };

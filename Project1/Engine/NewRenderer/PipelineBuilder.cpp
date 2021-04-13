@@ -4,7 +4,7 @@
 
 PipelineBuilder::PipelineResources* PipelineBuilder::createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout& layout, bool depthEnabled, bool cullingEnabled, bool isLine)
 {
-	PipelineBuilder::PipelineResources* retVals = new PipelineBuilder::PipelineResources;
+	PipelineBuilder::PipelineResources* retVals = new PipelineBuilder::PipelineResources(logicalDevice);
 
 	auto bindingDescription = Vertex::getBindingDescription();
 	auto attributeDescriptions = Vertex::getAttributeDescriptions();

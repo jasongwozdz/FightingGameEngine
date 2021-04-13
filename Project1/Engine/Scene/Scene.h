@@ -10,6 +10,7 @@
 #include <NewRenderer/VkRenderer.h>
 #include <NewRenderer/Textured.h>
 
+#define MAX_DRAWN_OBJECTS 200
 
 class Scene
 {
@@ -21,6 +22,7 @@ public:
 	entt::entity& getEntity(std::string name);
 	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
+	BaseCamera* getCurrentCamera();
 
 	//void each(std::function<void(entt::entity, entt::registry)>);
 	
@@ -50,6 +52,9 @@ private:
 
 	std::vector<BaseCamera*> cameras_;
 	int currentCamera_;
+
+	std::vector<Renderable*> objectsToDraw_;
+	int numObjectsToDraw_ = 0;
 
 	VkRenderer* renderer_;
 };

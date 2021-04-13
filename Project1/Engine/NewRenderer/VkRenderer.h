@@ -1,61 +1,28 @@
 #pragma once
-#include <Vector>
+#define GLFW_INCLUDE_VULKAN
+#include "Window.h"
+#include <vector>
 #include <map>
 #include <Singleton.h> 
-#include <NewRenderer/Renderable.h>
 #include <NewRenderer/Textured.h>
 #include <Window.h>
 #include <NewRenderer/PipelineBuilder.h>
-#include <libs/VulkanMemoryAllocator/vk_mem_alloc.h>
-#include <NewRenderer/VkTypes.h>
 #include <NewRenderer/UIInterface.h>
+#include "Renderable.h"
 
-enum PipelineTypes 
-{
-	BASIC_PIPELINE,
-	LINE_PIPELINE,
-	DEBUG_PIPELINE,
-	ANIMATION_PIPELINE,
-	NUM_PIPELINE_TYPES = 4
-};
-
-struct TextureResources
-{
-	VulkanImage image_;
-	VkImageView view_;
-	VkSampler sampler_;
-};
-
-struct RenderableObject
-{
-	VkBuffer vertexBuffer;
-	VmaAllocation vertexMem;
-
-	VkBuffer indexBuffer;
-	VmaAllocation indexMem;
-
-	std::vector<VkBuffer> uniformBuffer;
-	std::vector<VmaAllocation> uniformMem;
-
-	PipelineTypes pipelineType;
-
-	Renderable* renderable_;
-
-	VkDescriptorSetLayout descriptorLayout_;
-	std::vector<VkDescriptorSet> descriptorSets_;
-
-	TextureResources textureResources_;
-};
 
 class VkRenderer : Singleton<VkRenderer>
 {
 public:
-	void init(Window& window);
-	void draw();
+	VkRenderer(Window& window);
+	void init();
+	void draw(std::vector<Renderable*>& objectsToDraw);
 	void cleanup();
 	void uploadObject(Renderable* renderableObject);
 	void uploadObject(Renderable* renderableObject, Textured* texture, bool animated = false);
 	void prepareFrame();
+	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
+	void updateUniformBuffer(Renderable& mesh);
 
 	static VkRenderer& getSingleton();
 	static VkRenderer* getSingletonPtr();
@@ -70,6 +37,8 @@ public:
 	VkRenderPass renderPass_;
 
 private:
+	Window& window_;
+
 	UIInterface* ui_;
 
 	VkInstance instance_;
@@ -86,11 +55,11 @@ private:
 	VkCommandPool cmdPool_;
 	VkCommandBuffer cmdBuffer_;
 
-	VkRenderPass mainRenderPass_;
-
 	VkSwapchainKHR swapchain_;
 
 	VmaAllocator allocator_;
+
+	bool recreateSwapchain_;
 
 	std::vector<VkFramebuffer> frameBuffers_;
 	
@@ -114,7 +83,6 @@ private:
 	{
 		std::vector<VkImage> swapChainImages_;
 		std::vector<VkImageView> swapChainImageViews_;
-		std::vector<VkFramebuffer> swapChainFramebuffers_;
 		VkFormat imageFormat_;
 		int imageCount_;
 	}swapChainResources_;
@@ -123,11 +91,9 @@ private:
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
 
-	std::vector<RenderableObject> renderObjects_;
-
 	std::vector<PipelineBuilder::PipelineResources*> pipelines_;
 
-	std::map<PipelineTypes, std::vector<RenderableObject*>> pipelineMap_;
+	//std::map<PipelineTypes, std::vector<RenderableObject*>> pipelineMap_;
 
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
@@ -142,19 +108,21 @@ private:
 
 	void createSynchronizationResources();
 
-	void updateUniformBuffer(RenderableObject& mesh);
-
-	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex);
+	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw);
 
 	void initPipelines();
 
-	void createDescriptorSet(RenderableObject& object);
+	void createDescriptorSet(Renderable* object);
 
-	void createTextureResources(RenderableObject& o, Textured& texture);
+	void createTextureResources(Renderable& o, Textured& texture);
 
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	
 	std::vector<char> readShaderFile(const std::string& filename);
 
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
+
+	void recreateSwapchain();
+
+	void cleanupSwapchain();
 };

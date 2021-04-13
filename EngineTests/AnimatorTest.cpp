@@ -1,4 +1,5 @@
 #include "pch.h"
+#define VMA_IMPLEMENTATION
 #define GTEST_LANG_CXX11 1 //need to do this to get gtest to compile with visual studio 2017 https://stackoverflow.com/questions/42847103/stdtr1-with-visual-studio-2017
 #include "gtest/gtest.h"
 #include "../Project1/Engine/Scene/Componenets/Animator.h"
@@ -7,6 +8,7 @@
 #include <glm/gtx/matrix_interpolation.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include "../Project1/Engine/NewRenderer/VkRenderer.h"
 
 class AnimatorTestFixture : public ::testing::Test
 {

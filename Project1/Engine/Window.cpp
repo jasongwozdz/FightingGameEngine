@@ -2,20 +2,27 @@
 #include <iostream>
 #include "Window.h"
 #include "EngineSettings.h"
+#include "../Engine/libs/imgui/imgui_impl_glfw.h"
 
 Window::Window()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-	windowInfo.width = EngineSettings::getSingleton().getWindow_width();
-	windowInfo.height = EngineSettings::getSingleton().getWindow_height();
-	window = glfwCreateWindow(windowInfo.width, windowInfo.height, "Dog Game", nullptr, nullptr);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetWindowUserPointer(window, &windowInfo);
+	windowInfo_.width = EngineSettings::getSingleton().getWindow_width();
+	windowInfo_.height = EngineSettings::getSingleton().getWindow_height();
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Dog Game", nullptr, nullptr);
+	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetWindowUserPointer(window_, &windowInfo_);
 
-	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods)
+	glfwSetScrollCallback(window_, ImGui_ImplGlfw_ScrollCallback);
+
+	glfwSetCharCallback(window_, ImGui_ImplGlfw_CharCallback);
+
+	glfwSetKeyCallback(window_, [](GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
+		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
 		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
 		switch (action)
 		{
@@ -34,10 +41,11 @@ Window::Window()
 		}
 	});
 
-	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods)
+	glfwSetMouseButtonCallback(window_, [](GLFWwindow* window, int button, int action, int mods)
 	{
-		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
+		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
+		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
 		switch (action)
 		{
 			case GLFW_PRESS:
@@ -55,45 +63,55 @@ Window::Window()
 		}
 	});
 
-	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xPos, double yPos)
+	glfwSetCursorPosCallback(window_, [](GLFWwindow* window, double xPos, double yPos)
 	{
 		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
 
 		Events::MouseMoveEvent e(xPos, yPos);
 		info->callback(e);
 	});
+
+	glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* window, int width, int height)
+	{
+		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
+		info->width = width;
+		info->height = height;
+
+		Events::FrameBufferResizedEvent e(width, height);
+		info->callback(e);
+	});
 }
 
 Window::~Window()
 {
-	glfwDestroyWindow(window);
+	glfwDestroyWindow(window_);
 	glfwTerminate();
 }
 
 GLFWwindow* Window::getGLFWWindow()
 {
-	return window;
+	return window_;
 }
 
 void Window::setWindowWidth(float width)
 {
-	windowInfo.width = width;
+	windowInfo_.width = width;
 }
 
 void Window::setWindowHeight(float height)
 {
-	windowInfo.height = height;
+	windowInfo_.height = height;
 }
 
 void Window::setCursor(bool cursorEnabled)
 {
 	if (cursorEnabled)
 	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 	else
 	{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 }
 
@@ -104,5 +122,5 @@ void Window::onUpdate()
 
 void Window::setEventCallback(const std::function<void(Events::Event&)> f)
 {
-	windowInfo.callback = f;
+	windowInfo_.callback = f;
 }

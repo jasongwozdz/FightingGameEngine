@@ -67,6 +67,18 @@ public:
 
 	~Animator();
 
+	Animator& operator=(Animator&& other)
+	{
+		this->boneStructure_ = other.boneStructure_;
+		other.boneStructure_ = nullptr;
+		this->currentAnimation_ = (other.currentAnimation_);
+		this->animations_ = other.animations_;
+		this->globalInverseTransform_ = other.globalInverseTransform_;
+		this->boneTransforms_ = other.boneTransforms_;
+		this->localTime_ = other.localTime_;
+		return *this;
+	}
+
 	Animator& operator=(Animator const& other)
 	{
 		this->boneStructure_ = new BoneStructure(0);
@@ -78,8 +90,6 @@ public:
 		this->localTime_ = other.localTime_;
 		return *this;
 	}
-
-	bool playAnimation(float currentTime, std::string animationName);
 
 	void update(float currentTime, Renderable& renderable);
 

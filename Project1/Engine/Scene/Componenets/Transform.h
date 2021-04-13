@@ -6,6 +6,12 @@
 class Transform 
 {
 public:
+	Transform(float x, float y, float z);
+
+	Transform(glm::vec3 pos, Transform& parent);
+
+	Transform* parent = nullptr;
+
 	float x_ = 1.0f;
 	float y_ = 1.0f;
 	float z_ = 1.0f;
@@ -24,8 +30,6 @@ public:
 
 	float drawDebugGui_ = false;
 
-	Transform(float x, float y, float z);
-
 	Transform& operator +(const Transform& other)
 	{
 		x_ += other.x_;
@@ -43,6 +47,12 @@ public:
 
 	void drawDebugGui();
 
+	glm::mat4 calculateTransform();
+
 	void applyTransformToMesh(Renderable& mesh);
+
+	glm::vec3 getPosition();
+
+	void setPosition(glm::vec3 pos);
 };
 
