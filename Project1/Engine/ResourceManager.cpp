@@ -197,7 +197,10 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 
 void ResourceManager::recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure, int parentIndex)
 {
-	Joint j = { glm::transpose(glm::make_mat4(&node->mTransformation.a1)), node->mName.C_Str(), parentIndex };
+	Joint j;
+	j.invBindPose_ = glm::transpose(glm::make_mat4(&node->mTransformation.a1));
+	j.parent_ = parentIndex;
+	j.name_ = node->mName.C_Str();
 	boneStructure.boneInfo_.push_back(j);
 	int currentIndex = boneStructure.boneInfo_.size()-1;
 	aiNode** children = node->mChildren;
@@ -215,7 +218,10 @@ void ResourceManager::recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh,
 	{
 		std::string childName = children[i]->mName.C_Str();
 		
-		Joint j = {glm::transpose(glm::make_mat4(&children[i]->mTransformation.a1)), children[i]->mName.C_Str(), boneStructure.findBoneByBoneName(node->mName.C_Str())};
+		Joint j;
+		j.invBindPose_ = glm::transpose(glm::make_mat4(&children[i]->mTransformation.a1));
+		j.parent_ = boneStructure.findBoneByBoneName(node->mName.C_Str());
+		j.name_ = children[i]->mName.C_Str();
 
 		aiBone* childBone = findBoneName(childName, mesh->mBones, mesh->mNumBones);
 
@@ -272,7 +278,8 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		std::vector<BoneInfo> boneInfo;
 		std::vector<VertexBoneInfo> vertexBoneInfo;
 		std::vector<AnimationClip> animationClips;
-		BoneStructure* boneStructure = new BoneStructure(0);
+		BoneStructure boneStructure(0);
+		//BoneStructure* boneStructure = new BoneStructure(0);
 
 		const aiScene* scene = importer.ReadFile(filePath
 			.c_str(), 0);
@@ -289,8 +296,8 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 		{
 			aiMesh* pAiMesh = scene->mMeshes[i];
 
-			populateBoneStructure(scene->mRootNode, pAiMesh, *boneStructure);
-			populateAnimationClips(scene->mAnimations, scene->mNumAnimations, *boneStructure, animationClips);
+			populateBoneStructure(scene->mRootNode, pAiMesh, boneStructure);
+			populateAnimationClips(scene->mAnimations, scene->mNumAnimations, boneStructure, animationClips);
 			for (uint32_t j = 0; j < pAiMesh->mNumBones; ++j)
 			{
 				aiBone* currBone = pAiMesh->mBones[j];
@@ -299,8 +306,8 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 				const uint32_t numWeights = currBone->mNumWeights;
 				//add boneIDs/weights for each vertex 
 				std::string boneNameS = std::string(currBone->mName.C_Str());
-				int boneIndex = boneStructure->findBoneByBoneName(boneNameS);
-				boneStructure->boneInfo_[boneIndex].offset_ = glm::transpose(glm::make_mat4(&currBone->mOffsetMatrix.a1));
+				int boneIndex = boneStructure.findBoneByBoneName(boneNameS);
+				boneStructure.boneInfo_[boneIndex].offset_ = glm::transpose(glm::make_mat4(&currBone->mOffsetMatrix.a1));
 				for (uint32_t k = 0; k < numWeights; ++k)
 				{
 					uint32_t vertexIdx = currBone->mWeights[k].mVertexId + vertexOffset;
@@ -347,10 +354,12 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 			}
 		}
 
+		boneStructures_.push_back(boneStructure);
+
 		vals = new AnimationReturnVals();
 		vals->vertices = vertices;
 		vals->indices = indices;
-		vals->boneStructure = boneStructure;
+		vals->boneStructIndex = boneStructures_.size()-1;
 		vals->animations = animationClips;
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
 	}

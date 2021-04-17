@@ -4,6 +4,7 @@
 #include "CameraController.h"
 #include "FightingGame/InputHandler.h"
 #include "FightingGame/FighterFactory.h"
+#include "FightingGame/FighterCamera.h"
 
 class Sandbox : public Application
 {
@@ -12,10 +13,14 @@ public:
 	virtual void onUpdate(float deltaTime);
 	virtual void onStartup();
 private:
+	BaseCamera* camera_;
 	CameraController* cameraController_;
+	FighterCamera* fighterCamera_;
 	InputHandler* inputHandler_;
 	FighterFactory* fighterFactory_;
 	Fighter* fighter_;
+	Fighter* fighter2_;
+	bool cursor_ = false;
 
 	bool drawDebug;
 	std::vector<Entity> entities_;

@@ -22,54 +22,38 @@ Sandbox::~Sandbox()
 
 void Sandbox::initScene()
 {
-	
+	debugManager_->drawGrid({ 255, 255, 255 }, true);
 	std::string modelPath = "./Models/goblin.dae";
 	std::string texturePath = "./Textures/viking_room.png";
 	fighter_ = fighterFactory_->createFighter(modelPath, texturePath);
+	fighter_->setPosition({0.0f, 10.0f, 0.0f});
+	fighter_->controllable_ = true;
+	fighter2_ = fighterFactory_->createFighter(modelPath, texturePath);
+	fighter2_->controllable_ = true;
+	fighter2_->setPosition({0.0f, -10.0f, 0.0f});
+	fighter2_->flipSide();
+
+	//modelPath = "./Models/Viking_room.obj";
 	//ModelReturnVals vals = resourceManager_->loadObjFile(modelPath);
 	//TextureReturnVals texVals = resourceManager_->loadTextureFile(texturePath);
-
-
 	//Entity& e = scene_->addEntity("Temp");
-	//Transform& t = e.addComponent<Transform>( 1.0f,0.0f,0.0f );
-	//t.drawDebugGui_ = true;
-	//t.setScale(0.5f);
+	//Transform& t = e.addComponent<Transform>(1.0f, 0.0f, 0.0f);
+	//t.flipScale();
 	//Renderable& r = e.addComponent<Renderable>(vals.vertices, vals.indices, true, "Viking_Room");
 	//Textured& tex = e.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
-	//
-	//entities_.push_back(e);
 
-	//std::string goblinPath = "./Models/goblin.dae";
-	//std::string goblinTexturePath = "./Textures/missingTexture.jpg";
-	//texVals = resourceManager_->loadTextureFile(goblinTexturePath);
-	//Entity& goblin = scene_->addEntity("goblin");
-	//AnimationReturnVals retVals = resourceManager_->loadAnimationFile(goblinPath);
-	//Renderable& gRenderable = goblin.addComponent<Renderable>(retVals.vertices, retVals.indices, true, "goblin");
-	//Transform& goblinT = goblin.addComponent<Transform>( 1.0f,0.0f,0.0f );
-	//goblin.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
-	//goblinT.setScale(0.001f);
-	////goblinT.drawDebugGui_ = true;
-	//goblin.addComponent<Animator>(retVals.animations, retVals.boneStructure).setAnimation(0);
+	camera_ = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
+	BaseCamera* debugCamera = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
+	camera_->drawDebug_ = true;
 
-	//entities_.push_back(goblin);
+	cameraController_ = new CameraController(*debugCamera);
 
+	fighterCamera_ = new FighterCamera(camera_, fighter_, fighter2_);
 
-	//Entity& goblin2 = scene_->addEntity("goblin2");
-	//Renderable& gRenderable2 = goblin2.addComponent<Renderable>(retVals.vertices, retVals.indices, true, "goblin2");
-	//Transform& t2 = goblin2.addComponent<Transform>(5000.0f,0.0f,0.0f );
-	//goblin2.addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Viking_Room");
-	//t2.setScale(0.001f);
-	////BoneStructure& gBones2 = goblin2.addComponent<BoneStructure>(retVals.boneMapping, retVals.boneInfo);
-	//goblin2.addComponent<AnibaseCameramator>(retVals.animations, retVals.boneStructure).setAnimation(0);
+	scene_->addCamera(camera_);
+	scene_->addCamera(debugCamera);
 
-	//entities_.push_back(goblin2);
-	BaseCamera* cam = new BaseCamera({ 1.0f, 3.0f, 1.0f }, { -1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
-
-	cameraController_ = new CameraController(*cam);
-
-	scene_->addCamera(cam);
-
-	debugManager_->drawGrid({ 255, 255, 255 }, true);
+	debugManager_->addPoint({ 0, 0, 0 }, { 1, 1, 1 }, 0, true);
 }
 
 void Sandbox::handleMouseClick(Events::MousePressedEvent& e)
@@ -82,10 +66,26 @@ void Sandbox::handleKeyButtonDown(Events::KeyPressedEvent& e)
 	{
 	case 256: //esc
 		drawDebug = !drawDebug;
-		setCursor(drawDebug);
+		if (drawDebug)
+		{
+			scene_->setCamera(1);
+			cameraController_->controllable_ = !cursor_;
+			fighter_->controllable_ = false;
+			fighter2_->controllable_ = false;
+		}
+		else
+		{
+			scene_->setCamera(0);
+			cameraController_->controllable_ = false;
+			fighter_->controllable_ = true;
+			fighter2_->controllable_ = true;
+		}
 		break;
 
 	case 259: //backspace
+		cursor_ = !cursor_;
+		setCursor(cursor_);
+		cameraController_->controllable_ = !cursor_;
 		break;
 	}
 
@@ -95,9 +95,12 @@ void Sandbox::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher d(e);
 	d.dispatch<Events::KeyPressedEvent>(std::bind(&Sandbox::handleKeyButtonDown, this, std::placeholders::_1));
-	d.dispatch<Events::KeyPressedEvent>(std::bind(&CameraController::handleKeyPressed, cameraController_, std::placeholders::_1));
-	d.dispatch<Events::KeyReleasedEvent>(std::bind(&CameraController::handleKeyReleased, cameraController_, std::placeholders::_1));
-	d.dispatch<Events::MouseMoveEvent>(std::bind(&CameraController::handleMouseMoved, cameraController_, std::placeholders::_1));
+	if (cameraController_)
+	{
+		d.dispatch<Events::KeyPressedEvent>(std::bind(&CameraController::handleKeyPressed, cameraController_, std::placeholders::_1));
+		d.dispatch<Events::KeyReleasedEvent>(std::bind(&CameraController::handleKeyReleased, cameraController_, std::placeholders::_1));
+		d.dispatch<Events::MouseMoveEvent>(std::bind(&CameraController::handleMouseMoved, cameraController_, std::placeholders::_1));
+	}
 
 	d.dispatch<Events::KeyPressedEvent>(std::bind(&InputHandler::handleInputPressed, inputHandler_, std::placeholders::_1));
 	d.dispatch<Events::KeyReleasedEvent>(std::bind(&InputHandler::handleInputReleased, inputHandler_, std::placeholders::_1));
@@ -113,8 +116,16 @@ void Sandbox::onStartup()
 
 void Sandbox::onUpdate(float deltaTime)
 {
-	fighter_->onUpdate(deltaTime);
-	cameraController_->onUpdate(deltaTime);
+	if(fighter_)
+		fighter_->onUpdate(deltaTime);
+	if(fighter2_)
+		fighter2_->onUpdate(deltaTime);
+	if (fighterCamera_ && !drawDebug)
+		fighterCamera_->onUpdate(deltaTime);
+	if(cameraController_)
+		cameraController_->onUpdate(deltaTime);
+	if (camera_)
+		camera_->update(deltaTime);
 }
 
 Application* createApplication()

@@ -18,9 +18,9 @@ Fighter* FighterFactory::createFighter(const std::string& modelPath, const std::
 	Transform& transform = entity.addComponent<Transform>( 1.0f, 1.0f, 1.0f );
 	transform.setScale(0.001f);
 
-	Animator& animator = entity.addComponent<Animator>(ret.animations, ret.boneStructure);
+	Animator& animator = entity.addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation(-1);
 
-	Fighter* fighter = new Fighter(entity, transform, animator, inputHandler_);
+	Fighter* fighter = new Fighter(entity, inputHandler_);
 	return fighter;
 }

@@ -21,6 +21,12 @@ public:
 	void onUpdate();
 	void setEventCallback(const std::function<void(Events::Event&)> e);
 	void setWindowResizeCallback(const std::function<void(GLFWwindow* window, int width, int height)> fn);
+
+	static float getTime()
+	{
+		return glfwGetTime();
+	}
+
 	WindowInfo windowInfo_;
 private:
 	GLFWwindow* window_;

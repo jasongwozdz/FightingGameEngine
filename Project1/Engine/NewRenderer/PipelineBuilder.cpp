@@ -100,7 +100,7 @@ PipelineBuilder::PipelineResources* PipelineBuilder::createPipeline(VkDevice& lo
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState =  depthEnabled ? &depthStencil : nullptr;
+	pipelineInfo.pDepthStencilState =  &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.layout = retVals->pipelineLayout_;
 	pipelineInfo.renderPass = renderPass;

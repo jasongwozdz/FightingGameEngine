@@ -1,22 +1,11 @@
 #include "Renderable.h"
 
-Renderable::Renderable()
-{
-	std::cout << "JASON: Constructor2" << std::endl;
-	ubo_ = new Ubo;
-	textureResources_ = new TextureResources;
-}
-
 Renderable::Renderable(std::vector<Vertex> vertices, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName) :
 	vertices_(vertices), indices_(indices), depthEnabled_(depthEnabled), entityName_(entityName)
 {
-	std::cout << "JASON: constructer 2" << std::endl;
 	uploaded_ = false;
 	delete_ = false;
 	depthEnabled_ = true;
-	draw_ = true;
-	ubo_ = new Ubo;
-	textureResources_ = new TextureResources;
 }
 
 Renderable::Renderable(Renderable&& other) :
@@ -26,7 +15,6 @@ Renderable::Renderable(Renderable&& other) :
 	uploaded_(other.uploaded_),
 	delete_(other.delete_),
 	depthEnabled_(other.depthEnabled_),
-	draw_(other.draw_),
 	vertexBuffer_(other.vertexBuffer_),
 	vertexMem_(other.vertexMem_),
 	indexBuffer_(other.indexBuffer_),
@@ -38,7 +26,8 @@ Renderable::Renderable(Renderable&& other) :
 	descriptorLayout_(other.descriptorLayout_),
 	descriptorSets_(other.descriptorSets_),
 	allocator_(other.allocator_),
-	logicalDevice_(other.logicalDevice_)
+	logicalDevice_(other.logicalDevice_),
+	isLine_(other.isLine_)
 {
 	std::cout << "JASON: moved" << std::endl;
 	other.vertexBuffer_ = nullptr;
@@ -56,9 +45,7 @@ Renderable::Renderable(Renderable&& other) :
 		other.descriptorSets_[i] = nullptr;
 	}
 	textureResources_ = other.textureResources_;
-	other.textureResources_ = nullptr;
 	ubo_ = other.ubo_;
-	other.ubo_ = nullptr;
 }
 
 Renderable::Renderable(const Renderable& other) :
@@ -68,7 +55,6 @@ Renderable::Renderable(const Renderable& other) :
 	uploaded_(other.uploaded_),
 	delete_(other.delete_),
 	depthEnabled_(other.depthEnabled_),
-	draw_(other.draw_),
 	vertexBuffer_(other.vertexBuffer_),
 	vertexMem_(other.vertexMem_),
 	indexBuffer_(other.indexBuffer_),
@@ -80,13 +66,12 @@ Renderable::Renderable(const Renderable& other) :
 	descriptorLayout_(other.descriptorLayout_),
 	descriptorSets_(other.descriptorSets_),
 	allocator_(other.allocator_),
-	logicalDevice_(other.logicalDevice_)
+	logicalDevice_(other.logicalDevice_),
+	isLine_(other.isLine_)
 {
 	std::cout << "Jason copied" << std::endl;
-	textureResources_ = new TextureResources;
-	memcpy(textureResources_, other.textureResources_, sizeof(TextureResources));
-	ubo_ = new Ubo;
-	memcpy(ubo_, other.ubo_, sizeof(Ubo));
+	textureResources_ = other.textureResources_;
+	ubo_ = other.ubo_;
 }
 
 Renderable::~Renderable()
@@ -95,13 +80,6 @@ Renderable::~Renderable()
 	{
 		deleteResources(allocator_, logicalDevice_);
 	}
-	delete ubo_;
-	delete textureResources_;
-}
-
-Ubo& Renderable::ubo()
-{
-	return *ubo_;
 }
 
 void Renderable::deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice)

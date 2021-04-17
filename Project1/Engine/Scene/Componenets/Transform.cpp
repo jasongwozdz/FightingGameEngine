@@ -3,8 +3,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-Transform::Transform(float x, float y, float z)
-	: x_(x), y_(y), z_(z){}
+Transform::Transform(float x, float y, float z) : 
+	x_(x), y_(y), z_(z){}
+
+Transform::Transform(glm::vec3 pos) :
+	x_(pos.x), y_(pos.y), z_(pos.z){}
 
 void Transform::drawDebugGui()
 {
@@ -14,21 +17,23 @@ void Transform::drawDebugGui()
 		ImGui::InputFloat("x", &x_);
 		ImGui::InputFloat("y", &y_);
 		ImGui::InputFloat("z", &z_);
-		//ImGui::SliderFloat("x", &x_, 0.0f, 100.0f);
-		//ImGui::SliderFloat("y", &y_, 0.0f, 100.0f);
-		//ImGui::SliderFloat("z", &z_, 0.0f, 100.0f);
 		ImGui::InputFloat("quat x", &quaternion_.x);
 		ImGui::InputFloat("quat y", &quaternion_.y);
 		ImGui::InputFloat("quat z", &quaternion_.z);
 		ImGui::InputFloat("quat w", &quaternion_.w);
-		glm::quat normalizeQuat = glm::normalize(quaternion_);
-		rotationMatrix_ = glm::toMat4(normalizeQuat);
 
 		ImGui::InputFloat("scale", &scaleX_);
 		scaleY_ = scaleX_;
 		scaleZ_ = scaleX_;
 		ImGui::End();
 	}
+}
+
+void Transform::flipScale()
+{
+	scaleX_ *= -1;
+	scaleY_ *= -1;
+	scaleZ_ *= -1;
 }
 
 void Transform::setScale(float scale)
@@ -41,12 +46,8 @@ void Transform::setScale(float scale)
 void Transform::applyTransformToMesh(Renderable& mesh)
 {
 	glm::mat4 finalTranform = calculateTransform();
-	if (parent)
-	{
-		finalTranform = parent->calculateTransform() * finalTranform;
-	}
 	
-	mesh.ubo().model = finalTranform;
+	mesh.ubo_.model = finalTranform;
 	return;
 }
 
@@ -64,8 +65,14 @@ void Transform::setPosition(glm::vec3 pos)
 
 glm::mat4 Transform::calculateTransform()
 {
-	glm::mat4 scale = glm::scale(glm::mat4(1.0f), { scaleX_, scaleY_, scaleZ_ });
-	glm::mat4 rotationAndScale = rotationMatrix_ * scale;
-	glm::mat4 trans = glm::translate(rotationAndScale, (glm::vec3)*this);
-	return trans;
+	glm::mat4 trans = glm::translate(glm::mat4(1.0f), (glm::vec3)*this);
+	glm::mat4 rotationTrans = glm::toMat4(glm::normalize(quaternion_)) * trans;
+	glm::mat4 rotationTransScale = glm::scale(rotationTrans, { scaleX_, scaleY_, scaleZ_ });
+
+	return rotationTransScale;
+}
+
+void applyAxisAngleRotation(float rotation, glm::vec3 axis)
+{
+
 }

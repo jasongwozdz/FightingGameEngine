@@ -1,9 +1,24 @@
 #include "Fighter.h"
 #include "ResourceManager.h"
 
-Fighter::Fighter(Entity& entity, Transform& transform, Animator& animator, InputHandler& inputHandler) :
-	entity_(entity), transform_(transform), animator_(animator), inputHandler_(inputHandler)
+Fighter::Fighter(Entity& entity, InputHandler& inputHandler) :
+	entity_(entity), inputHandler_(inputHandler)
 {}
+
+void Fighter::setPosition(glm::vec3 pos)
+{
+	entity_.getComponent<Transform>().setPosition(pos);
+}
+
+void Fighter::flipSide()
+{
+	entity_.getComponent<Transform>().scaleX_ *= -1;
+	entity_.getComponent<Transform>().scaleY_ *= -1;
+	entity_.getComponent<Transform>().scaleZ_ *= -1;
+	glm::quat rot = entity_.getComponent<Transform>().quaternion_;
+	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
+	entity_.getComponent<Transform>().quaternion_ = flipRot * rot;
+}
 
 void Fighter::updateTransform()
 {
@@ -14,8 +29,6 @@ void Fighter::updateTransform()
 	glm::vec3 currentPos = transform.getPosition();
 
 	currentPos += trans;
-
-	std::cout << "Z: " << currentPos.z << std::endl;
 
 	transform.setPosition(currentPos);
 }
@@ -66,10 +79,10 @@ void Fighter::enterState(FighterState state)
 	switch (state)
 	{
 	case FighterState::idle:
-		animator_.setAnimation(-1);
+		entity_.getComponent<Animator>().setAnimation(-1);
 		break;
 	case FighterState::walking:
-		animator_.setAnimation(0);
+		entity_.getComponent<Animator>().setAnimation(0);
 		break;
 	}
 }

@@ -418,7 +418,7 @@ void VkRenderer::uploadObject(Renderable* mesh)
 	vmaUnmapMemory(allocator_, mesh->indexMem_);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(mesh->ubo());
+	size_t uniformBufferSize = sizeof(mesh->ubo_);
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -487,7 +487,7 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 	vmaUnmapMemory(allocator_, mesh->indexMem_);
 
 	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(mesh->ubo());
+	size_t uniformBufferSize = sizeof(mesh->ubo_);
 	VkBufferCreateInfo uBufferInfo{};
 	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	uBufferInfo.pNext = nullptr;
@@ -531,12 +531,12 @@ void VkRenderer::createDescriptorSet(Renderable* o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o->ubo());
+				bufferInfo.range = sizeof(o->ubo_);
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = o->textureResources_->view_;
-				imageInfo.sampler = o->textureResources_->sampler_;
+				imageInfo.imageView = o->textureResources_.view_;
+				imageInfo.sampler = o->textureResources_.sampler_;
 
 				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -579,7 +579,7 @@ void VkRenderer::createDescriptorSet(Renderable* o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o->ubo());
+				bufferInfo.range = sizeof(o->ubo_);
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
@@ -614,7 +614,7 @@ void VkRenderer::createDescriptorSet(Renderable* o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o->ubo());
+				bufferInfo.range = sizeof(o->ubo_);
 
 				std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
@@ -651,12 +651,12 @@ void VkRenderer::createDescriptorSet(Renderable* o)
 				VkDescriptorBufferInfo bufferInfo{};
 				bufferInfo.buffer = o->uniformBuffer_[i];
 				bufferInfo.offset = 0;
-				bufferInfo.range = sizeof(o->ubo());
+				bufferInfo.range = sizeof(o->ubo_);
 
 				VkDescriptorImageInfo imageInfo{};
 				imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				imageInfo.imageView = o->textureResources_->view_;
-				imageInfo.sampler = o->textureResources_->sampler_;
+				imageInfo.imageView = o->textureResources_.view_;
+				imageInfo.sampler = o->textureResources_.sampler_;
 
 				std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
@@ -811,7 +811,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::LINE_PIPELINE], true, true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::LINE_PIPELINE], true, false, true);
 
 		pipelines_[PipelineTypes::LINE_PIPELINE] = r;
 	}
@@ -875,13 +875,6 @@ void VkRenderer::initPipelines()
 		samplerLayoutBinding.pImmutableSamplers = nullptr;
 		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-		//VkDescriptorSetLayoutBinding bonesLayoutBinding{};
-		//uboLayoutBinding.binding = 3;
-		//uboLayoutBinding.descriptorCount = 1;
-		//uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		//uboLayoutBinding.pImmutableSamplers = nullptr;
-		//uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
 		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding};
 		VkDescriptorSetLayoutCreateInfo layoutInfo{};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -910,7 +903,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], true, false);
 
 		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
 	}
@@ -919,13 +912,13 @@ void VkRenderer::initPipelines()
 //void VkRenderer::updateUniformBuffer(RenderableObject& o)
 void VkRenderer::updateUniformBuffer(Renderable& renderable)
 {
-	renderable.ubo().proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	renderable.ubo().proj[1][1] *= -1;
+	renderable.ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+	renderable.ubo_.proj[1][1] *= -1;
 
 	void *data;
 	size_t y = sizeof(Ubo);
 	vmaMapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_], &data);
-	memcpy(data, &renderable.ubo(), sizeof(Ubo));
+	memcpy(data, &renderable.ubo_, sizeof(Ubo));
 	vmaUnmapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_]);
 }
 
@@ -1077,7 +1070,7 @@ void VkRenderer::createTextureResources(Renderable& o, Textured& texture)
 	VmaAllocationCreateInfo allocInfo = {};
 	allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-	vmaCreateImage(allocator_, &textureInfo, &allocInfo, &o.textureResources_->image_.image_, &o.textureResources_->image_.mem_, nullptr);
+	vmaCreateImage(allocator_, &textureInfo, &allocInfo, &o.textureResources_.image_.image_, &o.textureResources_.image_.mem_, nullptr);
 
 	VmaAllocationCreateInfo vmaInfo{};
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
@@ -1114,7 +1107,7 @@ void VkRenderer::createTextureResources(Renderable& o, Textured& texture)
 
 		imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageBarrier_toTransfer.image = o.textureResources_->image_.image_;
+		imageBarrier_toTransfer.image = o.textureResources_.image_.image_;
 		imageBarrier_toTransfer.subresourceRange = range;
 
 		imageBarrier_toTransfer.srcAccessMask = 0;
@@ -1134,7 +1127,7 @@ void VkRenderer::createTextureResources(Renderable& o, Textured& texture)
 		copyRegion.imageSubresource.layerCount = 1;
 		copyRegion.imageExtent = extent;
 
-		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer_, o.textureResources_->image_.image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer_, o.textureResources_.image_.image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		//transition the image back into shader readable
 		VkImageMemoryBarrier toReadable = imageBarrier_toTransfer;
@@ -1148,13 +1141,13 @@ void VkRenderer::createTextureResources(Renderable& o, Textured& texture)
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	});
 
-	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, o.textureResources_->image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, o.textureResources_.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
 
-	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &o.textureResources_->view_)); //needs to be deleted
+	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &o.textureResources_.view_)); //needs to be deleted
 
 	VkSamplerCreateInfo samplerInfo = vkinit::sampler_create_info(VK_FILTER_NEAREST);
 
-	VK_CHECK(vkCreateSampler(logicalDevice_, &samplerInfo, nullptr, &o.textureResources_->sampler_));
+	VK_CHECK(vkCreateSampler(logicalDevice_, &samplerInfo, nullptr, &o.textureResources_.sampler_));
 
 	vmaDestroyBuffer(allocator_, stagingBuffer.buffer_, stagingBuffer.mem_);
 }

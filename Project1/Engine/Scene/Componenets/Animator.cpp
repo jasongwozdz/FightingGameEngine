@@ -7,18 +7,19 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/matrix_interpolation.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include "ResourceManager.h"
+#include "libs/imgui/implot/implot.h"
 
-Animator::Animator(std::vector<AnimationClip> animations, BoneStructure* boneStructure) :
-	animations_(animations)
+Animator::Animator(std::vector<AnimationClip> animations, int boneStructureIndex) :
+	animations_(animations), boneStructureIndex_(boneStructureIndex), resourceManager_(ResourceManager::getSingleton())
 {
-	boneStructure_ = new BoneStructure(0);
-	memcpy(boneStructure_, boneStructure, sizeof(*boneStructure));
-	globalInverseTransform_ = boneStructure->globalInverseTransform_;
+	globalInverseTransform_ = resourceManager_.boneStructures_[boneStructureIndex_].globalInverseTransform_;
+;
 }
 
 //CONSTRUCTOR for testing interpolation
 Animator::Animator(std::vector<AnimationClip> animations ):
-	animations_(animations)
+	animations_(animations), resourceManager_(ResourceManager::getSingleton())
 {
 }
 
@@ -27,10 +28,11 @@ Animator::Animator(const Animator& other) :
 	animations_(other.animations_),
 	globalInverseTransform_(other.globalInverseTransform_),
 	localTime_(other.localTime_),
-	boneTransforms_(other.boneTransforms_)
+	boneTransforms_(other.boneTransforms_),
+	resourceManager_(other.resourceManager_)
 {
-	boneStructure_ = new BoneStructure(0);
-	memcpy(boneStructure_, other.boneStructure_, sizeof(*other.boneStructure_));
+	std::cout << "Animator: Copy constructor" << std::endl;
+	boneStructureIndex_ = other.boneStructureIndex_;
 }
 
 Animator::Animator(Animator&& other) :
@@ -38,11 +40,11 @@ Animator::Animator(Animator&& other) :
 	boneTransforms_(other.boneTransforms_),
 	animations_(other.animations_),
 	globalInverseTransform_(other.globalInverseTransform_),
-	localTime_(other.localTime_)
+	localTime_(other.localTime_),
+	resourceManager_(other.resourceManager_)
 {
-
-	this->boneStructure_ = other.boneStructure_;
-	other.boneStructure_ = nullptr;
+	std::cout << "Animator: Move constructor" << std::endl;
+	boneStructureIndex_ = other.boneStructureIndex_;
 }
 
 void Animator::setAnimation(int animationIndex)
@@ -61,7 +63,7 @@ void Animator::setAnimation(int animationIndex)
 
 Animator::~Animator()
 {
-	delete boneStructure_;
+	//delete boneStructure_;
 }
 
 void outputMatrixToFile(std::vector<aiMatrix4x4> boneTransforms)
@@ -84,11 +86,11 @@ void Animator::setPose(std::vector<glm::mat4> pose, Renderable& renderable)
 {
 	for (int i = 0; i < pose.size(); ++i)
 	{
-		renderable.ubo().bones[i] =  pose[i];
+		renderable.ubo_.bones[i] =  pose[i];
 	}
 	for (size_t i = MAX_BONES - (MAX_BONES - pose.size()); i < MAX_BONES; i++)
 	{
-		renderable.ubo().bones[i] = glm::mat4(1.0f);
+		renderable.ubo_.bones[i] = glm::mat4(1.0f);
 	}
 }
 
@@ -99,34 +101,62 @@ void Animator::update(float currentTime, Renderable& renderable)
 
 	std::vector<glm::mat4> globalTransforms;
 
-	glm::mat4 globalTransform = boneStructure_->boneInfo_[0].invBindPose_;
+	const BoneStructure& boneStructure_ = resourceManager_.boneStructures_[boneStructureIndex_];
+
+	glm::mat4 globalTransform = boneStructure_.boneInfo_[0].invBindPose_;
+
+	int frameIndex = 0;
 
 	if (currentAnimation_ != -1)
 	{
 		AnimationClip clip = animations_[currentAnimation_];
 
+		for (int i = 0; i < clip.positions_[1].size() - 1; i++)
+		{
+			if (clip.positions_[1][i + 1].time_ > localTime_)
+			{
+				frameIndex = i;
+				break;
+			}
+		}
+
 		if (clip.isLooping_)
 			localTime_ = fmod(((currentTime - startTime_)*clip.playbackRate_), clip.duration_);
 		else
 			localTime_ = std::clamp(((currentTime - startTime_)*clip.playbackRate_), 0.0f, clip.duration_);
-
-		if (boneStructure_->boneInfo_[0].animated_)
-			globalTransform = interpolateTransforms(1, clip);
+		if (boneStructure_.boneInfo_[0].animated_)
+			globalTransform = interpolateTransforms(1, clip, frameIndex);
 	}
+
+#define DEBUG 0
+#if DEBUG == 1
+	if (ImGui::Begin("Animator Debug"))
+	{
+		debugScrollingBuffer_.add( currentTime, localTime_ );
+
+		ImPlot::SetNextPlotLimitsX(currentTime - 3000.0f, currentTime, ImGuiCond_Always);
+		if (ImPlot::BeginPlot("AnimatorTiminig", "time", "LocalTime"))
+		{
+			ImPlot::PlotLine("localTime", debugScrollingBuffer_.bufferX.data(), debugScrollingBuffer_.bufferY.data(), debugScrollingBuffer_.bufferX.size());
+			ImPlot::EndPlot();
+		}
+		ImGui::End();
+	}
+#endif
 
 	globalTransforms.push_back(globalTransform);
 	
-	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_->boneInfo_[0].offset_); //model -> joint space
+	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_.boneInfo_[0].offset_); //model -> joint space
 
 	glm::mat4 parent(1.0f);
 	//get global positions of each joint
-	for (int i = 1; i < boneStructure_->boneInfo_.size()-1; i++)
+	for (int i = 1; i < boneStructure_.boneInfo_.size()-1; i++)
 	{
-		glm::mat4 currentPose(boneStructure_->boneInfo_[i].invBindPose_ );
-		if (currentAnimation_ != -1 && boneStructure_->boneInfo_[i].animated_)
-			currentPose = interpolateTransforms(i, animations_[currentAnimation_]);
+		glm::mat4 currentPose(boneStructure_.boneInfo_[i].invBindPose_ );
+		if (currentAnimation_ != -1 && boneStructure_.boneInfo_[i].animated_)
+			currentPose = interpolateTransforms(i, animations_[currentAnimation_], frameIndex);
 
-		int parentIndex = boneStructure_->boneInfo_[i].parent_;
+		int parentIndex = boneStructure_.boneInfo_[i].parent_;
 		if (parentIndex < finalTransform.size())
 		{
 			parent = globalTransforms[parentIndex];
@@ -141,9 +171,8 @@ void Animator::update(float currentTime, Renderable& renderable)
 
 		globalTransforms.push_back(globalTransform);
 
-		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_->boneInfo_[i].offset_);
+		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_.boneInfo_[i].offset_);
 	}
-
 
 	setPose(finalTransform, renderable);
 }
@@ -157,44 +186,37 @@ glm::vec3 interpolateVec(glm::vec3 a, glm::vec3 b, float time)
 	return { x, y, z };
 }
 
-glm::mat4 Animator::interpolateTransforms(int jointIndex, AnimationClip& clip)
+glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex)
 {
 	glm::mat4 pos;
 	glm::mat4 rotation;
 	glm::mat4 scale;
 
-	int frameIndex = 0;
-	for (int i = 0; i < clip.positions_[jointIndex].size() - 1; i++)
-	{
-		if (clip.positions_[jointIndex][i + 1].time_ > localTime_)
-		{
-			frameIndex = i;
-			break;
-		}
-	}
 
-KeyPosition startPos = clip.positions_[jointIndex][frameIndex];
+	KeyPosition startPos = clip.positions_[jointIndex][frameIndex];
 	KeyPosition endPos = clip.positions_[jointIndex][frameIndex + 1];
 
-	for (int i = 0; i < clip.scale_[jointIndex].size() - 1; i++)
-	{
-		if (clip.scale_[jointIndex][i + 1].time_ > localTime_)
-		{
-			frameIndex = i;
-			break;
-		}
-	}
+	//for (int i = 0; i < clip.scale_[jointIndex].size() - 1; i++)
+	//{
+	//	if (clip.scale_[jointIndex][i + 1].time_ > localTime_)
+	//	{
+	//		frameIndex = i;
+	//		break;
+	//	}
+	//}
+
 	KeyScale startScale = clip.scale_[jointIndex][frameIndex];
 	KeyScale endScale = clip.scale_[jointIndex][frameIndex+1];
 
-	for (int i = 0; i < clip.rotations_[jointIndex].size() - 1; i++)
-	{
-		if (clip.rotations_[jointIndex][i + 1].time_ > localTime_)
-		{
-			frameIndex = i;
-			break;
-		}
-	}
+	//for (int i = 0; i < clip.rotations_[jointIndex].size() - 1; i++)
+	//{
+	//	if (clip.rotations_[jointIndex][i + 1].time_ > localTime_)
+	//	{
+	//		frameIndex = i;
+	//		break;
+	//	}
+	//}
+
 	KeyRotation startRot = clip.rotations_[jointIndex][frameIndex];
 	KeyRotation endRot = clip.rotations_[jointIndex][frameIndex+1];
 	

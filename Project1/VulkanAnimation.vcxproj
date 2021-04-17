@@ -119,6 +119,7 @@
       <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TargetMachine>MachineX64</TargetMachine>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -138,6 +139,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
@@ -217,6 +219,9 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\libs\imgui\implot\implot.cpp" />
+    <ClCompile Include="Engine\libs\imgui\implot\implot_demo.cpp" />
+    <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
     <ClCompile Include="Sandbox\FightingGame\Fighter.cpp" />
     <ClCompile Include="Sandbox\CameraController.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Camera.cpp" />
@@ -239,6 +244,7 @@
     <ClCompile Include="Engine\Window.cpp" />
     <ClCompile Include="Engine\NewRenderer\Renderable.cpp" />
     <ClCompile Include="Engine\NewRenderer\PipelineBuilder.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp" />
     <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp" />
     <ClCompile Include="Sandbox\FightingGame\InputHandler.cpp" />
     <ClCompile Include="Sandbox\Sandbox.cpp" />
@@ -250,6 +256,8 @@
     <ClCompile Include="Engine\NewRenderer\UIInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\libs\imgui\implot\implot.h" />
+    <ClInclude Include="Engine\libs\imgui\implot\implot_internal.h" />
     <ClInclude Include="Sandbox\FightingGame\Fighter.h" />
     <ClInclude Include="Sandbox\CameraController.h" />
     <ClInclude Include="Engine\Scene\Componenets\Camera.h" />
@@ -281,6 +289,7 @@
     <ClInclude Include="Engine\Window.h" />
     <ClInclude Include="Engine\NewRenderer\Renderable.h" />
     <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
+    <ClInclude Include="Sandbox\FightingGame\FighterCamera.h" />
     <ClInclude Include="Sandbox\FightingGame\FighterFactory.h" />
     <ClInclude Include="Sandbox\FightingGame\InputHandler.h" />
     <ClInclude Include="Sandbox\Sandbox.h" />

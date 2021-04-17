@@ -64,8 +64,8 @@ void Application::run()
 	{
 		float start = endTime;
 		window_->onUpdate();
-		onUpdate(deltaTime);
 		renderer_->prepareFrame();
+		onUpdate(deltaTime);
 		scene_->update(deltaTime);
 		//renderer_->draw();
 		endTime = std::clock();

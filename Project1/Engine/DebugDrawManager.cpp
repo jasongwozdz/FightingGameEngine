@@ -18,32 +18,28 @@ DebugDrawManager::~DebugDrawManager()
 {
 }
 
-void DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duration, float depthEnabled)
+Entity& DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duration, float depthEnabled)
 {
 
 	ModelReturnVals	returnVals = ResourceManager::getSingleton().loadObjFile(sphereModelLoc);
-
-
-
-	//GameObjectManager& manager = GameObjectManager::getSingleton();
-	//manager.addGameObject(returnVals.vertices, returnVals.indices, pos, DEBUG_PIPELINE);
+	
+	Entity& point = scene_->addEntity("point");
+	Renderable& r = point.addComponent<Renderable>(returnVals.vertices, returnVals.indices, true, "point");
+	Transform& t = point.addComponent<Transform>(pos);
+	return point;
 }
 
 void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color, float lineWidth, float duration, bool depthEnabled)
 {
-	//GameObjectManager& manager = GameObjectManager::getSingleton();
-
 	std::vector<Vertex> vertices = {
 		{fromPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } },
 		{toPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } },
 	};
 	
 	std::vector<uint32_t> indices = { 0, 1 };
-
-	//manager.addGameObject(vertices, indices, { 0,0,0 }, LINE_PIPELINE);
 }
 
-void DebugDrawManager::drawGrid(glm::vec3 color, bool depthEnabled)
+Entity& DebugDrawManager::drawGrid(glm::vec3 color, bool depthEnabled)
 {
 	glm::vec3 x1 = { 50, -50, 0 };
 	glm::vec3 x2 = { -50, -50, 0 };
@@ -76,4 +72,5 @@ void DebugDrawManager::drawGrid(glm::vec3 color, bool depthEnabled)
 	r.isLine_ = true;
 	Transform& t = grid.addComponent<Transform>(0.0f, 0.0f, 0.0f);
 	entities_.push_back(grid);
+	return grid;
 }

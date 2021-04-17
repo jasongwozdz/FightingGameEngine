@@ -36,7 +36,7 @@ void Scene::update(float deltaTime)
 		transform.applyTransformToMesh(mesh);
 
 		if (cameras_.size() != 0)
-			mesh.ubo().view = cameras_[currentCamera_]->getView();
+			mesh.ubo_.view = cameras_[currentCamera_]->getView();
 		
 
 		auto animator = registry_.try_get<Animator>(entity); 
@@ -73,4 +73,9 @@ int Scene::addCamera(BaseCamera* camera)
 {
 	cameras_.push_back(camera);
 	return cameras_.size() - 1;
+}
+
+void Scene::setCamera(int index)
+{
+	currentCamera_ = index;
 }

@@ -47,12 +47,10 @@ public:
 	{
 		std::cout << "Move assignement operator" << std::endl;
 		depthEnabled_ = other.depthEnabled_;
-		draw_ = other.draw_;
 		uploaded_ = other.uploaded_;
 		delete_ = other.delete_;
 		isLine_ = other.isLine_;
-		ubo_ = new Ubo;
-		memcpy(ubo_, other.ubo_, sizeof(Ubo));
+		ubo_ = other.ubo_;
 		vertexBuffer_ = other.vertexBuffer_;
 		other.vertexBuffer_ = VK_NULL_HANDLE;
 		vertexMem_ = other.vertexMem_;
@@ -61,6 +59,7 @@ public:
 		other.indexBuffer_ = VK_NULL_HANDLE;
 		indexMem_ = other.indexMem_;
 		other.indexMem_ = nullptr;
+		isLine_ = other.isLine_;
 		for (int i = 0; i < other.uniformBuffer_.size(); i++)
 		{
 			uniformBuffer_[i] = other.uniformBuffer_[i];
@@ -73,8 +72,7 @@ public:
 		descriptorSets_ = (other.descriptorSets_);
 		allocator_ = (other.allocator_);
 		logicalDevice_ = other.logicalDevice_;
-		textureResources_ = new TextureResources;
-		memcpy(textureResources_, other.textureResources_, sizeof(TextureResources));
+		textureResources_ = other.textureResources_;
 		return *this;
 	}
 
@@ -82,16 +80,15 @@ public:
 	{
 		std::cout << "JASON: Assigned" << std::endl;
 		depthEnabled_ = other.depthEnabled_;
-		draw_ = other.draw_;
 		uploaded_ = other.uploaded_;
 		delete_ = other.delete_;
 		isLine_ = other.isLine_;
-		ubo_ = new Ubo;
-		memcpy(ubo_, other.ubo_, sizeof(Ubo));
+		ubo_ = other.ubo_;
 		vertexBuffer_ = other.vertexBuffer_;
 		vertexMem_ = other.vertexMem_;
 		indexBuffer_ = other.indexBuffer_;
 		indexMem_ = other.indexMem_;
+		isLine_ = other.isLine_;
 		for (int i = 0; i < other.uniformBuffer_.size(); i++)
 		{
 			uniformBuffer_[i] = other.uniformBuffer_[i];
@@ -102,22 +99,20 @@ public:
 		descriptorSets_ = (other.descriptorSets_);
 		allocator_ = (other.allocator_);
 		logicalDevice_ = other.logicalDevice_;
-		textureResources_ = new TextureResources;
-		memcpy(textureResources_, other.textureResources_, sizeof(TextureResources));
+		textureResources_ = other.textureResources_;
 		return *this;
 	}
 
 	~Renderable();
 	
-	Ubo* ubo_;
+	//Ubo* ubo_;
+	Ubo ubo_;
 
 	std::vector<Vertex> vertices_;
 	std::vector<uint32_t> indices_;
 	std::string entityName_;
 	
-	Ubo& ubo();
 	bool depthEnabled_;
-	bool draw_;
 	bool uploaded_;
 	bool delete_;
 	bool isLine_ = false;
@@ -142,7 +137,7 @@ public:
 	VkDescriptorSetLayout descriptorLayout_;
 	std::vector<VkDescriptorSet> descriptorSets_;
 
-	TextureResources* textureResources_;
+	TextureResources textureResources_;
 
 	void deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice);
 };

@@ -20,9 +20,17 @@ enum FighterStartingSide
 class Fighter
 {
 public:
-	Fighter(Entity& entity, Transform& transform, Animator& animator, InputHandler& inputHandler);
+	Fighter(Entity& entity, InputHandler& inputHandler);
+
 	void onUpdate(float delta);
+
+	void setPosition(glm::vec3 pos);
+
+	void flipSide();
 	
+	bool controllable_ = false;
+
+	Entity& entity_;
 private:
 
 	void updateTransform();
@@ -41,22 +49,15 @@ private:
 
 	void jumping();
 
-	float speed_ = 25.0f;
+	float speed_ = 0.05f;
 
 	float movedThisFrame_;
 
-	Entity& entity_;
-
-	Animator& animator_;
-
-	Transform& transform_;
 
 	InputHandler& inputHandler_;
 
 	FighterState state_ = idle;
 
 	glm::vec2 currentMovement_;
-
-	bool controllable_ = true;
 };
 

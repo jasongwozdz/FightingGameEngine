@@ -122,9 +122,9 @@ struct AnimationReturnVals : ReturnVals
 	}
 
 	~AnimationReturnVals() {};
+	int boneStructIndex;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
-	BoneStructure* boneStructure;
 	std::vector<AnimationClip> animations;
 };
 
@@ -145,8 +145,6 @@ public:
 
 	AnimationReturnVals& loadAnimationFile(std::string& filePath);
 
-	BoneStructure& getBoneStructure(int index); //get Bone structure by index
-
 	void freeResource(std::string filePath);
 
 	void freeAllResources();
@@ -157,9 +155,9 @@ public:
 
 	Assimp::Importer importer; //importer owns scene object so need to keep a copy of it
 
-private:
-
 	std::vector<BoneStructure> boneStructures_;
+
+private:
 
 	inline aiBone* findBoneName(std::string boneName, aiBone** bones, int numBones)
 	{

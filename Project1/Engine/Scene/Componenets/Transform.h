@@ -8,9 +8,7 @@ class Transform
 public:
 	Transform(float x, float y, float z);
 
-	Transform(glm::vec3 pos, Transform& parent);
-
-	Transform* parent = nullptr;
+	Transform(glm::vec3 pos);
 
 	float x_ = 1.0f;
 	float y_ = 1.0f;
@@ -20,13 +18,7 @@ public:
 	float scaleY_ = 1.0f;
 	float scaleZ_ = 1.0f;
 
-	float rotateX_ = 0.0f;
-	float rotateY_ = 0.0f;
-	float rotateZ_ = 0.0f;
-
-	glm::mat4 rotationMatrix_ = glm::mat4(1.0f);
-
-	glm::quat quaternion_ = { 1.0f, 1.0f, 1.0f, 0.0f };
+	glm::quat quaternion_ = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	float drawDebugGui_ = false;
 
@@ -54,5 +46,9 @@ public:
 	glm::vec3 getPosition();
 
 	void setPosition(glm::vec3 pos);
+
+	void flipScale();
+
+	void applyAxisAngleRotation(float rotInDegrees, glm::vec3 axis);
 };
 

@@ -13,6 +13,8 @@ public:
 	
 	void onUpdate(float deltaTime);
 
+	bool controllable_ = true;
+
 private:
 	BaseCamera& camera_;
 

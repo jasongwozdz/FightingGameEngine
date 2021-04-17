@@ -4,6 +4,9 @@
 #include <vector>
 #include "glm/gtc/quaternion.hpp"
 #include <ctime>
+#include "NewRenderer/UIInterface.h"
+
+class ResourceManager;
 
 struct JointPose
 {
@@ -31,11 +34,6 @@ struct KeyScale
 	float scale_;
 };
 
-struct AnimationSample
-{
-	std::vector<JointPose> jointPose_;
-};
-
 struct AnimationClip
 {
 	std::string name_;
@@ -59,18 +57,23 @@ public:
 
 	Animator(Animator&& animator);
 
-	Animator(std::vector<AnimationClip> animations, BoneStructure* boneStructure);
+	Animator(std::vector<AnimationClip> animations, int boneStructureIndex);
 
 	Animator(const Animator& other);
 
 	void setAnimation(int animationIndex);
 
+	ResourceManager& resourceManager_;
+
 	~Animator();
 
 	Animator& operator=(Animator&& other)
 	{
-		this->boneStructure_ = other.boneStructure_;
-		other.boneStructure_ = nullptr;
+
+		std::cout << "Animator: Move Animator assignement" << std::endl;
+		boneStructureIndex_ = other.boneStructureIndex_;
+		//this->boneStructure_ = other.boneStructure_;
+		//other.boneStructure_ = nullptr;
 		this->currentAnimation_ = (other.currentAnimation_);
 		this->animations_ = other.animations_;
 		this->globalInverseTransform_ = other.globalInverseTransform_;
@@ -81,8 +84,10 @@ public:
 
 	Animator& operator=(Animator const& other)
 	{
-		this->boneStructure_ = new BoneStructure(0);
-		memcpy(this->boneStructure_, other.boneStructure_, sizeof(*other.boneStructure_));
+		std::cout << "Animator: assignemnt" << std::endl;
+		this->boneStructureIndex_ = other.boneStructureIndex_;
+		//this->boneStructure_ = new BoneStructure(other.boneStructure_->boneInfo_.size());
+		//memcpy(this->boneStructure_, other.boneStructure_, sizeof(BoneStructure));
 		this->currentAnimation_ = (other.currentAnimation_);
 		this->animations_ = other.animations_;
 		this->globalInverseTransform_ = other.globalInverseTransform_;
@@ -94,10 +99,12 @@ public:
 	void update(float currentTime, Renderable& renderable);
 
 private:
+	UI::ScrollingBuffer<float, float> debugScrollingBuffer_; //DEBUG ONLY REMOVE
+
 	//TEST CONSTRUCTOR 
 	Animator(std::vector<AnimationClip> animations);
 
-	BoneStructure* boneStructure_;
+	int boneStructureIndex_;
 
 	std::vector<AnimationClip> animations_;
 
@@ -113,5 +120,5 @@ private:
 
 	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
 
-	glm::mat4 interpolateTransforms(int jointIndex, AnimationClip& clip);
+	glm::mat4 interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex);
 };

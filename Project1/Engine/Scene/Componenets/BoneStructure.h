@@ -9,10 +9,10 @@
 struct Joint
 {
 	glm::mat4 invBindPose_; //inverse bind pose
-	std::string name_; //name of joint
-	int parent_; //name of parent
 	glm::mat4 offset_ = glm::mat4(1.0f); //bone offset
+	int parent_; //name of parent
 	bool animated_ = false;
+	std::string name_; //name of joint
 };
 
 class BoneStructure

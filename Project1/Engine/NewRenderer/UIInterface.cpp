@@ -1,4 +1,5 @@
 #include "UIInterface.h"
+#include "libs/imgui/implot/implot.h"
 #include "libs/imgui/imgui.h"
 #include "libs/imgui/imgui_impl_glfw.h"
 #include "libs/imgui/imgui_impl_vulkan.h" 
@@ -6,6 +7,7 @@
 UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer,  GLFWwindow* window, VkRenderPass& renderPass)
 {
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
 
 	ImGui_ImplGlfw_InitForVulkan(window, false);
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -84,5 +86,6 @@ void UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
 
 UIInterface::~UIInterface()
 {
-
+	ImPlot::DestroyContext();
+	ImGui::DestroyContext();
 }
