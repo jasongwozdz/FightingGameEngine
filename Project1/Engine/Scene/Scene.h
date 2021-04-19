@@ -18,7 +18,7 @@ public:
 	Scene();
 	~Scene();
 	void update(float deltaTime);
-	Entity& addEntity(std::string entityName);
+	Entity* addEntity(std::string entityName);
 	entt::entity& getEntity(std::string name);
 	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
@@ -46,9 +46,10 @@ public:
 		}
 	}
 
+	std::vector<Entity*> entitys_;
+
 private:
 	entt::registry registry_;
-	std::vector<Entity*> entitys_;
 
 	std::vector<BaseCamera*> cameras_;
 	int currentCamera_;

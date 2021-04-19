@@ -1,6 +1,5 @@
 #include "Scene.h"
 
-
 Scene::Scene()
 {
 	renderer_ = VkRenderer::getSingletonPtr();
@@ -62,11 +61,11 @@ void Scene::update(float deltaTime)
 	objectsToDraw_.clear();
 }
 
-Entity& Scene::addEntity(std::string name)
+Entity* Scene::addEntity(std::string name)
 {
 	Entity* e = new Entity(registry_, name);
 	entitys_.push_back(e);
-	return *e;
+	return e;
 }
 
 int Scene::addCamera(BaseCamera* camera)

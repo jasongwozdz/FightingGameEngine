@@ -3,6 +3,17 @@
 #include "Scene/Scene.h"
 #include "InputHandler.h"
 
+struct Hitbox
+{
+	Hitbox(float width, float height, glm::vec3 pos) :
+		width_(width), height_(height), pos_(pos), hitboxEnt_(nullptr){}
+
+	float width_;
+	float height_;
+	glm::vec3 pos_;
+	Entity* hitboxEnt_;
+};
+
 enum FighterState
 {
 	idle,
@@ -20,7 +31,7 @@ enum FighterStartingSide
 class Fighter
 {
 public:
-	Fighter(Entity& entity, InputHandler& inputHandler);
+	Fighter(Entity* entity, InputHandler& inputHandler);
 
 	void onUpdate(float delta);
 
@@ -30,7 +41,17 @@ public:
 	
 	bool controllable_ = false;
 
-	Entity& entity_;
+	Entity* entity_;
+
+	FighterState state_ = idle;
+
+	float baseSpeed_ = 0.05f;
+	
+	float speed_ = baseSpeed_;
+
+	float deltaTime_;
+	
+	glm::vec2 currentMovement_;
 private:
 
 	void updateTransform();
@@ -49,15 +70,8 @@ private:
 
 	void jumping();
 
-	float speed_ = 0.05f;
-
 	float movedThisFrame_;
 
-
 	InputHandler& inputHandler_;
-
-	FighterState state_ = idle;
-
-	glm::vec2 currentMovement_;
 };
 

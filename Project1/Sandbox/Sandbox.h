@@ -6,6 +6,13 @@
 #include "FightingGame/FighterFactory.h"
 #include "FightingGame/FighterCamera.h"
 
+struct Arena
+{
+	float width;
+	float depth;
+	glm::vec3 pos;
+};
+
 class Sandbox : public Application
 {
 public:
@@ -13,10 +20,12 @@ public:
 	virtual void onUpdate(float deltaTime);
 	virtual void onStartup();
 private:
+	Arena arena_;
 	BaseCamera* camera_;
 	CameraController* cameraController_;
 	FighterCamera* fighterCamera_;
 	InputHandler* inputHandler_;
+	InputHandler* inputHandlerRight_;
 	FighterFactory* fighterFactory_;
 	Fighter* fighter_;
 	Fighter* fighter2_;

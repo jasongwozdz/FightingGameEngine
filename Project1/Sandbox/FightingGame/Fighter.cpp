@@ -1,36 +1,38 @@
 #include "Fighter.h"
 #include "ResourceManager.h"
 
-Fighter::Fighter(Entity& entity, InputHandler& inputHandler) :
+Fighter::Fighter(Entity* entity, InputHandler& inputHandler) :
 	entity_(entity), inputHandler_(inputHandler)
 {}
 
 void Fighter::setPosition(glm::vec3 pos)
 {
-	entity_.getComponent<Transform>().setPosition(pos);
+	entity_->getComponent<Transform>().pos_ = pos;
 }
 
 void Fighter::flipSide()
 {
-	entity_.getComponent<Transform>().scaleX_ *= -1;
-	entity_.getComponent<Transform>().scaleY_ *= -1;
-	entity_.getComponent<Transform>().scaleZ_ *= -1;
-	glm::quat rot = entity_.getComponent<Transform>().quaternion_;
+
+	entity_->getComponent<Transform>().scale_.x *= -1;
+	entity_->getComponent<Transform>().scale_.y *= -1;
+	entity_->getComponent<Transform>().scale_.z *= -1;
+
+	glm::quat rot = entity_->getComponent<Transform>().quaternion_;
 	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
-	entity_.getComponent<Transform>().quaternion_ = flipRot * rot;
+	entity_->getComponent<Transform>().quaternion_ = flipRot * rot;
 }
 
 void Fighter::updateTransform()
 {
 	glm::vec3 trans = { 0, currentMovement_.x * speed_, 0};
 
-	Transform& transform = entity_.getComponent<Transform>();
+	Transform& transform = entity_->getComponent<Transform>();
 
-	glm::vec3 currentPos = transform.getPosition();
+	glm::vec3 currentPos = transform.pos_;
 
 	currentPos += trans;
 
-	transform.setPosition(currentPos);
+	transform.pos_ = currentPos;
 }
 
 void Fighter::handleState()
@@ -79,10 +81,10 @@ void Fighter::enterState(FighterState state)
 	switch (state)
 	{
 	case FighterState::idle:
-		entity_.getComponent<Animator>().setAnimation(-1);
+		entity_->getComponent<Animator>().setAnimation(-1);
 		break;
 	case FighterState::walking:
-		entity_.getComponent<Animator>().setAnimation(0);
+		entity_->getComponent<Animator>().setAnimation(0);
 		break;
 	}
 }
@@ -94,11 +96,12 @@ void Fighter::processInput()
 
 void Fighter::onUpdate(float delta)
 {
+	deltaTime_ = delta;
 	if (controllable_)
 	{
 		processInput();
 	}
 
 	handleState();
-
+	speed_ = baseSpeed_;
 }

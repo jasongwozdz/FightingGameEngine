@@ -8,7 +8,7 @@ FighterCamera::FighterCamera(BaseCamera* camera, const Fighter* fighter1, const 
 	fighter1_(fighter1), fighter2_(fighter2), camera_(camera)
 {
 	posQueue.push(basePos_);
-	glm::vec3 mid = midPoint(fighter1_->entity_.getComponent<Transform>().getPosition(), fighter2_->entity_.getComponent<Transform>().getPosition());
+	glm::vec3 mid = midPoint(fighter1_->entity_->getComponent<Transform>().pos_, fighter2_->entity_->getComponent<Transform>().pos_);
 	camera_->position = { mid.x - 20, mid.y, mid.z+3 };
 	glm::vec3 direction = mid - camera_->position;
 	camera_->viewDirection = direction;
@@ -47,12 +47,11 @@ bool FighterCamera::shouldAddNewCameraPos()
 void FighterCamera::onUpdate(float deltaTime)
 {
 
-	Entity& f1 = fighter1_->entity_;
-	Entity& f2 = fighter2_->entity_;
-	glm::vec3 f1pos = f1.getComponent<Transform>().getPosition();
-	glm::vec3 f2pos = f2.getComponent<Transform>().getPosition();
+	Entity& f1 = *fighter1_->entity_;
+	Entity& f2 = *fighter2_->entity_;
+	glm::vec3& f1pos = f1.getComponent<Transform>().pos_;
+	glm::vec3& f2pos = f2.getComponent<Transform>().pos_;
 	glm::vec3 mid = midPoint(f1pos, f2pos);
-	std::cout << mid.y << std::endl;
 	camera_->position.y = -mid.y;
 
 	//if (shouldAddNewCameraPos() || lastUpdate_ < 0)

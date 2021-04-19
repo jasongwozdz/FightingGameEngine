@@ -8,7 +8,6 @@ Window::Window()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	windowInfo_.width = EngineSettings::getSingleton().getWindow_width();
 	windowInfo_.height = EngineSettings::getSingleton().getWindow_height();
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);

@@ -283,6 +283,7 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 
 		const aiScene* scene = importer.ReadFile(filePath
 			.c_str(), 0);
+		assert(scene != nullptr);
 
 		uint32_t vertexCount(0);		
 		for (uint32_t m = 0; m < scene->mNumMeshes; m++) {
