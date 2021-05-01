@@ -20,10 +20,10 @@ void Transform::drawDebugGui()
 	if (drawDebugGui_)
 	{
 		ImGui::Begin("Transform debug");
-		ImGui::InputFloat("quat x", &quaternion_.x);
-		ImGui::InputFloat("quat y", &quaternion_.y);
-		ImGui::InputFloat("quat z", &quaternion_.z);
-		ImGui::InputFloat("quat w", &quaternion_.w);
+		ImGui::InputFloat("quat x", &rot_.x);
+		ImGui::InputFloat("quat y", &rot_.y);
+		ImGui::InputFloat("quat z", &rot_.z);
+		ImGui::InputFloat("quat w", &rot_.w);
 	}
 }
 
@@ -36,32 +36,34 @@ void Transform::setScale(float scale)
 
 void Transform::applyTransformToMesh(Renderable& mesh)
 {
-	glm::mat4 finalTranform = calculateTransform();
-	mesh.ubo_.model = finalTranform;
+	finalTransform_ = calculateTransform();
+	mesh.ubo_.model = finalTransform_;
 	return;
 }
 
 glm::mat4 Transform::calculateTransform()
 {
-	glm::mat4 parentTrans(1.0f);
-	if (parent_ && parent_->getComponent<Transform>().pos_ != parent_->getComponent<Transform>().oldPos_)
+	if (calculateTransform_)
 	{
-		oldPos_.x -= 1;
-		parentTrans = glm::translate(glm::mat4(1.0f), parent_->getComponent<Transform>().pos_);
+		glm::mat4 parentTrans(1.0f);
+		if (parent_ && parent_->getComponent<Transform>().pos_ != parent_->getComponent<Transform>().oldPos_)
+		{
+			oldPos_.x -= 1;
+			parentTrans = glm::translate(glm::mat4(1.0f), parent_->getComponent<Transform>().pos_);
+		}
+
+		if (pos_ != oldPos_ || scale_ != oldScale_ || rot_ != oldRot_)
+		{
+			glm::mat4 trans = glm::translate(parentTrans, pos_);
+			glm::mat4 rotationTrans = glm::toMat4(glm::normalize(rot_)) * trans;
+			glm::mat4 rotationTransScale = glm::scale(rotationTrans, scale_);
+
+			oldPos_ = pos_;
+			oldScale_ = scale_;
+			oldRot_ = rot_;
+
+			finalTransform_ = rotationTransScale;
+		}
 	}
-
-	if (pos_ != oldPos_ || scale_ != oldScale_ || quaternion_ != oldQuaternion_)
-	{
-		glm::mat4 trans = glm::translate(parentTrans, pos_);
-		glm::mat4 rotationTrans = glm::toMat4(glm::normalize(quaternion_)) * trans;
-		glm::mat4 rotationTransScale = glm::scale(rotationTrans, scale_);
-
-		oldPos_ = pos_;
-		oldScale_ = scale_;
-		oldQuaternion_ = quaternion_;
-
-		finalTransform = rotationTransScale;
-	}
-
-	return finalTransform;
+	return finalTransform_;
 }

@@ -64,7 +64,7 @@ Entity* DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duratio
 {
 	ModelReturnVals	returnVals = ResourceManager::getSingleton().loadObjFile(sphereModelLoc);
 	Entity* point = scene_->addEntity("point");
-	Renderable& r = point->addComponent<Renderable>(returnVals.vertices, returnVals.indices, true, "debug_line");
+	Renderable& r = point->addComponent<Renderable>(returnVals.vertices, returnVals.indices, true, "debug_point");
 	Transform& t = point->addComponent<Transform>(pos);
 	t.setScale(5.f);
 	t.parent_ = parent;

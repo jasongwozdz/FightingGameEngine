@@ -9,6 +9,18 @@ namespace Input
 		left,
 		right
 	};
+
+	enum AttackMap
+	{
+		light = 1, 
+		medium = 2, 
+		strong = 4, 
+		ultra = 8,
+		notLight = 14,
+		notMedium = 13,
+		notStrong = 11,
+		notUltra = 7
+	};
 }
 
 class InputHandler
@@ -19,9 +31,8 @@ public:
 
 	void handleInputReleased(Events::KeyReleasedEvent& e);
 	
-	glm::vec2& getInput();
-
 	glm::vec2 currentInput_;
+	int currentAttackInput_ = 0;
 
 	Input::Side side_ = Input::Side::left;
 };

@@ -51,6 +51,10 @@ class Animator
 {
 public:
 
+	glm::mat4 globalInverseTransform_;
+
+	std::vector<glm::mat4> globalTransforms;
+
 	//UNIT TESTS FIXTURES
 	friend class AnimatorTestFixture;
 	//END UNIT TESTS
@@ -115,8 +119,6 @@ private:
 	int currentAnimation_ = -1;
 
 	std::vector<glm::mat4> boneTransforms_;
-
-	glm::mat4 globalInverseTransform_;
 
 	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
 

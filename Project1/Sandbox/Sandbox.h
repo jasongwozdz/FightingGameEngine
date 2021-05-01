@@ -5,6 +5,7 @@
 #include "FightingGame/InputHandler.h"
 #include "FightingGame/FighterFactory.h"
 #include "FightingGame/FighterCamera.h"
+#include "FightingGame/GameStateManager.h"
 
 struct Arena
 {
@@ -16,6 +17,7 @@ struct Arena
 class Sandbox : public Application
 {
 public:
+	Sandbox() = default;
 	virtual ~Sandbox();
 	virtual void onUpdate(float deltaTime);
 	virtual void onStartup();
@@ -27,13 +29,20 @@ private:
 	InputHandler* inputHandler_;
 	InputHandler* inputHandlerRight_;
 	FighterFactory* fighterFactory_;
+
+	GameStateManager* gameStateManager_;
+
 	Fighter* fighter_;
 	Fighter* fighter2_;
+	Entity* joint_;
 	bool cursor_ = false;
+
+	Entity* hurtboxDebug_;
 
 	bool drawDebug;
 	std::vector<Entity> entities_;
 	
+	std::vector<Attack> attacks_;
 
 	void initScene();
 	void onEvent(Events::Event& e);

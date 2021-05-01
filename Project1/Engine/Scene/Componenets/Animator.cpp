@@ -99,7 +99,7 @@ void Animator::update(float currentTime, Renderable& renderable)
 	currentTime = std::clock();
 	std::vector<glm::mat4> finalTransform;
 
-	std::vector<glm::mat4> globalTransforms;
+	globalTransforms.clear();
 
 	const BoneStructure& boneStructure_ = resourceManager_.boneStructures_[boneStructureIndex_];
 

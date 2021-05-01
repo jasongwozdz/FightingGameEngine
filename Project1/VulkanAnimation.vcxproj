@@ -226,7 +226,6 @@
     <ClCompile Include="Sandbox\CameraController.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Camera.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp" />
-    <ClCompile Include="Sandbox\DebugCamera.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Animator.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Engine\BaseCamera.cpp" />
@@ -246,6 +245,7 @@
     <ClCompile Include="Engine\NewRenderer\PipelineBuilder.cpp" />
     <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp" />
     <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp" />
     <ClCompile Include="Sandbox\FightingGame\InputHandler.cpp" />
     <ClCompile Include="Sandbox\Sandbox.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Transform.cpp" />
@@ -263,7 +263,6 @@
     <ClInclude Include="Engine\Scene\Componenets\Camera.h" />
     <ClInclude Include="Engine\Scene\Componenets\BoneStructure.h" />
     <ClInclude Include="Engine\Events.h" />
-    <ClInclude Include="Sandbox\DebugCamera.h" />
     <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
     <ClInclude Include="Engine\NewRenderer\VkTypes.h" />
     <ClInclude Include="Engine\Scene\Componenets\Animator.h" />
@@ -291,6 +290,7 @@
     <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
     <ClInclude Include="Sandbox\FightingGame\FighterCamera.h" />
     <ClInclude Include="Sandbox\FightingGame\FighterFactory.h" />
+    <ClInclude Include="Sandbox\FightingGame\GameStateManager.h" />
     <ClInclude Include="Sandbox\FightingGame\InputHandler.h" />
     <ClInclude Include="Sandbox\Sandbox.h" />
     <ClInclude Include="Engine\Scene\Componenets\Transform.h" />

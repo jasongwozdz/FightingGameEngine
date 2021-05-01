@@ -17,7 +17,7 @@ protected:
 	glm::mat4 interpolatePos(AnimationClip clip, float time)
 	{
 		animator->localTime_ = time;
-		return animator->interpolateTransforms(0, clip);
+		return animator->interpolateTransforms(0, clip, 1);
 	}
 
 	void SetUp() override

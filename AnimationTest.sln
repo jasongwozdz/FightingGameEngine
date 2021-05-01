@@ -14,9 +14,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
@@ -39,7 +36,6 @@ Global
 		{4451C2FA-6E5B-45E7-AC44-02214EA73C78}.Release|x86.ActiveCfg = Release|Win32
 		{4451C2FA-6E5B-45E7-AC44-02214EA73C78}.Release|x86.Build.0 = Release|Win32
 		{EC97CDD6-010F-4E8F-A8AC-2F6658BAA9CF}.Debug|x64.ActiveCfg = Debug|x64
-		{EC97CDD6-010F-4E8F-A8AC-2F6658BAA9CF}.Debug|x64.Build.0 = Debug|x64
 		{EC97CDD6-010F-4E8F-A8AC-2F6658BAA9CF}.Debug|x86.ActiveCfg = Debug|Win32
 		{EC97CDD6-010F-4E8F-A8AC-2F6658BAA9CF}.Debug|x86.Build.0 = Debug|Win32
 		{EC97CDD6-010F-4E8F-A8AC-2F6658BAA9CF}.Quick|x64.ActiveCfg = Release|x64
@@ -56,6 +52,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9A458E5B-B5BB-4605-AC8E-113857B183D3}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

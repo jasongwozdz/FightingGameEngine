@@ -21,8 +21,8 @@ Fighter* FighterFactory::createFighter(const std::string& modelPath, const std::
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation(-1);
 
-	float HITBOX_WIDTH = 3.5;
-	float HITBOX_HEIGHT = 5;
+	float HITBOX_WIDTH = 3;
+	float HITBOX_HEIGHT = 4.5;
 	glm::vec3 HITBOX_POS = { 0.0f, 0.0f, 0.0f };
 
 	Hitbox& hitbox = entity->addComponent<Hitbox>(HITBOX_WIDTH, HITBOX_HEIGHT, HITBOX_POS);

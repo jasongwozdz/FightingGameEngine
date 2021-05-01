@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Sandbox.h"
 #include "../EntryPoint.h"
-#include "DebugCamera.h"
+#include <glm/gtx/matrix_decompose.hpp>
 
 /*
 Severity	Code	Description	File	Line	Project	Suppression State
@@ -39,6 +39,11 @@ void Sandbox::initScene()
 	fighter2_->setPosition({0.0f, -5.0f, 0.0f});
 	fighter2_->flipSide();
 
+	joint_ = scene_->addEntity("Joint");
+	Transform& t = joint_->addComponent<Transform>(glm::vec3(0,0,0));
+	//t.parent_ = fighter_->entity_;
+
+	//TODO: 
 	Hitbox& h = fighter_->entity_->getComponent<Hitbox>();
 	h.hitboxEnt_ = debugManager_->drawRect( h.pos_, { 0, 10, 0 }, 0, true, -h.width_/2, h.width_/2, -h.height_/2,	h.height_/2, fighter_->entity_ );
 
@@ -82,14 +87,12 @@ void Sandbox::handleKeyButtonDown(Events::KeyPressedEvent& e)
 			scene_->setCamera(1);
 			cameraController_->controllable_ = !cursor_;
 			fighter_->controllable_ = false;
-			//fighter2_->controllable_ = false;
 		}
 		else
 		{
 			scene_->setCamera(0);
 			cameraController_->controllable_ = false;
 			fighter_->controllable_ = true;
-			//fighter2_->controllable_ = true;
 		}
 		break;
 
@@ -99,7 +102,6 @@ void Sandbox::handleKeyButtonDown(Events::KeyPressedEvent& e)
 		cameraController_->controllable_ = !cursor_;
 		break;
 	}
-
 }
 
 void Sandbox::onEvent(Events::Event& e)
@@ -128,6 +130,8 @@ void Sandbox::onStartup()
 
 	fighterFactory_ = new FighterFactory(*scene_, *inputHandler_);
 	initScene();
+	gameStateManager_ = new GameStateManager(fighter_, fighter2_, *debugManager_);
+
 	addEventCallback(std::bind(&Sandbox::onEvent, this, std::placeholders::_1));
 }
 
@@ -155,7 +159,6 @@ void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* a
 
 bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms)
 {
-
 	Hitbox& h1 = *(*hitboxes);
 
 	Transform& p1 = *(*transforms);
@@ -180,10 +183,72 @@ bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms)
 
 	if ((xMax1 > xMin2 && xMin1 < xMax2) && (yMax1 >= yMin2 && yMax2 >= yMin1))
 	{
-		std::cout << "hit" << std::endl;
 		return true;
 	}
 	return false;
+}
+
+glm::mat4 getGlobalTransformOfBone(const BoneStructure& boneStruct, int jointIndex)
+{
+	int parent = 0;
+	glm::mat4 finalTransform(1.0f);
+	//while (parent != -1)
+	//{
+
+	//	parent = boneStruct.boneInfo_[jointIndex].parent_
+	//}
+	return finalTransform;
+}
+
+void setJointPos(Entity& fighter, Entity& joint, Entity& point, int jointIndex)
+{
+	Animator& animator = fighter.getComponent<Animator>();
+	if (animator.globalTransforms.size() > jointIndex)
+	{
+		Transform& fighterTransform = fighter.getComponent<Transform>();
+		Renderable& mesh = fighter.getComponent<Renderable>();
+		Transform& jointTransform = joint.getComponent<Transform>();
+		glm::mat4 globalTransform = animator.globalTransforms[jointIndex];
+		//globalTransform = glm::scale(globalTransform, { 0.001f, 0.001f, 0.001f });
+		point.getComponent<Transform>().finalTransform_ = globalTransform;
+		point.getComponent<Transform>().calculateTransform_ = false;
+
+		//fighterTransform.setScale(0.001f);
+		//glm::vec3 scale;
+		//glm::quat rotation;
+		//glm::vec3 translation;
+		//glm::vec3 skew;
+		//glm::vec4 perspective;
+		//glm::decompose(finalTransform, scale, rotation, translation, skew, perspective);
+
+		//jointTransform.pos_ = -translation;
+		//jointTransform.rot_ = -rotation;
+	}
+}
+
+void updateAttack(Fighter& fighter_, Attack& attack, Entity& hurtboxDebug)
+{
+	if (attack.currentFrame != -1)
+	{
+		std::cout << "Currently attack attack.currentFrame" << attack.currentFrame << std::endl;
+		if (attack.currentFrame > attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
+		{
+			hurtboxDebug.getComponent<Renderable>().render_ = true;
+			int currentAttackFrame = attack.currentFrame - attack.startupFrames;
+			glm::vec2 hurtboxDim = attack.hurtboxWidthHeight[currentAttackFrame];
+			glm::vec3 hurtboxPos = attack.hurtboxPos[currentAttackFrame];
+			Transform& fighterTransform = fighter_.entity_->getComponent<Transform>();
+			Transform& hurtboxTransform = hurtboxDebug.getComponent<Transform>();
+			hurtboxTransform.pos_ = hurtboxPos + fighterTransform.pos_;
+		}
+		attack.currentFrame++;
+		if (attack.currentFrame > (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
+		{
+			std::cout << "Attack finished" << std::endl;
+			hurtboxDebug.getComponent<Renderable>().render_ = false;
+			attack.currentFrame = -1;
+		}
+	}
 }
 
 void Sandbox::onUpdate(float deltaTime)
@@ -203,6 +268,11 @@ void Sandbox::onUpdate(float deltaTime)
 		t2.pos_.y -= fighter_->speed_;
 		t1.pos_.y += fighter2_->speed_;
 	}
+
+	gameStateManager_->update(0);
+	//setJointPos(*fighter_->entity_, *joint_, *hurtboxDebug_, 3);
+	//updateAttack(*fighter_, attacks_[0], *hurtboxDebug_);
+
 
 	if (fighter_)
 		fighter_->onUpdate(deltaTime);
