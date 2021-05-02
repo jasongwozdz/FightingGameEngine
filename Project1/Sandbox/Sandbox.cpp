@@ -43,7 +43,6 @@ void Sandbox::initScene()
 	Transform& t = joint_->addComponent<Transform>(glm::vec3(0,0,0));
 	//t.parent_ = fighter_->entity_;
 
-	//TODO: 
 	Hitbox& h = fighter_->entity_->getComponent<Hitbox>();
 	h.hitboxEnt_ = debugManager_->drawRect( h.pos_, { 0, 10, 0 }, 0, true, -h.width_/2, h.width_/2, -h.height_/2,	h.height_/2, fighter_->entity_ );
 

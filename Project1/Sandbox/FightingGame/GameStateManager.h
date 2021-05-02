@@ -43,7 +43,7 @@ public:
 
 	Attack* fighterAttacks_[2] = { {nullptr}, {nullptr} };
 
-	Entity* pointDebug;
+	//Entity* pointDebug;
 
 	void update(float time);
 };
