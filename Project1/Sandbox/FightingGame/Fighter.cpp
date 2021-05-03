@@ -4,13 +4,15 @@
 Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side) :
 	entity_(entity), inputHandler_(inputHandler),side_(side)
 {
-	std::vector<int> attackInput = { Input::AttackMap::light };
+	std::vector<uint8_t> attackInput = { Input::InputMap::light };
 	std::vector<glm::vec2> movementInput = { {0, 0} };
 	attackInputs_.push_back({ 1, attackInput, movementInput, 0 , 0});
+	numAttacks_++;
 
-	//attackInput = { Input::AttackMap::medium };
-	//movementInput = { {0, 0} };
-	//attackInputs_.push_back({ 1, attackInput, movementInput, 1 , 0});
+	attackInput = { Input::InputMap::nothing, Input::InputMap::nothing, Input::InputMap::medium };
+	movementInput = { {-1, 0} , {-1, 1}, {1, 0} };
+	attackInputs_.push_back({ 1, attackInput, movementInput, 1 , 0});
+	numAttacks_++;
 
 	//attackInput = { Input::AttackMap::strong };
 	//movementInput = { {0, 0} };
@@ -134,12 +136,11 @@ void Fighter::enterState(FighterState state)
 	}
 }
 
-
 //How to deal with input sequences
 //move elements in attackInputs to have most relevant element at the beggining
 //for example start with only movement.y = -1;
 //move all AttackInputs that start with only movement.y to the front of the vector and increment their current input.
-bool Fighter::checkAttackInput(glm::vec2& currentMovement, int currentAttackInput, int& attackIndex)
+bool Fighter::checkAttackInput(int currentAttackInput, int& attackIndex)
 {
 	for (std::vector<AttackInput>::iterator iter = attackInputs_.begin(); iter != attackInputs_.end(); iter++)
 	{
@@ -162,11 +163,30 @@ bool Fighter::checkAttackInput(glm::vec2& currentMovement, int currentAttackInpu
 	return false;
 }
 
+//std::vector<int> Fighter::checkMovementInput(glm::vec2 currMovement)
+//{
+//	for (std::vector<AttackInput>::iterator attack = attackInputs_.begin(); attack != attackInputs_.end(); attack++)
+//	{
+//		float currentTime = std::clock();
+//		if (attack->lastCheckTime != 0)
+//		{
+//			float dt = currentTime - attack->lastCheckTime;
+//			if (dt > attack->dtBetweenAttacks)
+//			{
+//				attack->lastCheckTime = 0;
+//				attack->attackIndex = 0;
+//				attack->movementIndex = 0;
+//				continue;
+//			}
+//		}
+//	}
+//}
+
 void Fighter::processInput()
 {
-	currentMovement_ = inputHandler_.currentInput_;
+	currentMovement_ = inputHandler_.currentMovementInput_;
 	int attackIndex;
-	if (checkAttackInput(currentMovement_, inputHandler_.currentAttackInput_, attackIndex))
+	if (checkAttackInput(inputHandler_.currentAttackInput_, attackIndex))
 	{
 		currentAttack_ = attackIndex;
 	}

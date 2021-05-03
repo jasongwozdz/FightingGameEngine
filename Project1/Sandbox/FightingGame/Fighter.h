@@ -89,10 +89,13 @@ struct Attack
 struct AttackInput
 {
 	int numInputs = 1;
-	std::vector<int> attackInput;
+	std::vector<uint8_t> attackInput;
 	std::vector<glm::vec2> movementInput;
 	int attackIndex;
+	int movementIndex;
 	int currentInput = 0;
+	float dtBetweenAttacks;
+	float lastCheckTime = 0;
 };
 
 enum FighterState
@@ -138,7 +141,7 @@ public:
 	
 	glm::vec2 currentMovement_;
 
-	int numAttacks_ = 1;
+	int numAttacks_ = 0;
 
 	//set to -1 when not attacking
 	int currentAttack_ = -1;
@@ -166,7 +169,10 @@ private:
 	void setOrKeepState(FighterState state);
 
 	//returns true if attack input is complete and populates attackIndex with correspoding attack
-	bool checkAttackInput(glm::vec2& currentMovement, int currentAttackInput, int& attackIndex);
+	bool checkAttackInput(int currentAttackInput, int& attackIndex);
+
+	//returns a vector of indices into attackInputs_ that passed movement input check
+	std::vector<int> checkMovementInput(glm::vec2 currMovement);
 
 	float movedThisFrame_;
 

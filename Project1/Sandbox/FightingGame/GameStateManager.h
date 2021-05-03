@@ -2,12 +2,20 @@
 #include "Fighter.h"
 #include "DebugDrawManager.h"
 
+struct Arena
+{
+	float width;
+	float depth;
+	glm::vec3 pos;
+};
+
 class GameStateManager
 {
 public:
 	GameStateManager() = default;
 
-	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager& debugDrawManager);
+	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager& debugDrawManager, float arenaWidth, float arenaHeight);
+
 	~GameStateManager();
 
 	GameStateManager& operator=(GameStateManager&& other)
@@ -32,9 +40,15 @@ public:
 		return *this;
 	}
 
-	void updateAttack(Fighter& fighter, Attack& attack, Entity& hurtboxDebug, bool leftSide);
+	void updateAttack(Fighter& fighter1, Fighter& fighter2, Attack& attack, Entity& hurtboxDebug, bool leftSide);
 
 	void checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack, bool leftSide);
+
+	void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena);
+
+	bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms);
+
+	Arena arena_;
 
 	//first element in the array is right side fighter second element is left side
 	Fighter* fighters_[2];

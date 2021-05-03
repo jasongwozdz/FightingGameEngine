@@ -7,12 +7,6 @@
 #include "FightingGame/FighterCamera.h"
 #include "FightingGame/GameStateManager.h"
 
-struct Arena
-{
-	float width;
-	float depth;
-	glm::vec3 pos;
-};
 
 class Sandbox : public Application
 {

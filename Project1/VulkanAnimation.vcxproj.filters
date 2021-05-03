@@ -122,6 +122,9 @@
     <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -248,6 +251,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\libs\imgui\implot\implot_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sandbox\FightingGame\GameStateManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

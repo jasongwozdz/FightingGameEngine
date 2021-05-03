@@ -125,66 +125,13 @@ void Sandbox::onStartup()
 {
 	inputHandler_ = new InputHandler();
 	inputHandlerRight_ = new InputHandler();
-	inputHandlerRight_->side_ = Input::Side::right;
+	inputHandlerRight_->side_ = Input::Side::rightSide;
 
 	fighterFactory_ = new FighterFactory(*scene_, *inputHandler_);
 	initScene();
-	gameStateManager_ = new GameStateManager(fighter_, fighter2_, *debugManager_);
+	gameStateManager_ = new GameStateManager(fighter_, fighter2_, *debugManager_, GRID_WIDTH, GRID_DEPTH);
 
 	addEventCallback(std::bind(&Sandbox::onEvent, this, std::placeholders::_1));
-}
-
-void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena)
-{
-	for (int i = 0; i < 2; i++)
-	{
-		Hitbox& hitbox = *(*hitboxes);
-		Transform& p = *(*transforms);
-
-		if ((hitbox.width_ / 2 + p.pos_.y) > (arena->pos.y + (arena->width / 2)))
-		{
-			p.pos_.y = (arena->pos.y + (arena->width / 2)) - (hitbox.width_ / 2);
-		}
-			
-		if((p.pos_.y - hitbox.width_/2) < (-arena->width / 2 + arena->pos.y))
-		{
-			p.pos_.y = (-arena->width / 2 + arena->pos.y) + (hitbox.width_ / 2);
-		}
-
-		hitboxes++;
-		transforms++;
-	}
-}
-
-bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms)
-{
-	Hitbox& h1 = *(*hitboxes);
-
-	Transform& p1 = *(*transforms);
-
-	hitboxes++;
-	transforms++;
-
-	Hitbox& h2 = *(*hitboxes);
-	Transform& p2 = *(*transforms);
-
-	float xMax1 = p1.pos_.y + h1.width_ / 2;
-	float xMin1 = p1.pos_.y - h1.width_ / 2;
-
-	float xMax2 = p2.pos_.y + h2.width_ / 2;
-	float xMin2 = p2.pos_.y - h2.width_ / 2;
-
-	float yMax1 = p1.pos_.z + h1.height_ / 2;
-	float yMin1 = p1.pos_.z - h1.height_ / 2;
-
-	float yMax2 = p2.pos_.z + h2.height_ / 2;
-	float yMin2 = p2.pos_.z - h2.height_ / 2;
-
-	if ((xMax1 > xMin2 && xMin1 < xMax2) && (yMax1 >= yMin2 && yMax2 >= yMin1))
-	{
-		return true;
-	}
-	return false;
 }
 
 glm::mat4 getGlobalTransformOfBone(const BoneStructure& boneStruct, int jointIndex)
@@ -225,53 +172,11 @@ void setJointPos(Entity& fighter, Entity& joint, Entity& point, int jointIndex)
 	}
 }
 
-void updateAttack(Fighter& fighter_, Attack& attack, Entity& hurtboxDebug)
-{
-	if (attack.currentFrame != -1)
-	{
-		std::cout << "Currently attack attack.currentFrame" << attack.currentFrame << std::endl;
-		if (attack.currentFrame > attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
-		{
-			hurtboxDebug.getComponent<Renderable>().render_ = true;
-			int currentAttackFrame = attack.currentFrame - attack.startupFrames;
-			glm::vec2 hurtboxDim = attack.hurtboxWidthHeight[currentAttackFrame];
-			glm::vec3 hurtboxPos = attack.hurtboxPos[currentAttackFrame];
-			Transform& fighterTransform = fighter_.entity_->getComponent<Transform>();
-			Transform& hurtboxTransform = hurtboxDebug.getComponent<Transform>();
-			hurtboxTransform.pos_ = hurtboxPos + fighterTransform.pos_;
-		}
-		attack.currentFrame++;
-		if (attack.currentFrame > (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
-		{
-			std::cout << "Attack finished" << std::endl;
-			hurtboxDebug.getComponent<Renderable>().render_ = false;
-			attack.currentFrame = -1;
-		}
-	}
-}
-
 void Sandbox::onUpdate(float deltaTime)
 {
-	Hitbox& h1 = fighter_->entity_->getComponent<Hitbox>();
-	Hitbox& h2 = fighter2_->entity_->getComponent<Hitbox>();
-	Hitbox* hitboxes[2] = { &h1, &h2 };
-
-	Transform& t1 = fighter_->entity_->getComponent<Transform>();
-	Transform& t2 = fighter2_->entity_->getComponent<Transform>();
-	Transform* transforms[2] = { &t1, &t2 };
-
-	clampFighterOutOfBounds(hitboxes, transforms, &arena_);
-	bool fightersCollided = fighterCollisionCheck(hitboxes, transforms);
-	if (fightersCollided)
-	{
-		t2.pos_.y -= fighter_->speed_;
-		t1.pos_.y += fighter2_->speed_;
-	}
-
 	gameStateManager_->update(0);
 	//setJointPos(*fighter_->entity_, *joint_, *hurtboxDebug_, 3);
 	//updateAttack(*fighter_, attacks_[0], *hurtboxDebug_);
-
 
 	if (fighter_)
 		fighter_->onUpdate(deltaTime);
