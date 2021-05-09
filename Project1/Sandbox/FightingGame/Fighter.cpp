@@ -1,22 +1,27 @@
 #include "Fighter.h"
 #include "ResourceManager.h"
+#include <chrono>
+
+//return in milliseconds
+double getCurrentTime()
+{
+	std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
+	auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(currentTime);
+	auto nano = ms.time_since_epoch();
+	return nano.count();
+}
 
 Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side) :
 	entity_(entity), inputHandler_(inputHandler),side_(side)
 {
+	//std::vector<uint8_t> attackInput = { Input::InputMap::down, Input::InputMap::down | Input::InputMap::right, Input::InputMap::right, Input::InputMap::light };
 	std::vector<uint8_t> attackInput = { Input::InputMap::light };
-	std::vector<glm::vec2> movementInput = { {0, 0} };
-	attackInputs_.push_back({ 1, attackInput, movementInput, 0 , 0});
+	attackInputs_.push_back({ attackInput, (int)attackInput.size(), 200l});
 	numAttacks_++;
 
-	attackInput = { Input::InputMap::nothing, Input::InputMap::nothing, Input::InputMap::medium };
-	movementInput = { {-1, 0} , {-1, 1}, {1, 0} };
-	attackInputs_.push_back({ 1, attackInput, movementInput, 1 , 0});
+	attackInput = { Input::InputMap::strong };
+	attackInputs_.push_back({ attackInput, 1, 200l, 1});
 	numAttacks_++;
-
-	//attackInput = { Input::AttackMap::strong };
-	//movementInput = { {0, 0} };
-	//attackInputs_.push_back({ 1, attackInput, movementInput, 2, 0});
 
 	//attackInput = { Input::AttackMap::ultra };
 	//movementInput = { {0, 0} };
@@ -73,7 +78,7 @@ void Fighter::handleState()
 	case FighterState::hitstun:
 		std::cout << "in hitstun: handle hit, stunFrames: " << stunFrames_ << "pushMag: " << pushMagnitude_ << std::endl;
 		stunFrames_--;
-		if (stunFrames_ != -1)
+		if (stunFrames_ != 0)
 		{
 			glm::vec3 pos = entity_->getComponent<Transform>().pos_;
 			float pushMag = (bool)side_ ? pushMagnitude_ : pushMagnitude_ * -1 ;
@@ -82,6 +87,7 @@ void Fighter::handleState()
 		}
 		else
 		{
+			stunFrames_ = -1;
 			setOrKeepState(FighterState::idle);
 		}
 		break;
@@ -142,45 +148,62 @@ void Fighter::enterState(FighterState state)
 //move all AttackInputs that start with only movement.y to the front of the vector and increment their current input.
 bool Fighter::checkAttackInput(int currentAttackInput, int& attackIndex)
 {
-	for (std::vector<AttackInput>::iterator iter = attackInputs_.begin(); iter != attackInputs_.end(); iter++)
+	//std::cout << "current attack input " << currentAttackInput << std::endl;
+	if (currentAttackInput == 0) return false;
+	for (std::vector<AttackInput>::iterator attack = attackInputs_.begin(); attack != attackInputs_.end(); attack++)
 	{
-		int result = iter->attackInput[iter->currentInput] & currentAttackInput;
-		if (result > 0)
+
+		uint8_t result = attack->attackInput[attack->currentInput] & currentAttackInput;
+
+		if (result == attack->attackInput[attack->currentInput])
 		{
-			iter->currentInput++;
-			if (iter->numInputs == iter->currentInput)
+			double currentTime = getCurrentTime();
+
+			if (attack->lastCheckTime != 0)
 			{
-				attackIndex = iter->attackIndex;
-				iter->currentInput = 0;
+				double dt = currentTime - attack->lastCheckTime;
+				std::cout << "dt " << dt << std::endl;
+				if (dt > attack->dtBetweenAttacks)
+				{
+					//std::cout << "Execution not fast enough" << std::endl;
+					attack->lastCheckTime = 0;
+					attack->currentInput = 0;
+					continue;
+				}
+				else if (dt < attackInputDelay_)
+				{
+					inputHandler_.currentAttackInput_ &= ~result;
+					std::cout << "too fast" << std::endl;
+					continue;
+				}
+			}
+			attack->currentInput++;
+			attack->lastCheckTime = currentTime;
+			if (attack->numInputs == attack->currentInput)
+			{
+				attackIndex = attack->attackIndex;
+				attack->currentInput = 0;
+				attack->lastCheckTime = 0;
 				return true;
 			}
 		}
 		else
 		{
-			iter->currentInput = 0;
+			if (attack->currentInput > 0)
+			{
+				uint8_t lastAttack = attack->attackInput[attack->currentInput - 1];
+				result = lastAttack & currentAttackInput;
+				if (result == lastAttack)
+				{
+					continue;
+				}
+			}
+			attack->lastCheckTime = 0;
+			attack->currentInput = 0;
 		}
 	}
 	return false;
 }
-
-//std::vector<int> Fighter::checkMovementInput(glm::vec2 currMovement)
-//{
-//	for (std::vector<AttackInput>::iterator attack = attackInputs_.begin(); attack != attackInputs_.end(); attack++)
-//	{
-//		float currentTime = std::clock();
-//		if (attack->lastCheckTime != 0)
-//		{
-//			float dt = currentTime - attack->lastCheckTime;
-//			if (dt > attack->dtBetweenAttacks)
-//			{
-//				attack->lastCheckTime = 0;
-//				attack->attackIndex = 0;
-//				attack->movementIndex = 0;
-//				continue;
-//			}
-//		}
-//	}
-//}
 
 void Fighter::processInput()
 {
@@ -188,8 +211,15 @@ void Fighter::processInput()
 	int attackIndex;
 	if (checkAttackInput(inputHandler_.currentAttackInput_, attackIndex))
 	{
-		currentAttack_ = attackIndex;
+#define QUEUE_DEPTH 1
+		if (attackBuffer_.size() < QUEUE_DEPTH)
+		{
+			attackBuffer_.push(attackIndex);
+			clearAttackBufferTime_ = getCurrentTime() + timeToClearBuffer_;
+		}
+		std::cout << "added " << attackIndex << " to buffer" << std::endl;
 	}
+	inputHandler_.currentAttackInput_ = 0;
 }
 
 void Fighter::onUpdate(float delta)
@@ -199,9 +229,13 @@ void Fighter::onUpdate(float delta)
 	{
 		processInput();
 	}
-
 	handleState();
 	speed_ = baseSpeed_;
+	if(attackBuffer_.size() > 0 && getCurrentTime() > clearAttackBufferTime_)
+	{
+		//std::cout << "buffer cleared" << std::endl;
+		attackBuffer_.empty();
+	}
 }
 
 bool Fighter::onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames)

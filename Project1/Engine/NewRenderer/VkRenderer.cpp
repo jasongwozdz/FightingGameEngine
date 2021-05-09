@@ -60,7 +60,7 @@ void VkRenderer::cleanupSwapchain()
 
 	vkDestroySwapchainKHR(logicalDevice_, swapchain_, nullptr);
 
-	delete ui_;
+	//delete ui_;
 }
 
 void VkRenderer::recreateSwapchain()
@@ -71,8 +71,8 @@ void VkRenderer::recreateSwapchain()
 		return;
 	}
 
-	cleanupSwapchain();
 	vkDeviceWaitIdle(logicalDevice_);
+	cleanupSwapchain();
 	createSwapchainResources();
 	createDefaultRenderPass();
 	createDefualtDepthResources();
@@ -82,7 +82,8 @@ void VkRenderer::recreateSwapchain()
 	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(cmdPool_, 1);
 	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
 
-	ui_ = new UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+	ui_->recreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+	//ui_ = new UI::UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_, allocator_);
 }
 
 VkRenderer* VkRenderer::getSingletonPtr()
@@ -202,7 +203,8 @@ void VkRenderer::init()
 
 	createSynchronizationResources();
 
-	ui_ = new UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+	//ui_->RecreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+	ui_ = new UI::UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_, allocator_);
 }
 
 void VkRenderer::createDefaultRenderPass()
@@ -768,7 +770,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayout, true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayout, VK_NULL_HANDLE, true, true);
 
 		pipelines_[PipelineTypes::BASIC_PIPELINE] = r;
 	}
@@ -811,7 +813,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::LINE_PIPELINE], true, false, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE], VK_NULL_HANDLE,true, false, true);
 
 		pipelines_[PipelineTypes::LINE_PIPELINE] = r;
 	}
@@ -854,7 +856,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE], true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE], VK_NULL_HANDLE, true, true);
 
 		pipelines_[PipelineTypes::DEBUG_PIPELINE] = r;
 	}
@@ -903,10 +905,63 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], true, false);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], VK_NULL_HANDLE, true, false);
 
 		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
 	}
+	//GUI PIPELINE
+	//{
+	//	//VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	//	//uboLayoutBinding.binding = 0;
+	//	//uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
+	//	//uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	//	//uboLayoutBinding.pImmutableSamplers = nullptr;
+	//	//uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	//	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	//	samplerLayoutBinding.binding = 1;
+	//	samplerLayoutBinding.descriptorCount = 1;
+	//	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	//	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	//	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	//	std::array<VkDescriptorSetLayoutBinding, 1> bindings = {  samplerLayoutBinding};
+	//	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	//	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	//	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	//	layoutInfo.pBindings = bindings.data();
+
+	//	VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::GUI_PIPELINE]));
+
+	//	std::vector<char> vertexShaderCode = readShaderFile("./shaders/imgui.vert.spv");
+	//	std::vector<char> fragmentShaderCode = readShaderFile("./shaders/imgui.frag.spv");
+
+	//	VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
+	//	VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
+
+	//	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+	//	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	//	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	//	vertShaderStageInfo.module = vertexShader;
+	//	vertShaderStageInfo.pName = "main";
+
+	//	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+	//	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	//	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	//	fragShaderStageInfo.module = fragmentShader;
+	//	fragShaderStageInfo.pName = "main";
+
+	//	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+	//	VkPushConstantRange range;
+	//	range.offset = 0;
+	//	range.size = sizeof(GUIPushConstant);
+	//	range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	//	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::GUI_PIPELINE], &range, true, false);
+
+	//	pipelines_[PipelineTypes::GUI_PIPELINE] = r;
+	//}
 }
 
 //void VkRenderer::updateUniformBuffer(RenderableObject& o)
@@ -949,7 +1004,7 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 
 	if (recreateSwapchain_)
 	{
-		ui_->renderFrame(cmdBuffer_);
+		//ui_->renderFrame(cmdBuffer_);
 		recreateSwapchain_ = false;
 		recreateSwapchain();
 		

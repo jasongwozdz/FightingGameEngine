@@ -22,7 +22,8 @@ enum PipelineTypes
 	LINE_PIPELINE,
 	DEBUG_PIPELINE,
 	ANIMATION_PIPELINE,
-	NUM_PIPELINE_TYPES = 4
+	GUI_PIPELINE,
+	NUM_PIPELINE_TYPES = 5
 };
 
 struct TextureResources
@@ -69,7 +70,12 @@ public:
 		}
 		renderableObjectId_ = (other.renderableObjectId_);
 		descriptorLayout_ = (other.descriptorLayout_);
+		other.descriptorLayout_ = VK_NULL_HANDLE;
 		descriptorSets_ = (other.descriptorSets_);
+		for (int i = 0; i < other.descriptorSets_.size(); i++)
+		{
+			other.descriptorSets_[i] = VK_NULL_HANDLE;
+		}
 		allocator_ = (other.allocator_);
 		logicalDevice_ = other.logicalDevice_;
 		textureResources_ = other.textureResources_;
@@ -102,6 +108,8 @@ public:
 		textureResources_ = other.textureResources_;
 		return *this;
 	}
+
+	void setVertAndIndicies(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
 
 	~Renderable();
 	

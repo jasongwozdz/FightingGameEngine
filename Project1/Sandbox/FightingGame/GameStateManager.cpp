@@ -1,41 +1,69 @@
 #include "GameStateManager.h"
+#include "EngineSettings.h"
+#include "NewRenderer/UIInterface.h"
 
-//void populateAttacks(Attack** attacksArray, )
-//{
-//
-//}
+void setHurtboxWidthHeight(Entity& hitbox, float width, float height, glm::vec3 color)
+{
+	std::vector<Vertex> verticies;
+	glm::vec3 p1 = { 0.0f, -width/2, height/2 };
+	glm::vec3 p2 = { 0.0f, width/2, height/2 };
+	glm::vec3 p3 = { 0.0f, -width/2, -height/2 };
+	glm::vec3 p4 = { 0.0f, width/2, -height/2 };
+	verticies.push_back({ p1 , color});
+	verticies.push_back({ p2 , color});
+	verticies.push_back({ p3 , color});
+	verticies.push_back({ p4 , color});
+
+	std::vector<uint32_t> indices;
+	indices.push_back(0);
+	indices.push_back(1);
+
+	indices.push_back(1);
+	indices.push_back(3);
+
+	indices.push_back(3);
+	indices.push_back(2);
+
+	indices.push_back(2);
+	indices.push_back(0);
+	Renderable& mesh = hitbox.getComponent<Renderable>();
+	mesh.setVertAndIndicies(verticies, indices);
+}
 
 GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager& debugDrawManager, float arenaWidth, float arenaHeight) :
-	fighters_{ fighter1, fighter2 }
+	ui(UI::UIInterface::getSingleton())
 {
-	const int startup = 2;
-	const int active = 20;
-	const int recovery = 2;
-
 	arena_ = { arenaWidth, arenaHeight, {0.0, 0.0, -1.75f} };
 
+	fighterResources_.fighters_[0] = fighter1;
+	fighterResources_.fighters_[1] = fighter2;
 	//pointDebug = debugDrawManager.addPoint({ 0,0,0 }, { 255, 255, 0 }, 1, true);
 	//pointDebug->getComponent<Renderable>().render_ = false;
+	fighterResources_.fighterAttacks_[0].resize(fighterResources_.fighters_[0]->numAttacks_);
+	fighterResources_.fighterAttacks_[1].resize(fighterResources_.fighters_[1]->numAttacks_);
 
 	Hitbox hurtbox = { 0,0, {0,0,0} };
 	hurtbox.hitboxEnt_ = fighter1->entity_;
-	hurtboxDebug_[0] = debugDrawManager.drawRect({ 0,0,0 }, { 255, 0, 0 }, 1, true, -1, 1, -1, 1);
-	hurtboxDebug_[1] = debugDrawManager.drawRect({ 0,0,0 }, { 255, 0, 0 }, 1, true, -1, 1, -1, 1);
-	hurtboxDebug_[0]->getComponent<Renderable>().render_ = false;
-	hurtboxDebug_[1]->getComponent<Renderable>().render_ = false;
-
+	fighterResources_.hurtboxDebug_[0] = debugDrawManager.drawRect({ 0,0,0 }, { 255, 0, 0 }, 1, true, -1, 1, -1, 1);
+	fighterResources_.hurtboxDebug_[1] = debugDrawManager.drawRect({ 0,0,0 }, { 255, 0, 0 }, 1, true, -1, 1, -1, 1);
+	fighterResources_.hurtboxDebug_[0]->getComponent<Renderable>().render_ = false;
+	fighterResources_.hurtboxDebug_[1]->getComponent<Renderable>().render_ = false;
+{
+	int startup = 10;
+	int active = 20;
+	int recovery = 50;
 
 	glm::vec3* hurtboxPos = new glm::vec3[active];
-	hurtboxPos[0] =  { 0, -1,  1 };
-	hurtboxPos[1] =  { 0, -1.3,  1 };
-	hurtboxPos[2] =  { 0, -1.3,  1 };
-	hurtboxPos[3] =  { 0, -1.3,  1 };
-	hurtboxPos[4] =  { 0, -1.5,  1 };
-	hurtboxPos[5] =  { 0, -1.5,  1 };
-	hurtboxPos[6] =  { 0, -1.5,  1 };
-	hurtboxPos[7] =  { 0, -1.5,  1 };
-	hurtboxPos[8] =  { 0, -1.5,  1 };
-	hurtboxPos[9] =	 { 0, -1.5,  1 };
+	hurtboxPos[0] = { 0, -1,  1 };
+	hurtboxPos[1] = { 0, -1.3,  1 };
+	hurtboxPos[2] = { 0, -1.3,  1 };
+	hurtboxPos[3] = { 0, -1.3,  1 };
+	hurtboxPos[4] = { 0, -1.5,  1 };
+	hurtboxPos[5] = { 0, -1.5,  1 };
+	hurtboxPos[6] = { 0, -1.5,  1 };
+	hurtboxPos[7] = { 0, -1.5,  1 };
+	hurtboxPos[8] = { 0, -1.5,  1 };
+	hurtboxPos[9] = { 0, -1.5,  1 };
 	hurtboxPos[10] = { 0, -1.5,  1 };
 	hurtboxPos[11] = { 0, -1.5,  1 };
 	hurtboxPos[12] = { 0, -1.5,  1 };
@@ -48,47 +76,79 @@ GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDr
 	hurtboxPos[19] = { 0, -1.5,  1 };
 
 	glm::vec2* hurtboxWidthHeight = new glm::vec2[active];
-	hurtboxWidthHeight[0] =  {2, 2};
-	hurtboxWidthHeight[1] =  {2, 2};
-	hurtboxWidthHeight[2] =  {2, 2};
-	hurtboxWidthHeight[3] =  {2, 2};
-	hurtboxWidthHeight[4] =  {2, 2};
-	hurtboxWidthHeight[5] =  {2, 2};
-	hurtboxWidthHeight[6] =  {2, 2};
-	hurtboxWidthHeight[7] =  {2, 2};
-	hurtboxWidthHeight[8] =  {2, 2};
-	hurtboxWidthHeight[9] =  {2, 2};
-	hurtboxWidthHeight[10] = {2, 2};
-	hurtboxWidthHeight[11] = {2, 2};
-	hurtboxWidthHeight[12] = {2, 2};
-	hurtboxWidthHeight[13] = {2, 2};
-	hurtboxWidthHeight[14] = {2, 2};
-	hurtboxWidthHeight[15] = {2, 2};
-	hurtboxWidthHeight[16] = {2, 2};
-	hurtboxWidthHeight[17] = {2, 2};
-	hurtboxWidthHeight[18] = {2, 2};
-	hurtboxWidthHeight[19] = {2, 2};
+	hurtboxWidthHeight[0] =  { 1, 1 };
+	hurtboxWidthHeight[1] =  { 1, 1 };
+	hurtboxWidthHeight[2] =  { 1, 1 };
+	hurtboxWidthHeight[3] =  { 1, 1 };
+	hurtboxWidthHeight[4] =  { 1, 1 };
+	hurtboxWidthHeight[5] =  { 1, 1 };
+	hurtboxWidthHeight[6] =  { 1, 1 };
+	hurtboxWidthHeight[7] =  { 1, 1 };
+	hurtboxWidthHeight[8] =  { 1, 1 };
+	hurtboxWidthHeight[9] =  { 2, 1 };
+	hurtboxWidthHeight[10] = { 2, 1 };
+	hurtboxWidthHeight[11] = { 2, 1 };
+	hurtboxWidthHeight[12] = { 2, 1 };
+	hurtboxWidthHeight[13] = { 2, 1 };
+	hurtboxWidthHeight[14] = { 2, 1 };
+	hurtboxWidthHeight[15] = { 2, 1 };
+	hurtboxWidthHeight[16] = { 2, 1 };
+	hurtboxWidthHeight[17] = { 2, 1 };
+	hurtboxWidthHeight[18] = { 2, 1 };
+	hurtboxWidthHeight[19] = { 2, 1 };
 
-	Attack* attack1 = new Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 5, 5, 1.5);
-	Attack* attack2 = new Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 5, 5, 1.5);
+	fighterResources_.fighterAttacks_[0][0] = Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 5, 5, 0.1, 5);
+	fighterResources_.fighterAttacks_[1][0] = Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 5, 5, 0.1, 5);
+}
+{
+	int startup = 10;
+	int active = 10;
+	int recovery = 50;
 
-	fighterAttacks_[0] = new Attack[fighters_[0]->numAttacks_];
-	fighterAttacks_[1] = new Attack[fighters_[1]->numAttacks_];
+	glm::vec3* hurtboxPos = new glm::vec3[active];
+	hurtboxPos[0] = { 0, -1,	-2 };
+	hurtboxPos[1] = { 0, -1.3,  -2 };
+	hurtboxPos[2] = { 0, -1.3,  -2 };
+	hurtboxPos[3] = { 0, -1.3,  -2 };
+	hurtboxPos[4] = { 0, -1.5,  -2 };
+	hurtboxPos[5] = { 0, -1.5,  -2 };
+	hurtboxPos[6] = { 0, -1.5,  -2 };
+	hurtboxPos[7] = { 0, -1.5,  -2 };
+	hurtboxPos[8] = { 0, -1.5,  -2 };
+	hurtboxPos[9] = { 0, -1.5,  -2 };
 
-	fighterAttacks_[0] = attack1;
-	fighterAttacks_[1] = attack2;
+	glm::vec2* hurtboxWidthHeight = new glm::vec2[active];
+	hurtboxWidthHeight[0] = { 2, 2 };
+	hurtboxWidthHeight[1] = { 2, 2 };
+	hurtboxWidthHeight[2] = { 2, 2 };
+	hurtboxWidthHeight[3] = { 2, 2 };
+	hurtboxWidthHeight[4] = { 2, 2 };
+	hurtboxWidthHeight[5] = { 2, 2 };
+	hurtboxWidthHeight[6] = { 2, 2 };
+	hurtboxWidthHeight[7] = { 2, 2 };
+	hurtboxWidthHeight[8] = { 2, 2 };
+	hurtboxWidthHeight[9] = { 2, 2 };
 
+	fighterResources_.fighterAttacks_[0][1] = Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 50, 50, 0.1, 5);
+	fighterResources_.fighterAttacks_[1][1] = Attack(startup, active, recovery, hurtboxWidthHeight, hurtboxPos, -1, hurtbox, 50, 50, 0.1, 5);
+}
+	fighterResources_.cancelAttackMap_[0].add(0, 1);
+	fighterResources_.cancelAttackMap_[1].add(0, 1);
 };
 
 GameStateManager::~GameStateManager()
 {
-	delete[] fighterAttacks_;
+	delete[] fighterResources_.fighterAttacks_;
 }
 
-void GameStateManager::updateAttack(Fighter& fighter1, Fighter& fighter2, Attack& attack, Entity& hurtboxDebug, bool leftSide)
+void GameStateManager::updateAttack(int fighterIndex)
 {
-	//std::cout << "Currently attack attack.currentFrame" << attack.currentFrame << std::endl;
-	if (attack.currentFrame > attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
+	Attack& attack = fighterResources_.fighterAttacks_[fighterIndex][fighterResources_.fighters_[fighterIndex]->currentAttack_];
+	Entity& hurtboxDebug = *fighterResources_.hurtboxDebug_[fighterIndex];
+	bool leftSide = fighterIndex;
+	Fighter& fighter1 = *fighterResources_.fighters_[fighterIndex];
+	Fighter& fighter2 = *fighterResources_.fighters_[fighterIndex];
+	if (attack.currentFrame >= attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
 	{
 		hurtboxDebug.getComponent<Renderable>().render_ = true;
 		int currentAttackFrame = attack.currentFrame - attack.startupFrames;
@@ -104,21 +164,86 @@ void GameStateManager::updateAttack(Fighter& fighter1, Fighter& fighter2, Attack
 		{
 			checkAttackCollision(fighter1, fighter2, attack, leftSide);
 		}
-
+		//std::cout << "----active----" << std::endl;
 	}
-	attack.currentFrame++;
-	if (attack.currentFrame > (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
+
+	if (attack.currentFrame > attack.startupFrames + attack.activeFrames)
 	{
-		//std::cout << "Attack finished" << std::endl;
 		hurtboxDebug.getComponent<Renderable>().render_ = false;
+	}
+
+	//std::cout << "currentFrame: " << attack.currentFrame << std::endl;
+	if (attack.currentFrame >= (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
+	{
+		//std::cout << "----end----" << std::endl;
+		//std::cout << "Attack finished" << std::endl;
 		//pointDebug->getComponent<Renderable>().render_ = false;
 		attack.currentFrame = 0;
 		fighter1.currentAttack_ = -1;
 		attack.handled_ = false;
+		return;
 	}
+	attack.currentFrame++;
 }
 
-void GameStateManager::checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack, bool leftSide)
+void GameStateManager::updateAttack(Fighter& fighter1, Fighter& fighter2, Attack& attack, Entity& hurtboxDebug, bool leftSide)
+{
+	//if (attack.currentFrame == 0)
+	//{
+	//	std::cout << "----startup----" << std::endl;
+	//}
+	//std::cout << "Currently attack attack.currentFrame" << attack.currentFrame << std::endl;
+	if (attack.currentFrame >= attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
+	{
+		hurtboxDebug.getComponent<Renderable>().render_ = true;
+		int currentAttackFrame = attack.currentFrame - attack.startupFrames;
+		glm::vec2 hurtboxDim = attack.hurtboxWidthHeight[currentAttackFrame];
+		glm::vec3 hurtboxPos = attack.hurtboxPos[currentAttackFrame];
+		if(leftSide)  hurtboxPos.y *= -1;
+		Transform& fighterTransform = fighter1.entity_->getComponent<Transform>();
+		Transform& hurtboxTransform = hurtboxDebug.getComponent<Transform>();
+		hurtboxTransform.pos_ = hurtboxPos + fighterTransform.pos_;
+
+		//pointDebug->getComponent<Renderable>().render_ = true;
+		if (!attack.handled_)
+		{
+			checkAttackCollision(fighter1, fighter2, attack, leftSide);
+		}
+		else if(fighter1.attackBuffer_.size() > 0)
+		{
+			int nextAttack = fighter1.attackBuffer_.front();
+			if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighter1.currentAttack_, nextAttack))
+			{
+				attack.currentFrame = 0;
+				attack.handled_ = false;
+				fighter1.currentAttack_ = nextAttack;
+				fighter1.attackBuffer_.pop();
+				std::cout << "cancel" << std::endl;
+			}
+		}
+		//std::cout << "----active----" << std::endl;
+	}
+
+	if (attack.currentFrame > attack.startupFrames + attack.activeFrames)
+	{
+		hurtboxDebug.getComponent<Renderable>().render_ = false;
+	}
+
+	//std::cout << "currentFrame: " << attack.currentFrame << std::endl;
+	if (attack.currentFrame >= (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
+	{
+		//std::cout << "----end----" << std::endl;
+		//std::cout << "Attack finished" << std::endl;
+		//pointDebug->getComponent<Renderable>().render_ = false;
+		attack.currentFrame = 0;
+		fighter1.currentAttack_ = -1;
+		attack.handled_ = false;
+		return;
+	}
+	attack.currentFrame++;
+}
+
+bool GameStateManager::checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack, bool leftSide)
 {
 	Hitbox& h2 = fighter2.entity_->getComponent<Hitbox>();
 	Transform& t1 = fighter1.entity_->getComponent<Transform>();
@@ -133,10 +258,10 @@ void GameStateManager::checkAttackCollision(Fighter& fighter1, Fighter& fighter2
 	if (leftSide) hitboxPos.y *= -1;
 	glm::vec3 pos = t1.pos_ + hitboxPos;
 
-	float hitboxXMin = pos.y - attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].x/2 ;
-	float hitboxXMax = pos.y + attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].x/2 ;
-	float hitboxYMin = pos.z - attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].y/2 ;
-	float hitboxYMax = pos.z + attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].y/2 ;
+	float hitboxXMin = pos.y - attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].x / 2;
+	float hitboxXMax = pos.y + attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].x / 2;
+	float hitboxYMin = pos.z - attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].y / 2;
+	float hitboxYMax = pos.z + attack.hurtboxWidthHeight[attack.currentFrame - attack.startupFrames].y / 2;
 
 	//pointDebug->getComponent<Transform>().pos_ = {0, hitboxXMin, 0 };
 
@@ -145,7 +270,9 @@ void GameStateManager::checkAttackCollision(Fighter& fighter1, Fighter& fighter2
 		fighter2.onHit(attack.hitPushMag, attack.hitstunFrames, attack.blockstunFrames);
 		attack.handled_ = true;
 		std::cout << "hit" << std::endl;
+		return true;
 	}
+	return false;
 }
 
 bool GameStateManager::fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms)
@@ -190,8 +317,8 @@ void GameStateManager::clampFighterOutOfBounds(Hitbox** hitboxes, Transform** tr
 		{
 			p.pos_.y = (arena->pos.y + (arena->width / 2)) - (hitbox.width_ / 2);
 		}
-			
-		if((p.pos_.y - hitbox.width_/2) < (-arena->width / 2 + arena->pos.y))
+
+		if ((p.pos_.y - hitbox.width_ / 2) < (-arena->width / 2 + arena->pos.y))
 		{
 			p.pos_.y = (-arena->width / 2 + arena->pos.y) + (hitbox.width_ / 2);
 		}
@@ -201,34 +328,175 @@ void GameStateManager::clampFighterOutOfBounds(Hitbox** hitboxes, Transform** tr
 	}
 }
 
+void GameStateManager::drawHealthBars()
+{
+	float height = EngineSettings::getSingleton().windowHeight;
+	float width = EngineSettings::getSingleton().windowWidth;
+	float backHealthBarWidth =  width * 0.25;
+	float healthBarWidth = ((float)fighterResources_.healthBar[0]/(float)fighterResources_.fighters_[0]->maxHealth_) * width *0.25;
+	ui.drawRect(healthBarWidth, 60, { -width*.8, -height*.1 }, { 0, 255, 0, 1 });
+	ui.drawRect(backHealthBarWidth, 60, { -width*.8, -height*.1 }, { 255, 0, 0, 1 });
+
+	backHealthBarWidth =  width * 0.25;
+	healthBarWidth = ((float)fighterResources_.healthBar[1]/(float)fighterResources_.fighters_[1]->maxHealth_) * width *0.25;
+	ui.drawRect(healthBarWidth, 50, { -width*.2, -height*.1 }, { 0, 255, 0, 1 });
+	ui.drawRect(backHealthBarWidth, 50, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
+}
+
 void GameStateManager::update(float time)
 {
 	//TODO: clean this up
-	Hitbox& h1 = fighters_[0]->entity_->getComponent<Hitbox>();
-	Hitbox& h2 = fighters_[1]->entity_->getComponent<Hitbox>();
+	Hitbox& h1 = fighterResources_.fighters_[0]->entity_->getComponent<Hitbox>();
+	Hitbox& h2 = fighterResources_.fighters_[1]->entity_->getComponent<Hitbox>();
 	Hitbox* hitboxes[2] = { &h1, &h2 };
 
-	Transform& t1 = fighters_[0]->entity_->getComponent<Transform>();
-	Transform& t2 = fighters_[1]->entity_->getComponent<Transform>();
+	Transform& t1 = fighterResources_.fighters_[0]->entity_->getComponent<Transform>();
+	Transform& t2 = fighterResources_.fighters_[1]->entity_->getComponent<Transform>();
 	Transform* transforms[2] = { &t1, &t2 };
 	clampFighterOutOfBounds(hitboxes, transforms, &arena_);
 
 	bool fightersCollided = fighterCollisionCheck(hitboxes, transforms);
 	if (fightersCollided)
 	{
-		t2.pos_.y -= fighters_[0]->speed_;
-		t1.pos_.y += fighters_[1]->speed_;
+		t2.pos_.y -= fighterResources_.fighters_[0]->speed_;
+		t1.pos_.y += fighterResources_.fighters_[1]->speed_;
 	}
 
-	int currentAttack = fighters_[0]->currentAttack_;
-	if (currentAttack != -1)
+	FighterState state = fighterResources_.fighters_[0]->state_;
+	if((state==idle || state == walking || state == blocking) && fighterResources_.fighters_[0]->currentAttack_ == -1 && fighterResources_.fighters_[0]->attackBuffer_.size() > 0)
 	{
-		updateAttack(*fighters_[0], *fighters_[1], fighterAttacks_[0][currentAttack], *hurtboxDebug_[0], false);
+		fighterResources_.fighters_[0]->currentAttack_ = fighterResources_.fighters_[0]->attackBuffer_.front();
+		fighterResources_.fighters_[0]->attackBuffer_.pop();
+	}
+	state = fighterResources_.fighters_[1]->state_;
+	if ((state==idle || state == walking || state == blocking) && fighterResources_.fighters_[1]->currentAttack_ == -1 && fighterResources_.fighters_[1]->attackBuffer_.size() > 0)
+	{
+		fighterResources_.fighters_[1]->currentAttack_ = fighterResources_.fighters_[1]->attackBuffer_.front();
+		fighterResources_.fighters_[1]->attackBuffer_.pop();
 	}
 
-	currentAttack = fighters_[1]->currentAttack_;
-	if (currentAttack != -1)
+	updateAttacks();
+	drawHealthBars();
+}
+
+void GameStateManager::updateAttacks()
+{
+	int attackIndex1 = fighterResources_.fighters_[0]->currentAttack_;
+	int attackIndex2 = fighterResources_.fighters_[1]->currentAttack_;
+	Hitbox* h[2] = { &fighterResources_.fighters_[0]->entity_->getComponent<Hitbox>(), &fighterResources_.fighters_[1]->entity_->getComponent<Hitbox>() };
+	Transform* transforms[2] = { &fighterResources_.fighters_[0]->entity_->getComponent<Transform>(), &fighterResources_.fighters_[1]->entity_->getComponent<Transform>() };
+	Attack* attack = nullptr;
+	if (attackIndex1 != -1)
 	{
-		updateAttack(*fighters_[1], *fighters_[0], fighterAttacks_[1][currentAttack], *hurtboxDebug_[1], true);
+		attack = &fighterResources_.fighterAttacks_[0][attackIndex1];
+		if (attack->currentFrame >= attack->startupFrames && attack->currentFrame < (attack->startupFrames + attack->activeFrames))
+		{
+			fighterResources_.hurtboxDebug_[0]->getComponent<Renderable>().render_ = true;
+			int currentAttackFrame = attack->currentFrame - attack->startupFrames;
+			glm::vec2 hurtboxDim = attack->hurtboxWidthHeight[currentAttackFrame];
+			setHurtboxWidthHeight(*fighterResources_.hurtboxDebug_[0], hurtboxDim[0], hurtboxDim[1], {255, 0, 0});
+			glm::vec3 hurtboxPos = attack->hurtboxPos[currentAttackFrame];
+			Transform& fighterTransform = fighterResources_.fighters_[0]->entity_->getComponent<Transform>();
+			Transform& hurtboxTransform = fighterResources_.hurtboxDebug_[0]->getComponent<Transform>();
+			hurtboxTransform.pos_ = hurtboxPos + fighterTransform.pos_;
+
+			//pointDebug->getComponent<Renderable>().render_ = true;
+			if (!attack->handled_)
+			{
+				if (checkAttackCollision(*fighterResources_.fighters_[0], *fighterResources_.fighters_[1], *attack, false))
+				{
+					fighterResources_.healthBar[1] -= attack->damage;
+					std::cout << "health2: " << fighterResources_.healthBar[1] << std::endl;
+				}
+			}
+			else if(fighterResources_.fighters_[0]->attackBuffer_.size() > 0)
+			{
+				int nextAttack = fighterResources_.fighters_[0]->attackBuffer_.front();
+				if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[0]->currentAttack_, nextAttack))
+				{
+					attack->currentFrame = 0;
+					attack->handled_ = false;
+					fighterResources_.fighters_[0]->currentAttack_ = nextAttack;
+					fighterResources_.fighters_[0]->attackBuffer_.pop();
+					std::cout << "cancel" << std::endl;
+				}
+			}
+			//std::cout << "----active----" << std::endl;
+		}
+
+		if (attack->currentFrame > attack->startupFrames + attack->activeFrames)
+		{
+			fighterResources_.hurtboxDebug_[0]->getComponent<Renderable>().render_ = false;
+		}
+
+		//std::cout << "currentFrame: " << attack.currentFrame << std::endl;
+		if (attack->currentFrame >= (attack->startupFrames + attack->recoveryFrames + attack->activeFrames))
+		{
+			//std::cout << "----end----" << std::endl;
+			//std::cout << "Attack finished" << std::endl;
+			//pointDebug->getComponent<Renderable>().render_ = false;
+			attack->currentFrame = 0;
+			attack->handled_ = false;
+			fighterResources_.fighters_[0]->currentAttack_ = -1;
+			return;
+		}
+		attack->currentFrame++;
+	}
+
+	if (attackIndex2 != -1)
+	{
+		attack = &fighterResources_.fighterAttacks_[1][attackIndex2];
+		if (attack->currentFrame >= attack->startupFrames && attack->currentFrame < (attack->startupFrames + attack->activeFrames))
+		{
+			fighterResources_.hurtboxDebug_[1]->getComponent<Renderable>().render_ = true;
+			int currentAttackFrame = attack->currentFrame - attack->startupFrames;
+			glm::vec2 hurtboxDim = attack->hurtboxWidthHeight[currentAttackFrame];
+			glm::vec3 hurtboxPos = attack->hurtboxPos[currentAttackFrame];
+			hurtboxPos.y *= -1;
+			Transform& fighterTransform = fighterResources_.fighters_[1]->entity_->getComponent<Transform>();
+			Transform& hurtboxTransform = fighterResources_.hurtboxDebug_[1]->getComponent<Transform>();
+			hurtboxTransform.pos_ = hurtboxPos + fighterTransform.pos_;
+
+			//pointDebug->getComponent<Renderable>().render_ = true;
+			if (!attack->handled_)
+			{
+				if (checkAttackCollision(*fighterResources_.fighters_[1], *fighterResources_.fighters_[0], *attack, true))
+				{
+					fighterResources_.healthBar[0] -= attack->damage;
+					std::cout << "health1: " << fighterResources_.healthBar[0] << std::endl;
+				}
+			}
+			else if(fighterResources_.fighters_[1]->attackBuffer_.size() > 0)
+			{
+				int nextAttack = fighterResources_.fighters_[1]->attackBuffer_.front();
+				if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[1]->currentAttack_, nextAttack))
+				{
+					attack->currentFrame = 0;
+					attack->handled_ = false;
+					fighterResources_.fighters_[1]->currentAttack_ = nextAttack;
+					fighterResources_.fighters_[1]->attackBuffer_.pop();
+					std::cout << "cancel" << std::endl;
+				}
+			}
+			//std::cout << "----active----" << std::endl;
+		}
+
+		if (attack->currentFrame > attack->startupFrames + attack->activeFrames)
+		{
+			fighterResources_.hurtboxDebug_[1]->getComponent<Renderable>().render_ = false;
+		}
+
+		//std::cout << "currentFrame: " << attack.currentFrame << std::endl;
+		if (attack->currentFrame >= (attack->startupFrames + attack->recoveryFrames + attack->activeFrames))
+		{
+			//std::cout << "----end----" << std::endl;
+			//std::cout << "Attack finished" << std::endl;
+			//pointDebug->getComponent<Renderable>().render_ = false;
+			attack->currentFrame = 0;
+			attack->handled_ = false;
+			fighterResources_.fighters_[1]->currentAttack_ = -1;
+			return;
+		}
+		attack->currentFrame++;
 	}
 }

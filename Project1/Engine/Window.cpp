@@ -8,8 +8,8 @@ Window::Window()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	windowInfo_.width = EngineSettings::getSingleton().getWindow_width();
-	windowInfo_.height = EngineSettings::getSingleton().getWindow_height();
+	windowInfo_.width = EngineSettings::getSingleton().windowWidth;
+	windowInfo_.height = EngineSettings::getSingleton().windowHeight;
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Dog Game", nullptr, nullptr);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -75,6 +75,8 @@ Window::Window()
 		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
 		info->width = width;
 		info->height = height;
+		EngineSettings::getSingletonPtr()->windowHeight = info->height;
+		EngineSettings::getSingletonPtr()->windowWidth = info->width;
 
 		Events::FrameBufferResizedEvent e(width, height);
 		info->callback(e);

@@ -84,12 +84,30 @@ Renderable::~Renderable()
 
 void Renderable::deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice)
 {
-	std::cout << "Jason delete" << std::endl;
+	std::cout << "Jason delete mesh" << std::endl;
 	vmaDestroyBuffer(allocator, vertexBuffer_, vertexMem_);
 	vmaDestroyBuffer(allocator, indexBuffer_, indexMem_);
 	for (int i = 0; i < uniformBuffer_.size(); i++)
 	{
 		vmaDestroyBuffer(allocator, uniformBuffer_[i], uniformMem_[i]);
 	}
-	//vkDestroyDescriptorSetLayout(logicalDevice, descriptorLayout_, nullptr);
+	vkDestroyDescriptorSetLayout(logicalDevice, descriptorLayout_, nullptr);
+}
+
+void Renderable::setVertAndIndicies(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)
+{
+	assert(allocator_);
+	vertices_ = vertices;
+	indices_ = indices;
+	size_t vertexBufferSize = vertices_.size() * sizeof(Vertex);
+	void *vertexData;
+	vmaMapMemory(allocator_, vertexMem_, &vertexData);
+	memcpy(vertexData, vertices_.data(), vertexBufferSize);
+	vmaUnmapMemory(allocator_, vertexMem_);
+
+	size_t indexBufferSize = indices_.size() * sizeof(uint32_t);
+	void *indexData;
+	vmaMapMemory(allocator_, indexMem_, &indexData);
+	memcpy(indexData, indices_.data(), indexBufferSize);
+	vmaUnmapMemory(allocator_, indexMem_);
 }

@@ -10,7 +10,6 @@
 #include <NewRenderer/UIInterface.h>
 #include "Renderable.h"
 
-
 class VkRenderer : Singleton<VkRenderer>
 {
 public:
@@ -24,6 +23,9 @@ public:
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
 	void updateUniformBuffer(Renderable& mesh);
 
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+	std::vector<char> readShaderFile(const std::string& filename);
+
 	static VkRenderer& getSingleton();
 	static VkRenderer* getSingletonPtr();
 	
@@ -36,10 +38,9 @@ public:
 
 	VkRenderPass renderPass_;
 
-private:
 	Window& window_;
 
-	UIInterface* ui_;
+	UI::UIInterface* ui_;
 
 	VkInstance instance_;
 
@@ -116,9 +117,6 @@ private:
 
 	void createTextureResources(Renderable& o, Textured& texture);
 
-	VkShaderModule createShaderModule(const std::vector<char>& code);
-	
-	std::vector<char> readShaderFile(const std::string& filename);
 
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 
