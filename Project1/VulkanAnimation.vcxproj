@@ -31,7 +31,7 @@
     <ProjectGuid>{4451C2FA-6E5B-45E7-AC44-02214EA73C78}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>VulkanAnimation</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -89,12 +89,17 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
+    <ExtensionsToDeleteOnClean>*dll;$(ExtensionsToDeleteOnClean)</ExtensionsToDeleteOnClean>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -114,6 +119,7 @@
       <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TargetMachine>MachineX64</TargetMachine>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -125,15 +131,22 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\FightingGame\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -170,7 +183,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\FightingGame\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -178,48 +191,123 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Quick|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\source\repos\FightingGame\Project1\Engine;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <SubSystem>Console</SubSystem>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /y /d "C:\Users\jsngw\source\repos\Vulkan\bin\assimp-vc140-mt.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copy DLLs to Target Directory</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BufferOperations.cpp" />
-    <ClCompile Include="DepthBuffer.cpp" />
-    <ClCompile Include="GraphicsPipeline.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="RenderPassComponent.cpp" />
-    <ClCompile Include="ResourceManager.cpp" />
-    <ClCompile Include="PrimitiveMesh.cpp" />
-    <ClCompile Include="TexturedMesh.cpp" />
-    <ClCompile Include="VulkanAnimation.cpp" />
-    <ClCompile Include="VulkanImage.cpp" />
+    <ClCompile Include="Engine\libs\imgui\implot\implot.cpp" />
+    <ClCompile Include="Engine\libs\imgui\implot\implot_demo.cpp" />
+    <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\Fighter.cpp" />
+    <ClCompile Include="Sandbox\CameraController.cpp" />
+    <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp" />
+    <ClCompile Include="Engine\Scene\Componenets\Animator.cpp" />
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="Engine\BaseCamera.cpp" />
+    <ClCompile Include="Engine\DebugDrawManager.cpp" />
+    <ClCompile Include="Engine\EngineSettings.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui_demo.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="Engine\libs\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Engine\Scene\Entity.cpp" />
+    <ClCompile Include="Engine\ResourceManager.cpp" />
+    <ClCompile Include="Engine\Scene\Scene.cpp" />
+    <ClCompile Include="Engine\Window.cpp" />
+    <ClCompile Include="Engine\NewRenderer\Renderable.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp" />
+    <ClCompile Include="Sandbox\FightingGame\InputHandler.cpp" />
+    <ClCompile Include="Sandbox\Sandbox.cpp" />
+    <ClCompile Include="Engine\Scene\Componenets\Transform.cpp" />
+    <ClCompile Include="Engine\NewRenderer\VkRenderer.cpp" />
+    <ClCompile Include="Engine\libs\vk-bootstrap\VkBootstrap.cpp" />
+    <ClCompile Include="Engine\NewRenderer\vkinit.cpp" />
+    <ClCompile Include="Engine\NewRenderer\Textured.cpp" />
+    <ClCompile Include="Engine\NewRenderer\UIInterface.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BufferOperations.h" />
-    <ClInclude Include="DepthBuffer.h" />
-    <ClInclude Include="GraphicsPipeline.h" />
-    <ClInclude Include="EngineSettings.h" />
-    <ClInclude Include="RenderPassComponent.h" />
-    <ClInclude Include="VulkanImage.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="ResourceManager.h" />
-    <ClInclude Include="PrimitiveMesh.h" />
-    <ClInclude Include="Singleton.h" />
-    <ClInclude Include="TexturedMesh.h" />
-    <ClInclude Include="Vertex.h" />
-    <ClInclude Include="VulkanDebug.h" />
-    <ClInclude Include="VulkanErrorCheck.h" />
-    <ClInclude Include="VulkanWindow.h" />
+    <ClInclude Include="Engine\libs\imgui\implot\implot.h" />
+    <ClInclude Include="Engine\libs\imgui\implot\implot_internal.h" />
+    <ClInclude Include="Sandbox\FightingGame\Fighter.h" />
+    <ClInclude Include="Sandbox\CameraController.h" />
+    <ClInclude Include="Engine\Scene\Componenets\Camera.h" />
+    <ClInclude Include="Engine\Scene\Componenets\BoneStructure.h" />
+    <ClInclude Include="Engine\Events.h" />
+    <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
+    <ClInclude Include="Engine\NewRenderer\VkTypes.h" />
+    <ClInclude Include="Engine\Scene\Componenets\Animator.h" />
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="Engine\BaseCamera.h" />
+    <ClInclude Include="Engine\DebugDrawManager.h" />
+    <ClInclude Include="Engine\EngineSettings.h" />
+    <ClInclude Include="Engine\libs\entt\entt.hpp" />
+    <ClInclude Include="Engine\libs\imgui\imconfig.h" />
+    <ClInclude Include="Engine\libs\imgui\imgui.h" />
+    <ClInclude Include="Engine\libs\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="Engine\libs\imgui\imgui_impl_vulkan.h" />
+    <ClInclude Include="Engine\libs\imgui\imgui_internal.h" />
+    <ClInclude Include="Engine\libs\imgui\imstb_rectpack.h" />
+    <ClInclude Include="Engine\libs\imgui\imstb_textedit.h" />
+    <ClInclude Include="Engine\libs\imgui\imstb_truetype.h" />
+    <ClInclude Include="Engine\ResourceManager.h" />
+    <ClInclude Include="Engine\Scene\Entity.h" />
+    <ClInclude Include="EntryPoint.h" />
+    <ClInclude Include="Engine\Scene\Scene.h" />
+    <ClInclude Include="Engine\Singleton.h" />
+    <ClInclude Include="Engine\Vertex.h" />
+    <ClInclude Include="Engine\Window.h" />
+    <ClInclude Include="Engine\NewRenderer\Renderable.h" />
+    <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
+    <ClInclude Include="Sandbox\FightingGame\FighterCamera.h" />
+    <ClInclude Include="Sandbox\FightingGame\FighterFactory.h" />
+    <ClInclude Include="Sandbox\FightingGame\GameStateManager.h" />
+    <ClInclude Include="Sandbox\FightingGame\InputHandler.h" />
+    <ClInclude Include="Sandbox\Sandbox.h" />
+    <ClInclude Include="Engine\Scene\Componenets\Transform.h" />
+    <ClInclude Include="Engine\NewRenderer\VkRenderer.h" />
+    <ClInclude Include="Engine\libs\vk-bootstrap\VkBootstrap.h" />
+    <ClInclude Include="Engine\NewRenderer\vkinit.h" />
+    <ClInclude Include="Engine\NewRenderer\Textured.h" />
+    <ClInclude Include="Engine\NewRenderer\UIInterface.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\Settings\EngineSettings.ini" />
+    <None Include="shaders\animatedMesh.frag" />
+    <None Include="shaders\animatedMesh.vert" />
+    <None Include="shaders\imgui.frag" />
+    <None Include="shaders\imgui.vert" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\texturedMeshShader.frag" />
+    <None Include="shaders\texturedMeshShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

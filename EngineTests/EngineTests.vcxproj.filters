@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="AnimatorTest.cpp" />
+    <ClCompile Include="..\Project1\Engine\Scene\Componenets\Animator.cpp">
+      <Filter>Includes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Project1\Engine\Scene\Componenets\BoneStructure.cpp">
+      <Filter>Includes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Project1\Engine\NewRenderer\Renderable.cpp">
+      <Filter>Includes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\Project1\Engine\Scene\Componenets\Animator.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Project1\Engine\Scene\Componenets\BoneStructure.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Project1\Engine\NewRenderer\Renderable.h">
+      <Filter>Includes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Includes">
+      <UniqueIdentifier>{bdb0f799-c0dc-49cd-8c54-85d8414fb5ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
