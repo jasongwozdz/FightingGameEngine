@@ -7,6 +7,7 @@
 
 //Hitbox structure used for all differrent types of hitboxs(hurtboxes, collisions, etc..) 
 //Gamestate manager should be handling all collision detection.
+
 struct Hitbox
 {
 	Hitbox() = default;
@@ -18,7 +19,14 @@ struct Hitbox
 	float height_;
 	glm::vec3 pos_;
 	Entity* hitboxEnt_;
+	std::vector<Hitbox> children;
 	//TODO: Hitbox* children_; Implement hierarchical hitbox system.  
+};
+
+struct Hitboxes
+{
+
+	std::vector<Hitbox> children;
 };
 
 struct Attack
@@ -172,9 +180,16 @@ public:
 
 	FighterState state_ = idle;
 
-	float baseSpeed_ = 0.05f;
+	double pastTime_ = 0;
+
+	float baseSpeed_ = 5.0f;
 	
 	float speed_ = baseSpeed_;
+	float terminalYSpeed_ = 0.25f;
+	float currentYspeed_ = 0.0f;
+	float currentXspeed_ = 0.0f;
+	float gravity_ = -1.0f;
+	float threshold;
 
 	float deltaTime_;
 	
@@ -197,10 +212,16 @@ public:
 
 	int maxHealth_ = 100;
 
+	bool flipSide_ = false;
+
 	const double timeToClearBuffer_ = 5; //ms
 	double clearAttackBufferTime_ = 0;
 
-	bool onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames); //returns bool if hit was successful - might need to do this since fighter could be invincible at time of attack collision(not likley since will probably just remove hitboxes to emulate invincibility, can't think of a reason why I should't do that), and GSM will need to know this since a different amount of attack recovery frames are used depending if an attack hits or not(*gms will probably not need to know this since i'm just gonna handle hitstun/blockstun in here probably).  Also could be used to determine if an attack is blocked or not
+	bool onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames); //returns bool if hit was successful 
+
+	void setOrKeepState(FighterState state);
+
+	glm::vec3 getPosition();
 
 private:
 
@@ -213,8 +234,6 @@ private:
 	void handleState();
 
 	void handleMove();
-
-	void setOrKeepState(FighterState state);
 
 	//returns true if attack input is complete and populates attackIndex with correspoding attack
 	bool checkAttackInput(int currentAttackInput, int& attackIndex);

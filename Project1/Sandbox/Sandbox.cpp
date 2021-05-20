@@ -37,7 +37,6 @@ void Sandbox::initScene()
 	fighter2_ = fighterFactory_->createFighter(modelPath, texturePath, *inputHandlerRight_);
 	fighter2_->controllable_ = true;
 	fighter2_->setPosition({0.0f, -5.0f, 0.0f});
-	fighter2_->flipSide();
 
 	joint_ = scene_->addEntity("Joint");
 	Transform& t = joint_->addComponent<Transform>(glm::vec3(0,0,0));
@@ -64,11 +63,6 @@ void Sandbox::initScene()
 	arena_ = { GRID_WIDTH, GRID_DEPTH, {0.0, 0.0, -1.75f} };
 
 	debugManager_->drawGrid(arena_.pos, GRID_WIDTH, GRID_DEPTH, { 255, 255, 255 }, true);
-	//debugManager_->addPoint({ 0, 0, 0 }, { 1, 1, 1 }, 0, true, fighter_->entity_);
-
-
-	debugManager_->addPoint({ 0, arena_.pos.y + arena_.width/2, 0 }, { 0.0f, 10.0f, 0.0f }, 0, true);
-	debugManager_->addPoint({ 0, arena_.pos.y - arena_.width/2, 0 }, { 0.0f, 10.0f, 0.0f }, 0, true);
 }
 
 void Sandbox::handleMouseClick(Events::MousePressedEvent& e)
@@ -138,11 +132,6 @@ glm::mat4 getGlobalTransformOfBone(const BoneStructure& boneStruct, int jointInd
 {
 	int parent = 0;
 	glm::mat4 finalTransform(1.0f);
-	//while (parent != -1)
-	//{
-
-	//	parent = boneStruct.boneInfo_[jointIndex].parent_
-	//}
 	return finalTransform;
 }
 
@@ -158,25 +147,12 @@ void setJointPos(Entity& fighter, Entity& joint, Entity& point, int jointIndex)
 		//globalTransform = glm::scale(globalTransform, { 0.001f, 0.001f, 0.001f });
 		point.getComponent<Transform>().finalTransform_ = globalTransform;
 		point.getComponent<Transform>().calculateTransform_ = false;
-
-		//fighterTransform.setScale(0.001f);
-		//glm::vec3 scale;
-		//glm::quat rotation;
-		//glm::vec3 translation;
-		//glm::vec3 skew;
-		//glm::vec4 perspective;
-		//glm::decompose(finalTransform, scale, rotation, translation, skew, perspective);
-
-		//jointTransform.pos_ = -translation;
-		//jointTransform.rot_ = -rotation;
 	}
 }
 
 void Sandbox::onUpdate(float deltaTime)
 {
 	gameStateManager_->update(0);
-	//setJointPos(*fighter_->entity_, *joint_, *hurtboxDebug_, 3);
-	//updateAttack(*fighter_, attacks_[0], *hurtboxDebug_);
 
 	if (fighter_)
 		fighter_->onUpdate(deltaTime);

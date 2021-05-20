@@ -95,9 +95,6 @@
     <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Engine\Scene\Componenets\Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Sandbox\CameraController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -11,10 +11,20 @@ double getCurrentTime()
 	return nano.count();
 }
 
+glm::vec3 Fighter::getPosition()
+{
+	Transform& transform = entity_->getComponent<Transform>();
+	glm::vec3 pos = transform.pos_;
+	if (side_ == left)
+	{
+		pos.z *= -1;
+	}
+	return pos;
+}
+
 Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side) :
 	entity_(entity), inputHandler_(inputHandler),side_(side)
 {
-	//std::vector<uint8_t> attackInput = { Input::InputMap::down, Input::InputMap::down | Input::InputMap::right, Input::InputMap::right, Input::InputMap::light };
 	std::vector<uint8_t> attackInput = { Input::InputMap::light };
 	attackInputs_.push_back({ attackInput, (int)attackInput.size(), 200l});
 	numAttacks_++;
@@ -22,10 +32,6 @@ Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side) :
 	attackInput = { Input::InputMap::strong };
 	attackInputs_.push_back({ attackInput, 1, 200l, 1});
 	numAttacks_++;
-
-	//attackInput = { Input::AttackMap::ultra };
-	//movementInput = { {0, 0} };
-	//attackInputs_.push_back({ 1, attackInput, movementInput, 3, 0});
 }
 
 void Fighter::setPosition(glm::vec3 pos)
@@ -46,19 +52,29 @@ void Fighter::flipSide()
 	swapped = swapped << 15;
 	swapped = swapped >> 15;
 	side_ = (FighterSide)swapped;
+	flipSide_ = false;
 }
 
 void Fighter::updateTransform()
 {
-	glm::vec3 trans = { 0, currentMovement_.x * speed_, 0};
+	//glm::vec3 trans = { 0, currentMovement_.x * speed_, 0};
 
 	Transform& transform = entity_->getComponent<Transform>();
+	transform.pos_.y += currentXspeed_ ;
+	currentYspeed_ += gravity_ * deltaTime_;
+	transform.pos_.z += currentYspeed_;
+	if (side_ == left)
+	{
+		transform.pos_.z *= -1;
+	}
 
-	glm::vec3 currentPos = transform.pos_;
+	//transform.pos_.z -= gravity_ * (side_ == left ? -1.0f : 1.0f);
 
-	currentPos += trans;
+	//glm::vec3 currentPos = transform.pos_;
 
-	transform.pos_ = currentPos;
+	//currentPos += trans;
+
+	//transform.pos_ = currentPos;
 }
 
 void Fighter::handleState()
@@ -66,10 +82,15 @@ void Fighter::handleState()
 	switch (state_)
 	{
 	case FighterState::idle:
+		if (flipSide_) flipSide();
 		handleMove();
 		break;
 	case FighterState::walking:
 		handleMove();
+		updateTransform();
+		break;
+	case FighterState::jumping:
+		//updateJump();
 		updateTransform();
 		break;
 	case FighterState::attacking:
@@ -96,6 +117,7 @@ void Fighter::handleState()
 
 void Fighter::handleMove()
 {
+
 	if (controllable_)
 	{
 		if (currentAttack_ != -1)
@@ -105,6 +127,10 @@ void Fighter::handleMove()
 		else if (currentMovement_.y == 0 && currentMovement_.x != 0)
 		{
 			setOrKeepState(FighterState::walking);
+		}
+		else if (currentMovement_.y > 0)
+		{
+			setOrKeepState(FighterState::jumping);
 		}
 		else
 		{
@@ -139,13 +165,29 @@ void Fighter::enterState(FighterState state)
 	case FighterState::hitstun:
 		entity_->getComponent<Animator>().setAnimation(0);
 		break;
+	case FighterState::jumping:
+		currentYspeed_ = terminalYSpeed_;
+		currentXspeed_ = 0;
+		if (side_ == left && currentMovement_.x < 0)
+		{
+			currentXspeed_ = -baseSpeed_* 2 * deltaTime_;
+		}
+		else if (side_ == left && currentMovement_.x > 0)
+		{
+			currentXspeed_ = baseSpeed_ * 2 * deltaTime_;
+		}
+		else if (currentMovement_.x > 0)
+		{
+			currentXspeed_ = baseSpeed_ * 2 * deltaTime_;
+		}
+		else if(currentMovement_.x < 0)
+		{
+			currentXspeed_ = -baseSpeed_ * 2 * deltaTime_;
+		}
+		break;
 	}
 }
 
-//How to deal with input sequences
-//move elements in attackInputs to have most relevant element at the beggining
-//for example start with only movement.y = -1;
-//move all AttackInputs that start with only movement.y to the front of the vector and increment their current input.
 bool Fighter::checkAttackInput(int currentAttackInput, int& attackIndex)
 {
 	//std::cout << "current attack input " << currentAttackInput << std::endl;
@@ -208,6 +250,10 @@ bool Fighter::checkAttackInput(int currentAttackInput, int& attackIndex)
 void Fighter::processInput()
 {
 	currentMovement_ = inputHandler_.currentMovementInput_;
+	if (state_ != jumping)
+	{
+		currentXspeed_ = baseSpeed_ * currentMovement_.x * deltaTime_;
+	}
 	int attackIndex;
 	if (checkAttackInput(inputHandler_.currentAttackInput_, attackIndex))
 	{
@@ -224,18 +270,15 @@ void Fighter::processInput()
 
 void Fighter::onUpdate(float delta)
 {
-	deltaTime_ = delta;
+	double currentTime = getCurrentTime();
+	deltaTime_ = (currentTime - pastTime_)/1000;
+	pastTime_ = currentTime;
 	if (controllable_)
 	{
 		processInput();
 	}
 	handleState();
-	speed_ = baseSpeed_;
-	if(attackBuffer_.size() > 0 && getCurrentTime() > clearAttackBufferTime_)
-	{
-		//std::cout << "buffer cleared" << std::endl;
-		attackBuffer_.empty();
-	}
+	speed_ = baseSpeed_ * deltaTime_;
 }
 
 bool Fighter::onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames)

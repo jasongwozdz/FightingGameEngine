@@ -53,27 +53,4 @@ void FighterCamera::onUpdate(float deltaTime)
 	glm::vec3& f2pos = f2.getComponent<Transform>().pos_;
 	glm::vec3 mid = midPoint(f1pos, f2pos);
 	camera_->position.y = -mid.y;
-
-	//if (shouldAddNewCameraPos() || lastUpdate_ < 0)
-	//{
-	//	Entity& f1 = fighter1_->entity_;
-	//	Entity& f2 = fighter2_->entity_;
-	//	posQueue.pop();
-	//	glm::vec3 f1pos = f1.getComponent<Transform>().getPosition();
-	//	glm::vec3 f2pos = f2.getComponent<Transform>().getPosition();
-	//	glm::vec3 mid = midPoint(f1pos, f2pos);
-	//	glm::vec3 newPos = glm::vec3(calculateX(f1pos, f2pos, mid), mid.x ,camera_.position.z);
-	//	posQueue.push(newPos);
-	//	lastUpdate_ = CURR_TIME;
-	//}
-	//else
-	//{
-	//	glm::vec3 currPos = camera_.position;
-	//	float normalizedTime = (CURR_TIME - lastUpdate_)/framesPerUpdate_;
-	//	float x = currPos.x + normalizedTime*(posQueue.front().x - currPos.x);
-	//	float y = currPos.y + normalizedTime*(posQueue.front().y - currPos.y);
-	//	float z = currPos.z + normalizedTime*(posQueue.front().z - currPos.z);
-
-	//	camera_.position = { x ,y, z };
-	//}
 }

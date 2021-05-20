@@ -88,37 +88,37 @@ void BaseCamera::update(float deltaTime)
 		}
 		
 
-		ImGui::Begin("Camera Debug");
-		char buffer[500];
-		sprintf_s(buffer, "Position: %f, %f, %f", position.x, position.y, position.z);
-		ImGui::Text(buffer);
-		sprintf_s(buffer, "ViewDirection: %f, %f, %f", viewDirection.x, viewDirection.y, viewDirection.z);
-		ImGui::Text(buffer);
-		sprintf_s(buffer, "upDirection: %f, %f, %f", upDirection.x, upDirection.y, viewDirection.z);
-		ImGui::Text(buffer);
+		//ImGui::Begin("Camera Debug");
+		//char buffer[500];
+		//sprintf_s(buffer, "Position: %f, %f, %f", position.x, position.y, position.z);
+		//ImGui::Text(buffer);
+		//sprintf_s(buffer, "ViewDirection: %f, %f, %f", viewDirection.x, viewDirection.y, viewDirection.z);
+		//ImGui::Text(buffer);
+		//sprintf_s(buffer, "upDirection: %f, %f, %f", upDirection.x, upDirection.y, viewDirection.z);
+		//ImGui::Text(buffer);
 
-		ImPlot::SetNextPlotLimitsX(time - 3000.0f, time, ImGuiCond_Always);
-		ImPlot::SetNextPlotLimitsY(-100, 100);
-		if (ImPlot::BeginPlot("viewDirections", "time", "viewDirection"))
-		{
-			ImPlot::PlotLine("View Direction X", times_.data(), viewDirectionsX_.data(), viewDirectionsX_.size());
-			ImPlot::PlotLine("View Direction Y", times_.data(), viewDirectionsY_.data(), viewDirectionsY_.size());
-			ImPlot::PlotLine("View Direction Z", times_.data(), viewDirectionsZ_.data(), viewDirectionsZ_.size());
+		//ImPlot::SetNextPlotLimitsX(time - 3000.0f, time, ImGuiCond_Always);
+		//ImPlot::SetNextPlotLimitsY(-100, 100);
+		//if (ImPlot::BeginPlot("viewDirections", "time", "viewDirection"))
+		//{
+		//	ImPlot::PlotLine("View Direction X", times_.data(), viewDirectionsX_.data(), viewDirectionsX_.size());
+		//	ImPlot::PlotLine("View Direction Y", times_.data(), viewDirectionsY_.data(), viewDirectionsY_.size());
+		//	ImPlot::PlotLine("View Direction Z", times_.data(), viewDirectionsZ_.data(), viewDirectionsZ_.size());
 
-			ImPlot::EndPlot();
-		}
+		//	ImPlot::EndPlot();
+		//}
 
-		ImPlot::SetNextPlotLimitsX(time - 3000.0f, time, ImGuiCond_Always);
-		ImPlot::SetNextPlotLimitsY(-100, 100);
-		if (ImPlot::BeginPlot("Position", "time", "viewDirection"))
-		{
-			ImPlot::PlotLine("Position X", times_.data(), posX_.data(), posX_.size());
-			ImPlot::PlotLine("Position Y", times_.data(), posY_.data(), posY_.size());
-			ImPlot::PlotLine("Position Z", times_.data(), posZ_.data(), posZ_.size());
+		//ImPlot::SetNextPlotLimitsX(time - 3000.0f, time, ImGuiCond_Always);
+		//ImPlot::SetNextPlotLimitsY(-100, 100);
+		//if (ImPlot::BeginPlot("Position", "time", "viewDirection"))
+		//{
+		//	ImPlot::PlotLine("Position X", times_.data(), posX_.data(), posX_.size());
+		//	ImPlot::PlotLine("Position Y", times_.data(), posY_.data(), posY_.size());
+		//	ImPlot::PlotLine("Position Z", times_.data(), posZ_.data(), posZ_.size());
 
-			ImPlot::EndPlot();
-		}
-		ImGui::End();
+		//	ImPlot::EndPlot();
+		//}
+		//ImGui::End();
 	}
 }
 

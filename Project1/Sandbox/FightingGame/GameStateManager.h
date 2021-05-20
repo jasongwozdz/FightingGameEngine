@@ -97,11 +97,7 @@ public:
 		return *this;
 	}
 
-	void updateAttack(Fighter& fighter1, Fighter& fighter2, Attack& attack, Entity& hurtboxDebug, bool leftSide);
-
-	void updateAttack(int fighterIndex);
-
-	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack, bool leftSide);
+	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack);
 
 	void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena);
 
@@ -115,11 +111,13 @@ public:
 
 	FighterResources fighterResources_;
 
-	UI::UIInterface& ui ;
+	UI::UIInterface& ui_;
 
-	//int currentAttack_[2] = { -1, -1 };
-
-	//Entity* pointDebug;
+	bool debug_ = true;
 
 	void update(float time);
+
+	void drawHitboxDebug(int fighterIndex, Attack* attack);
+
+	void checkFighterSide();
 };

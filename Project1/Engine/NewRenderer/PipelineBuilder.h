@@ -22,8 +22,6 @@ namespace PipelineBuilder
 			vkDestroyPipeline(logicalDevice_, pipeline_, nullptr);
 		}
 	};
-	//template<class Vertex>
-	//PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, VkPushConstantRange* range, bool depthEnabled, bool cullingEnabled, bool isLine = false);
 
 	template<class Vertex>
 	PipelineBuilder::PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, VkPushConstantRange* range, bool depthEnabled, bool cullingEnabled, bool isLine = false)

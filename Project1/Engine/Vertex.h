@@ -12,39 +12,6 @@ struct Vertex {
 	glm::vec4 boneWeights = {0.0, 0.0, 0.0, 0.0};
 	glm::ivec4 boneIds = {0, 0, 0, 0};
 
-	//Vertex() {};
-
-	//Vertex(glm::vec3 pos, glm::vec3 color) :
-	//	pos(pos), color(color){}
-
-	//Vertex(	glm::vec3 pos,
-	//	glm::vec3 color,
-	//	glm::vec2 texCoord,
-	//	glm::vec3 normal
-	//) : pos(pos), color(color), texCoord(texCoord), normal(normal)
-	//{
-	//	glm::vec4 boneWeights = {0.0, 0.0, 0.0, 0.0};
-	//	glm::ivec4 boneIds = {0, 0, 0, 0};
-	//}
-	//
-	//Vertex(	glm::vec3 pos,
-	//	glm::vec3 color,
-	//	glm::vec2 texCoord,
-	//	glm::vec3 normal,
-	//	glm::vec4 boneWeights,
-	//	glm::ivec4 boneIds
-	//) : pos(pos), color(color), texCoord(texCoord), normal(normal),boneWeights(boneWeights),boneIds(boneIds){}
-
-	//Vertex(const Vertex& v)
-	//{
-	//	pos = v.pos;
-	//	color = v.color;
-	//	texCoord = v.texCoord;
-	//	normal = v.normal;
-	//	boneWeights = v.boneWeights;
-	//	boneIds = v.boneIds;
-	//}
-
 	static VkVertexInputBindingDescription getBindingDescription() {
 		VkVertexInputBindingDescription bindingDescription{};
 		bindingDescription.binding = 0;

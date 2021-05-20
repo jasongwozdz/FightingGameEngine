@@ -224,7 +224,6 @@
     <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
     <ClCompile Include="Sandbox\FightingGame\Fighter.cpp" />
     <ClCompile Include="Sandbox\CameraController.cpp" />
-    <ClCompile Include="Engine\Scene\Componenets\Camera.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Animator.cpp" />
     <ClCompile Include="Application.cpp" />
@@ -242,7 +241,6 @@
     <ClCompile Include="Engine\Scene\Scene.cpp" />
     <ClCompile Include="Engine\Window.cpp" />
     <ClCompile Include="Engine\NewRenderer\Renderable.cpp" />
-    <ClCompile Include="Engine\NewRenderer\PipelineBuilder.cpp" />
     <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp" />
     <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp" />
     <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp" />
