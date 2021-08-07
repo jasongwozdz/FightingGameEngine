@@ -53,7 +53,9 @@ void Animator::setAnimation(int animationIndex)
 	if (animationIndex < size && animationIndex >= -1)
 	{
 		currentAnimation_ = animationIndex;
+		lastIndex_ = 0;
 		startTime_ = std::clock();
+		localTime_ = 0;
 	}
 	else
 	{
@@ -105,17 +107,17 @@ void Animator::update(float currentTime, Renderable& renderable)
 
 	glm::mat4 globalTransform = boneStructure_.boneInfo_[0].invBindPose_;
 
-	int frameIndex = 0;
-
+	unsigned int frameIndex = 0;
 	if (currentAnimation_ != -1)
 	{
 		AnimationClip clip = animations_[currentAnimation_];
 
-		for (int i = 0; i < clip.positions_[1].size() - 1; i++)
+		for (unsigned int i = lastIndex_; i < clip.positions_[1].size() - 2; i++)
 		{
 			if (clip.positions_[1][i + 1].time_ > localTime_)
 			{
 				frameIndex = i;
+				lastIndex_ = (frameIndex) % (clip.positions_[1].size()-3);
 				break;
 			}
 		}
@@ -124,6 +126,7 @@ void Animator::update(float currentTime, Renderable& renderable)
 			localTime_ = fmod(((currentTime - startTime_)*clip.playbackRate_), clip.duration_);
 		else
 			localTime_ = std::clamp(((currentTime - startTime_)*clip.playbackRate_), 0.0f, clip.duration_);
+
 		if (boneStructure_.boneInfo_[0].animated_)
 			globalTransform = interpolateTransforms(1, clip, frameIndex);
 	}
@@ -196,26 +199,8 @@ glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& c
 	KeyPosition startPos = clip.positions_[jointIndex][frameIndex];
 	KeyPosition endPos = clip.positions_[jointIndex][frameIndex + 1];
 
-	//for (int i = 0; i < clip.scale_[jointIndex].size() - 1; i++)
-	//{
-	//	if (clip.scale_[jointIndex][i + 1].time_ > localTime_)
-	//	{
-	//		frameIndex = i;
-	//		break;
-	//	}
-	//}
-
 	KeyScale startScale = clip.scale_[jointIndex][frameIndex];
 	KeyScale endScale = clip.scale_[jointIndex][frameIndex+1];
-
-	//for (int i = 0; i < clip.rotations_[jointIndex].size() - 1; i++)
-	//{
-	//	if (clip.rotations_[jointIndex][i + 1].time_ > localTime_)
-	//	{
-	//		frameIndex = i;
-	//		break;
-	//	}
-	//}
 
 	KeyRotation startRot = clip.rotations_[jointIndex][frameIndex];
 	KeyRotation endRot = clip.rotations_[jointIndex][frameIndex+1];

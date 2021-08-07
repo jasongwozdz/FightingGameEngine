@@ -8,4 +8,6 @@ C:/VulkanSDK/Bin32/glslc.exe animatedMesh.vert -o animatedMesh.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe animatedMesh.frag -o animatedMesh.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe gui2d.vert -o gui2d.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe gui2d.frag -o gui2d.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe debug.vert -o debug.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe debug.frag -o debug.frag.spv
 pause

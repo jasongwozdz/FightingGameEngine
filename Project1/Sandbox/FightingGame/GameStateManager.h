@@ -61,22 +61,16 @@ struct FighterResources
 
 	Entity* hurtboxDebug_[2];
 
-	std::vector<Attack> fighterAttacks_[2];
+	//std::vector<Attack> fighterAttacks_[2];
 
 	CancelAttackMap cancelAttackMap_[2];
 
-	int healthBar[2] = { 100, 100 }; //between 0 and 1
+	int healthBar[2] = { 100, 100 }; 
 };
 
 class GameStateManager
 {
 public:
-	GameStateManager() = default;
-
-	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager& debugDrawManager, float arenaWidth, float arenaHeight);
-
-	~GameStateManager();
-
 	GameStateManager& operator=(GameStateManager&& other)
 	{
 		std::cout << "assignment" << std::endl;
@@ -91,21 +85,38 @@ public:
 		other.fighterResources_.hurtboxDebug_[0] = nullptr;
 		other.fighterResources_.hurtboxDebug_[1] = nullptr; 
 
-		fighterResources_.fighterAttacks_[0] = other.fighterResources_.fighterAttacks_[0];
-		fighterResources_.fighterAttacks_[1] = other.fighterResources_.fighterAttacks_[1];
-
 		return *this;
 	}
+
+	GameStateManager() = default;
+
+	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, float arenaWidth, float arenaHeight);
+
+	~GameStateManager();
+
+	void update(float time);
+
+	bool debug_ = true;
+
+private:
+	bool r_checkAttackCollision(const Hitbox& hitbox, const float hitboxXMin, const float hitboxXMax, const float hitboxYMin, const float hitboxYMax, glm::vec3 pos, bool left) const;
 
 	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack);
 
 	void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena);
-
+	
 	bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms);
 
 	void updateAttacks();
 
+	void r_drawHitboxDebug(const Hitbox& hitbox, glm::vec3 pos, bool left) const;
+	void drawHitboxDebug(const Hitbox& hitbox, const Fighter& fighter) const;
+
 	void drawHealthBars();
+
+	void drawHitboxDebug(int fighterIndex, Attack* attack);
+
+	void checkFighterSide();
 
 	Arena arena_;
 
@@ -113,11 +124,5 @@ public:
 
 	UI::UIInterface& ui_;
 
-	bool debug_ = true;
-
-	void update(float time);
-
-	void drawHitboxDebug(int fighterIndex, Attack* attack);
-
-	void checkFighterSide();
+	DebugDrawManager* debugManager_;
 };

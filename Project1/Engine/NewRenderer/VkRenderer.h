@@ -10,6 +10,8 @@
 #include <NewRenderer/UIInterface.h>
 #include "Renderable.h"
 
+class DebugDrawManager; // forware declare this class to remove cyclical dependency between DebugDrawManager.h->Scene.h->VkRenderer.h
+
 class VkRenderer : Singleton<VkRenderer>
 {
 public:
@@ -41,6 +43,8 @@ public:
 	Window& window_;
 
 	UI::UIInterface* ui_;
+	
+	DebugDrawManager* debugDrawManager_;
 
 	VkInstance instance_;
 

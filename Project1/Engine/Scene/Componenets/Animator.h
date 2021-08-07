@@ -123,4 +123,6 @@ private:
 	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
 
 	glm::mat4 interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex);
+
+	unsigned int lastIndex_ = 0;
 };

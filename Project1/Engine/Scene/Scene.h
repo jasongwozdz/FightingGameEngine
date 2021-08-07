@@ -22,7 +22,7 @@ public:
 	entt::entity& getEntity(std::string name);
 	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
-	BaseCamera* getCurrentCamera();
+	BaseCamera* getCurrentCamera() const;
 
 	//void each(std::function<void(entt::entity, entt::registry)>);
 	

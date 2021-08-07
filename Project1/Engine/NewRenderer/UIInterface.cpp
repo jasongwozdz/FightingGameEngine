@@ -250,9 +250,7 @@ void UI::UIInterface::recreateUI(VkInstance& instance, VkPhysicalDevice& physica
 
 	delete uiPipeline_;
 
-	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, &range, true, false);
-
-	uiPipeline_ = r;
+	uiPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, &range, true, false);
 
 	size_t vertexBufferSize = 4 * sizeof(Vertex);
 }

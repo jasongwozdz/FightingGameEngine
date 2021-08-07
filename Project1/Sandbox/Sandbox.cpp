@@ -40,20 +40,17 @@ void Sandbox::initScene()
 
 	joint_ = scene_->addEntity("Joint");
 	Transform& t = joint_->addComponent<Transform>(glm::vec3(0,0,0));
-	//t.parent_ = fighter_->entity_;
 
 	Hitbox& h = fighter_->entity_->getComponent<Hitbox>();
-	h.hitboxEnt_ = debugManager_->drawRect( h.pos_, { 0, 10, 0 }, 0, true, -h.width_/2, h.width_/2, -h.height_/2,	h.height_/2, fighter_->entity_ );
-
-	h = fighter2_->entity_->getComponent<Hitbox>();
-	h.hitboxEnt_ = debugManager_->drawRect( h.pos_, { 0, 10, 0 }, 0, true, -h.width_/2, h.width_/2, -h.height_/2,	h.height_/2, fighter2_->entity_ );
 
 	camera_ = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
 	BaseCamera* debugCamera = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
 	camera_->drawDebug_ = true;
-
+	
 	cameraController_ = new CameraController(*debugCamera);
 	fighterCamera_ = new FighterCamera(camera_, fighter_, fighter2_);
+
+	debugManager_->scene_ = scene_;
 
 	scene_->addCamera(camera_);
 	scene_->addCamera(debugCamera);
@@ -62,7 +59,6 @@ void Sandbox::initScene()
 #define GRID_DEPTH 21
 	arena_ = { GRID_WIDTH, GRID_DEPTH, {0.0, 0.0, -1.75f} };
 
-	debugManager_->drawGrid(arena_.pos, GRID_WIDTH, GRID_DEPTH, { 255, 255, 255 }, true);
 }
 
 void Sandbox::handleMouseClick(Events::MousePressedEvent& e)
@@ -94,6 +90,9 @@ void Sandbox::handleKeyButtonDown(Events::KeyPressedEvent& e)
 		setCursor(cursor_);
 		cameraController_->controllable_ = !cursor_;
 		break;
+
+	case GLFW_KEY_F:
+		gameStateManager_->debug_ = !gameStateManager_->debug_;
 	}
 }
 
@@ -123,7 +122,7 @@ void Sandbox::onStartup()
 
 	fighterFactory_ = new FighterFactory(*scene_, *inputHandler_);
 	initScene();
-	gameStateManager_ = new GameStateManager(fighter_, fighter2_, *debugManager_, GRID_WIDTH, GRID_DEPTH);
+	gameStateManager_ = new GameStateManager(fighter_, fighter2_, debugManager_, GRID_WIDTH, GRID_DEPTH);
 
 	addEventCallback(std::bind(&Sandbox::onEvent, this, std::placeholders::_1));
 }
@@ -144,7 +143,6 @@ void setJointPos(Entity& fighter, Entity& joint, Entity& point, int jointIndex)
 		Renderable& mesh = fighter.getComponent<Renderable>();
 		Transform& jointTransform = joint.getComponent<Transform>();
 		glm::mat4 globalTransform = animator.globalTransforms[jointIndex];
-		//globalTransform = glm::scale(globalTransform, { 0.001f, 0.001f, 0.001f });
 		point.getComponent<Transform>().finalTransform_ = globalTransform;
 		point.getComponent<Transform>().calculateTransform_ = false;
 	}
@@ -152,7 +150,6 @@ void setJointPos(Entity& fighter, Entity& joint, Entity& point, int jointIndex)
 
 void Sandbox::onUpdate(float deltaTime)
 {
-	gameStateManager_->update(0);
 
 	if (fighter_)
 		fighter_->onUpdate(deltaTime);
@@ -164,6 +161,8 @@ void Sandbox::onUpdate(float deltaTime)
 		cameraController_->onUpdate(deltaTime);
 	if (camera_)
 		camera_->update(deltaTime);
+
+	gameStateManager_->update(0);
 }
 
 Application* createApplication()

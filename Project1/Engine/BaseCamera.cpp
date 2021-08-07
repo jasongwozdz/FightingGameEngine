@@ -56,7 +56,7 @@ void BaseCamera::strafeRight(float time)
 	position += time * cameraSpeed * strafeDirection;
 }
 
-glm::mat4 BaseCamera::getView() 
+glm::mat4 const BaseCamera::getView() 
 {
 	glm::mat4 view = glm::lookAt(position, position + viewDirection, upDirection);
 	return view;

@@ -10,7 +10,7 @@ Scene::~Scene()
 	registry_.clear();
 }
 
-BaseCamera* Scene::getCurrentCamera()
+BaseCamera* Scene::getCurrentCamera() const
 {
 	if (cameras_.size() > 0)
 	{

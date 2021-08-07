@@ -54,7 +54,7 @@ public:
 
 	void setOldMousePosition(glm::vec2 oldMouse);
 
-	glm::mat4 getView();
+	glm::mat4 const getView();
 
 	virtual void update(float deltaTime);
 };

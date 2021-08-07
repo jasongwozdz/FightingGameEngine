@@ -6,6 +6,7 @@
 #include <vector>
 #include <NewRenderer/vkinit.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include "DebugDrawManager.h"
 #define VMA_IMPLEMENTATION
 #include <libs/VulkanMemoryAllocator/vk_mem_alloc.h>
 
@@ -83,7 +84,7 @@ void VkRenderer::recreateSwapchain()
 	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
 
 	ui_->recreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
-	//ui_ = new UI::UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_, allocator_);
+	
 }
 
 VkRenderer* VkRenderer::getSingletonPtr()
@@ -203,8 +204,8 @@ void VkRenderer::init()
 
 	createSynchronizationResources();
 
-	//ui_->RecreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
 	ui_ = new UI::UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_, allocator_);
+	debugDrawManager_ = new DebugDrawManager(logicalDevice_, renderPass_, allocator_);
 }
 
 void VkRenderer::createDefaultRenderPass()
@@ -909,59 +910,6 @@ void VkRenderer::initPipelines()
 
 		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
 	}
-	//GUI PIPELINE
-	//{
-	//	//VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	//	//uboLayoutBinding.binding = 0;
-	//	//uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-	//	//uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//	//uboLayoutBinding.pImmutableSamplers = nullptr;
-	//	//uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	//	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	//	samplerLayoutBinding.binding = 1;
-	//	samplerLayoutBinding.descriptorCount = 1;
-	//	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	//	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//	std::array<VkDescriptorSetLayoutBinding, 1> bindings = {  samplerLayoutBinding};
-	//	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	//	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	//	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	//	layoutInfo.pBindings = bindings.data();
-
-	//	VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::GUI_PIPELINE]));
-
-	//	std::vector<char> vertexShaderCode = readShaderFile("./shaders/imgui.vert.spv");
-	//	std::vector<char> fragmentShaderCode = readShaderFile("./shaders/imgui.frag.spv");
-
-	//	VkShaderModule vertexShader = createShaderModule(vertexShaderCode);
-	//	VkShaderModule fragmentShader = createShaderModule(fragmentShaderCode);
-
-	//	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-	//	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	//	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	//	vertShaderStageInfo.module = vertexShader;
-	//	vertShaderStageInfo.pName = "main";
-
-	//	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-	//	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	//	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	//	fragShaderStageInfo.module = fragmentShader;
-	//	fragShaderStageInfo.pName = "main";
-
-	//	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
-
-	//	VkPushConstantRange range;
-	//	range.offset = 0;
-	//	range.size = sizeof(GUIPushConstant);
-	//	range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-	//	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline(logicalDevice_, renderPass_, shaders, windowExtent_, descriptorLayouts_[PipelineTypes::GUI_PIPELINE], &range, true, false);
-
-	//	pipelines_[PipelineTypes::GUI_PIPELINE] = r;
-	//}
 }
 
 //void VkRenderer::updateUniformBuffer(RenderableObject& o)
@@ -1004,7 +952,6 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 
 	if (recreateSwapchain_)
 	{
-		//ui_->renderFrame(cmdBuffer_);
 		recreateSwapchain_ = false;
 		recreateSwapchain();
 		
@@ -1040,8 +987,13 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 	
 	vkCmdBeginRenderPass(cmdBuffer_, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+
 	drawObjects(cmdBuffer_, 0, objectsToDraw);
 	ui_->renderFrame(cmdBuffer_);
+
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+	proj[1][1] *= -1;
+	debugDrawManager_->renderFrame(cmdBuffer_, proj);
 
 	//finalize the render pass
 	vkCmdEndRenderPass(cmdBuffer_);
@@ -1089,10 +1041,6 @@ void VkRenderer::cleanup()
 
 	vkDestroyDescriptorPool(logicalDevice_, descriptorPool_, nullptr);
 	
-	//for (auto framebuffer : swapChainResources_.swapChainFramebuffers_) {
-	//	vkDestroyFramebuffer(logicalDevice_, framebuffer, nullptr);
-	//}
-
 	vkFreeCommandBuffers(logicalDevice_, cmdPool_, 1, &cmdBuffer_);
 	vkDestroyCommandPool(logicalDevice_, cmdPool_, nullptr);
 	
@@ -1108,9 +1056,6 @@ void VkRenderer::cleanup()
 
 	vkDestroyDevice(logicalDevice_, nullptr);
 
-	//if (enableValidationLayers) {
-	//	DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
-	//}
 
 	vkDestroySurfaceKHR(instance_, surface_, nullptr);
 

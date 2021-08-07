@@ -44,6 +44,9 @@ dlldata.c
 project.lock.json
 project.fragment.lock.json
 artifacts/
+EngineTests/
+Models/
+Sandbox/
 
 *_i.c
 *_p.c
@@ -69,6 +72,7 @@ artifacts/
 *.pidb
 *.svclog
 *.scc
+*.txt
 
 # Chutzpah Test files
 _Chutzpah*
