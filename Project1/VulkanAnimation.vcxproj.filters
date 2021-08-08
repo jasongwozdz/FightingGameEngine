@@ -122,9 +122,6 @@
     <ClCompile Include="Engine\File.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\FightingGame\CustomAnimator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -260,9 +257,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Engine\NewRenderer\ShaderUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\CustomAnimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sandbox\FightingGame\Hitbox.h">
