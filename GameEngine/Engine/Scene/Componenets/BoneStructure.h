@@ -1,5 +1,4 @@
 #pragma once
-#include "assimp/scene.h"
 #include "glm/glm.hpp"
 #include "../../NewRenderer/Renderable.h"
 

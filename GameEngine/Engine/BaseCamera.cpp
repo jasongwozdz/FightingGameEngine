@@ -1,15 +1,20 @@
 #include "BaseCamera.h"
-#include "libs/imgui/imgui.h"
-#include "libs/imgui/implot/implot.h"
 #include <iostream>
 #include <cstdio>
 #include <ctime>
+#include "libs/imgui/imgui.h"
+#include "libs/imgui/implot/implot.h"
+#include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
+#include "EngineSettings.h"
 
 BaseCamera::BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDir)
 {
 	position = pos;
 	viewDirection = direction;
 	upDirection = upDir;
+	projectionMatrix = glm::perspective(glm::radians(45.0f), EngineSettings::getSingleton().windowWidth / (float)EngineSettings::getSingleton().windowHeight, 0.1f, 100.0f);
+	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
 }
 
 BaseCamera::~BaseCamera() {};
@@ -32,6 +37,16 @@ void BaseCamera::updateMouse(glm::vec2 newMousePosition)
 	//rotate around y axis by delta y
 	viewDirection = glm::mat3(glm::rotate(-mouseDelta.y * rotationSpeed, toRotateAround)) * viewDirection; 
 	oldMousePosition = newMousePosition;
+}
+
+void BaseCamera::resetProjectionMatrix(const float width, const float height)
+{
+	if (width == 0 || height == 0)
+	{
+		return;
+	}
+	projectionMatrix = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
+	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
 }
 
 void BaseCamera::moveForward(float time) 

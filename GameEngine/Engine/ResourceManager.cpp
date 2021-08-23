@@ -8,6 +8,7 @@
 #include <array>
 #include <glm/gtc/type_ptr.hpp>
 #include <assert.h>
+#include <stb_image.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -40,7 +41,6 @@ glm::mat4 ResourceManager::aiMatToGlmMat(aiMatrix4x4& a)
 	}
 	return mat;
 }
-
 
 template<> ResourceManager* Singleton<ResourceManager>::msSingleton = 0;
 
@@ -170,16 +170,24 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		}
 
 	}
+	sample.frameCount_ = sample.positions_[1].size();
 	return true;
 }
 
 
  bool ResourceManager::populateAnimationClips(aiAnimation** animations, int numAnimations, BoneStructure& bones, std::vector<AnimationClip>& animationClips)
 {
+	 static unsigned int currAnim = 0; //used to populate an animation name incase its empty
 	for (int i = 0; i < numAnimations; i++)
 	{
 		AnimationClip a;
 		a.name_ = animations[i]->mName.C_Str();
+		if (a.name_.size() == 0)
+		{
+			std::ostringstream s;
+			s << "Animation_" << currAnim;
+			a.name_ = s.str();
+		}
 		a.duration_ = animations[i]->mDuration;
 		a.framesPerSecond_ = animations[i]->mTicksPerSecond;
 		if (!populateAnimationClip(a, animations[i]->mChannels, animations[i]->mNumChannels, bones))
@@ -268,7 +276,7 @@ void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStru
 	recursivePopulateBoneStructure(root, mesh, boneStructure, 0);
 }
 
-AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
+AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& filePath)
 {
 	auto find = m_resourceRegistry.find(filePath);
 	AnimationReturnVals* vals;
@@ -372,7 +380,7 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(std::string& filePath)
 	return *vals;
 }
 
-TextureReturnVals& ResourceManager::loadTextureFile(std::string& filePath)
+TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 {
 	TextureReturnVals* returnVals;
 	//Look in resourceRegistry for texture.  If its not found, allocate resources and then add to registry.

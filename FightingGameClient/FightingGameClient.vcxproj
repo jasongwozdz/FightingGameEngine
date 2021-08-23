@@ -159,23 +159,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Sandbox\CameraController.cpp" />
-    <ClCompile Include="Sandbox\FightingGame\Fighter.cpp" />
-    <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp" />
-    <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp" />
-    <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp" />
-    <ClCompile Include="Sandbox\FightingGame\InputHandler.cpp" />
-    <ClCompile Include="Sandbox\Sandbox.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterFileImporter.cpp" />
+    <ClCompile Include="Game\CameraController.cpp" />
+    <ClCompile Include="Game\FightingGame\Fighter.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterCamera.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterFactory.cpp" />
+    <ClCompile Include="Game\FightingGame\GameStateManager.cpp" />
+    <ClCompile Include="Game\FightingGame\InputHandler.cpp" />
+    <ClCompile Include="Game\Sandbox.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Sandbox\CameraController.h" />
-    <ClInclude Include="Sandbox\FightingGame\Fighter.h" />
-    <ClInclude Include="Sandbox\FightingGame\FighterCamera.h" />
-    <ClInclude Include="Sandbox\FightingGame\FighterFactory.h" />
-    <ClInclude Include="Sandbox\FightingGame\GameStateManager.h" />
-    <ClInclude Include="Sandbox\FightingGame\Hitbox.h" />
-    <ClInclude Include="Sandbox\FightingGame\InputHandler.h" />
-    <ClInclude Include="Sandbox\Sandbox.h" />
+    <ClInclude Include="Game\FightingGame\FighterFileImporter.h" />
+    <ClInclude Include="Game\CameraController.h" />
+    <ClInclude Include="Game\FightingGame\Fighter.h" />
+    <ClInclude Include="Game\FightingGame\FighterCamera.h" />
+    <ClInclude Include="Game\FightingGame\FighterFactory.h" />
+    <ClInclude Include="Game\FightingGame\GameStateManager.h" />
+    <ClInclude Include="Game\FightingGame\Hitbox.h" />
+    <ClInclude Include="Game\FightingGame\InputHandler.h" />
+    <ClInclude Include="Game\Sandbox.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />

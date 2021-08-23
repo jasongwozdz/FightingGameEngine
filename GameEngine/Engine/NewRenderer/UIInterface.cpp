@@ -128,13 +128,15 @@ UI::UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDev
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
+	std::vector<VkPushConstantRange> ranges;
 	VkPushConstantRange range;
 	range.offset = 0;
 	range.size = sizeof(PushConstantInfo);
 	range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	ranges.push_back(range);
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, &range, true, false);
+	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
 
 	uiPipeline_ = r;
 
@@ -241,18 +243,23 @@ void UI::UIInterface::recreateUI(VkInstance& instance, VkPhysicalDevice& physica
 
 	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
+	std::vector<VkPushConstantRange> ranges;
 	VkPushConstantRange range;
 	range.offset = 0;
 	range.size = sizeof(PushConstantInfo);
 	range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	ranges.push_back(range);
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
 
 	delete uiPipeline_;
 
-	uiPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, &range, true, false);
+	uiPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
+}
 
-	size_t vertexBufferSize = 4 * sizeof(Vertex);
+void UI::UIInterface::showImGuiDemoWindow()
+{
+	ImGui::ShowDemoWindow();
 }
 
 void UI::UIInterface::prepareFrame()
@@ -362,4 +369,142 @@ UI::UIInterface::~UIInterface()
 {
 	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
+}
+
+//IMGUI interface
+
+bool UI::UIInterface::beginMenu(const std::string& menuName)
+{
+	return(ImGui::BeginMenu(menuName.c_str()));
+}
+
+bool UI::UIInterface::addMenuItem(const std::string& menuItem, bool* clickedOn)
+{
+	ImGui::MenuItem(menuItem.c_str(), NULL, clickedOn);
+	return true;
+}
+
+void UI::UIInterface::endMenu()
+{
+	ImGui::EndMenu();
+}
+
+
+void UI::UIInterface::beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen )
+{
+	ImGui::SetNextWindowSize({ width, height }, ImGuiCond_FirstUseEver);
+	ImGui::Begin(windowTitle.c_str(), isOpen, NULL);
+}
+
+void UI::UIInterface::EndWindow()
+{
+	ImGui::End();
+}
+
+void UI::UIInterface::addText(const std::string& text)
+{
+	ImGui::Text(text.c_str());
+}
+
+bool UI::UIInterface::addInput(const std::string& defaultText, std::string* input)
+{
+	ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue;
+	//returns true if enter is pressed
+	if (ImGui::InputText(defaultText.c_str(), imGuiInputBuffer, sizeof(imGuiInputBuffer), inputTextFlags))
+	{
+		*input = imGuiInputBuffer;
+		return true;
+	}
+	return false;
+}
+
+void UI::UIInterface::openPopup(const std::string& popupName)
+{
+	ImGui::OpenPopup(popupName.c_str());
+}
+
+void UI::UIInterface::closePopup()
+{
+	ImGui::CloseCurrentPopup();
+}
+
+bool UI::UIInterface::beginPopup(const std::string& popupName, bool* isOpen)
+{
+	ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+	return(ImGui::BeginPopupModal(popupName.c_str(), NULL, ImGuiWindowFlags_AlwaysAutoResize));
+}
+
+void UI::UIInterface::endPopup()
+{
+	ImGui::EndPopup();
+}
+
+bool UI::UIInterface::addButton(const std::string& buttonText)
+{
+	return(ImGui::Button(buttonText.c_str()));
+}
+
+void UI::UIInterface::makeColumns(const std::string& tableName, int numCols)
+{
+	ImGui::Columns(numCols, tableName.c_str());
+}
+
+void UI::UIInterface::addSeperator()
+{
+	ImGui::Separator();
+}
+
+void UI::UIInterface::nextColumn()
+{
+	ImGui::NextColumn();
+}
+
+bool UI::UIInterface::addSelectable(const std::string& label, bool selected)
+{
+	return(ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns));
+}
+
+bool UI::UIInterface::beginPopupContextItem(const std::string& name)
+{
+	return(ImGui::BeginPopupContextItem(name.c_str()));//need to close this with endPopup
+}
+
+bool UI::UIInterface::isMouseOverUI()
+{
+	return (ImGui::GetIO().WantCaptureMouse);
+}
+
+bool UI::UIInterface::beginMainMenuBar()
+{
+	return(ImGui::BeginMainMenuBar());
+}
+
+void UI::UIInterface::endMainMenuBar()
+{
+	return(ImGui::EndMainMenuBar());
+}
+
+bool UI::UIInterface::addInputFloat(std::string text, float& output, float defaultVal)
+{
+	ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue;
+	return(ImGui::InputFloat(text.c_str(), &output, defaultVal, 0.0f, "%.3f", inputTextFlags));
+}
+
+bool UI::UIInterface::addInputInt(std::string text, int& output, int step)
+{
+	ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue;
+	return(ImGui::InputInt(text.c_str(), &output, step, 0.0f, inputTextFlags));
+}
+
+bool UI::UIInterface::addSlider(const std::string& text, int& input, int start, int end)
+{
+	return(ImGui::SliderInt(text.c_str(), &input, start, end));
+}
+
+glm::vec2 UI::UIInterface::getCursorPos()
+{
+	ImVec2 screenPos = ImGui::GetCursorScreenPos();
+	glm::vec2 output = { screenPos.x, screenPos.y };
+	return(output);
 }

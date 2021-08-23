@@ -3,7 +3,6 @@
 #include <ctime>
 #include "glm/gtc/quaternion.hpp"
 #include "../../NewRenderer/UIInterface.h"
-#include "assimp/scene.h"
 #include "BoneStructure.h"
 
 #ifdef ENGINE_EXPORTS
@@ -53,37 +52,44 @@ struct AnimationClip
 	std::vector<std::vector<KeyScale>> scale_;
 };
 
+//struct CustomElement
+//{
+//	float time_;
+//	void* data;
+//};
+//
+//struct CustomAnimatedElementClip
+//{
+//	std::vector<CustomElement> elements_;
+//	void(*interpolateFunction)(float,int);
+//};
+
+
 class ENGINE_API Animator
 {
 public:
-
-	glm::mat4 globalInverseTransform_;
-
-	std::vector<glm::mat4> globalTransforms;
-
-	//UNIT TESTS FIXTURES
-	friend class AnimatorTestFixture;
-	//END UNIT TESTS
-
 	Animator(Animator&& animator);
 
 	Animator(std::vector<AnimationClip> animations, int boneStructureIndex);
 
 	Animator(const Animator& other);
 
+	~Animator();
+
 	void setAnimation(int animationIndex);
 
-	ResourceManager& resourceManager_;
+	void setAnimation(std::string name);
 
-	~Animator();
+	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable);
+
+	void update(float currentTime, Renderable& renderable);
+
+	int findAnimationIndexByName(const std::string& animationName);
 
 	Animator& operator=(Animator&& other)
 	{
-
 		std::cout << "Animator: Move Animator assignement" << std::endl;
 		boneStructureIndex_ = other.boneStructureIndex_;
-		//this->boneStructure_ = other.boneStructure_;
-		//other.boneStructure_ = nullptr;
 		this->currentAnimation_ = (other.currentAnimation_);
 		this->animations_ = other.animations_;
 		this->globalInverseTransform_ = other.globalInverseTransform_;
@@ -96,8 +102,6 @@ public:
 	{
 		std::cout << "Animator: assignemnt" << std::endl;
 		this->boneStructureIndex_ = other.boneStructureIndex_;
-		//this->boneStructure_ = new BoneStructure(other.boneStructure_->boneInfo_.size());
-		//memcpy(this->boneStructure_, other.boneStructure_, sizeof(BoneStructure));
 		this->currentAnimation_ = (other.currentAnimation_);
 		this->animations_ = other.animations_;
 		this->globalInverseTransform_ = other.globalInverseTransform_;
@@ -106,29 +110,29 @@ public:
 		return *this;
 	}
 
-	void update(float currentTime, Renderable& renderable);
+public:
+	glm::mat4 globalInverseTransform_;
+
+	std::vector<glm::mat4> globalTransforms;
+
+	ResourceManager& resourceManager_;
 
 private:
-	UI::ScrollingBuffer<float, float> debugScrollingBuffer_; //DEBUG ONLY REMOVE
-
 	//TEST CONSTRUCTOR 
 	Animator(std::vector<AnimationClip> animations);
-
-	int boneStructureIndex_;
-
-	std::vector<AnimationClip> animations_;
-
-	float startTime_ = 0;
-	
-	float localTime_;
-
-	int currentAnimation_ = -1;
-
-	std::vector<glm::mat4> boneTransforms_;
 
 	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
 
 	glm::mat4 interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex);
 
+private:
+	UI::ScrollingBuffer<float, float> debugScrollingBuffer_; //DEBUG ONLY REMOVE
+	int boneStructureIndex_;
+	float startTime_ = 0;
+	float localTime_;
+	int currentAnimation_ = -1;
+	std::vector<glm::mat4> boneTransforms_;
 	unsigned int lastIndex_ = 0;
+	bool dontUpdate_ = false; //set to true when getAnimationPoseByFrame is called
+	std::vector<AnimationClip> animations_;
 };

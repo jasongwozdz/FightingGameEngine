@@ -15,51 +15,57 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Sandbox\FightingGame\Fighter.cpp">
+    <ClCompile Include="Game\FightingGame\Fighter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\FightingGame\FighterCamera.cpp">
+    <ClCompile Include="Game\FightingGame\FighterCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\FightingGame\FighterFactory.cpp">
+    <ClCompile Include="Game\FightingGame\FighterFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\FightingGame\GameStateManager.cpp">
+    <ClCompile Include="Game\FightingGame\FighterFileImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\FightingGame\InputHandler.cpp">
+    <ClCompile Include="Game\FightingGame\GameStateManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\CameraController.cpp">
+    <ClCompile Include="Game\FightingGame\InputHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Sandbox\Sandbox.cpp">
+    <ClCompile Include="Game\CameraController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Sandbox.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Sandbox\FightingGame\Fighter.h">
+    <ClInclude Include="Game\FightingGame\Fighter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\FighterCamera.h">
+    <ClInclude Include="Game\FightingGame\FighterCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\FighterFactory.h">
+    <ClInclude Include="Game\FightingGame\FighterFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\GameStateManager.h">
+    <ClInclude Include="Game\FightingGame\FighterFileImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\Hitbox.h">
+    <ClInclude Include="Game\FightingGame\GameStateManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\FightingGame\InputHandler.h">
+    <ClInclude Include="Game\FightingGame\Hitbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\CameraController.h">
+    <ClInclude Include="Game\FightingGame\InputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Sandbox\Sandbox.h">
+    <ClInclude Include="Game\CameraController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Sandbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

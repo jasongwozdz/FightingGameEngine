@@ -4,7 +4,6 @@
 #include <map>
 #include <iostream>
 #include <vector>
-#include <stb_image.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <assimp/Importer.hpp> 
@@ -147,9 +146,9 @@ public:
 
 	ModelReturnVals& loadObjFile(std::string& filePath);
 
-	TextureReturnVals& loadTextureFile(std::string& filePath);
+	TextureReturnVals& loadTextureFile(const std::string& filePath);
 
-	AnimationReturnVals& loadAnimationFile(std::string& filePath);
+	AnimationReturnVals& loadAnimationFile(const std::string& filePath);
 
 	void freeResource(std::string filePath);
 

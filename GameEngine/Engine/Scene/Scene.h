@@ -30,6 +30,7 @@ public:
 	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
 	BaseCamera* getCurrentCamera() const;
+	void frameBufferResizedCallback(const Events::FrameBufferResizedEvent& e);
 
 	//void each(std::function<void(entt::entity, entt::registry)>);
 	

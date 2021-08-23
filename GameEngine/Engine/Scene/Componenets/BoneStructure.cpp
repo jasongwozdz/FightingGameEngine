@@ -2,6 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "assimp/scene.h"
 
 BoneStructure::BoneStructure(std::vector<Joint> boneInfo) :
 	boneInfo_(boneInfo)

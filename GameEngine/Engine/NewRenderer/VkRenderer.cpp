@@ -85,6 +85,7 @@ void VkRenderer::recreateSwapchain()
 	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
 
 	ui_->recreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
+
 	
 }
 
@@ -128,12 +129,15 @@ void VkRenderer::init()
 
 	glfwCreateWindowSurface(instance_, window_.getGLFWWindow(), nullptr, &surface_);
 
+	VkPhysicalDeviceFeatures features{};
+	features.fragmentStoresAndAtomics = true;//need this feature to make a writeable storage buffer in the fragment shader
+
 	//use vkbootstrap to select a gpu. 
-	//We want a gpu that can write to the SDL surface and supports vulkan 1.2
 	vkb::PhysicalDeviceSelector selector{ vkb_inst };
 	vkb::PhysicalDevice physicalDevice = selector
 		.set_minimum_version(1, 1)
 		.set_surface(surface_)
+		.set_required_features(features)
 		.select()
 		.value();
 
@@ -206,7 +210,7 @@ void VkRenderer::init()
 	createSynchronizationResources();
 
 	ui_ = new UI::UIInterface(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_, allocator_);
-	debugDrawManager_ = new DebugDrawManager(logicalDevice_, renderPass_, allocator_);
+	debugDrawManager_ = new DebugDrawManager(logicalDevice_, renderPass_, allocator_, descriptorPool_);
 }
 
 void VkRenderer::createDefaultRenderPass()
@@ -772,7 +776,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayout, VK_NULL_HANDLE, true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayout, std::vector<VkPushConstantRange>(), true, true);
 
 		pipelines_[PipelineTypes::BASIC_PIPELINE] = r;
 	}
@@ -815,7 +819,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE], VK_NULL_HANDLE,true, false, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE],  std::vector<VkPushConstantRange>(),true, false, true);
 
 		pipelines_[PipelineTypes::LINE_PIPELINE] = r;
 	}
@@ -858,7 +862,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE], VK_NULL_HANDLE, true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE],  std::vector<VkPushConstantRange>(), true, true);
 
 		pipelines_[PipelineTypes::DEBUG_PIPELINE] = r;
 	}
@@ -907,7 +911,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE], VK_NULL_HANDLE, true, false);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE],  std::vector<VkPushConstantRange>(), true, false);
 
 		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
 	}
@@ -916,8 +920,8 @@ void VkRenderer::initPipelines()
 //void VkRenderer::updateUniformBuffer(RenderableObject& o)
 void VkRenderer::updateUniformBuffer(Renderable& renderable)
 {
-	renderable.ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	renderable.ubo_.proj[1][1] *= -1;
+	//renderable.ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+	//renderable.ubo_.proj[1][1] *= -1;
 
 	void *data;
 	size_t y = sizeof(Ubo);
@@ -969,6 +973,7 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 	uint32_t swapchainImageIndex;
 	VkResult result = (vkAcquireNextImageKHR(logicalDevice_, swapchain_, 1000000000, presentSemaphore_, nullptr, &swapchainImageIndex));
 
+
 	VkCommandBufferBeginInfo cmdBeginInfo = vkinit::command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	VK_CHECK(vkBeginCommandBuffer(cmdBuffer_, &cmdBeginInfo));
@@ -990,11 +995,9 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 
 
 	drawObjects(cmdBuffer_, 0, objectsToDraw);
-	ui_->renderFrame(cmdBuffer_);
+	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);
+	ui_->renderFrame(cmdBuffer_);//draw UI last
 
-	glm::mat4 proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	proj[1][1] *= -1;
-	debugDrawManager_->renderFrame(cmdBuffer_, proj);
 
 	//finalize the render pass
 	vkCmdEndRenderPass(cmdBuffer_);

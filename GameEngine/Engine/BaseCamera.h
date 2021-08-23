@@ -20,6 +20,8 @@ struct ENGINE_API ScrollingBuffer
 class ENGINE_API BaseCamera
 {
 public:
+	glm::mat4 projectionMatrix;
+
 	glm::vec3 viewDirection;
 	
 	glm::vec3 position;
@@ -59,6 +61,8 @@ public:
 	void strafeRight(float time);
 
 	void setOldMousePosition(glm::vec2 oldMouse);
+
+	void resetProjectionMatrix(const float width, const float height);
 
 	glm::mat4 const getView();
 

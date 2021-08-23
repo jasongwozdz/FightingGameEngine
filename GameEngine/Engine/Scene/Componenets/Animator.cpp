@@ -9,6 +9,8 @@
 #include "Animator.h"
 #include "../../ResourceManager.h"
 #include "../../libs/imgui/imgui.h"
+#include "assimp/scene.h"
+#include <stb_image.h>
 
 Animator::Animator(std::vector<AnimationClip> animations, int boneStructureIndex) :
 	animations_(animations), boneStructureIndex_(boneStructureIndex), resourceManager_(ResourceManager::getSingleton())
@@ -49,6 +51,7 @@ Animator::Animator(Animator&& other) :
 
 void Animator::setAnimation(int animationIndex)
 {
+	dontUpdate_ = false;
 	int size = animations_.size();
 	if (animationIndex < size && animationIndex >= -1)
 	{
@@ -61,6 +64,87 @@ void Animator::setAnimation(int animationIndex)
 	{
 		std::cout << "WARNING: animationIndex: " << animationIndex << " not found" << std::endl;
 	}
+}
+
+void Animator::setAnimation(std::string name)
+{
+	dontUpdate_ = false;
+	for (int i = 0; i < animations_.size(); i++)
+	{
+		if (animations_[i].name_ == name)
+		{
+			currentAnimation_ = i;
+			lastIndex_ = 0;
+			startTime_ = std::clock();
+			localTime_ = 0;
+		}
+	}
+}
+
+void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable)
+{
+	//if (animationIndex > animations_.size())
+	//{
+	//	std::cout << "Error: incorrect animation index" << std::endl;
+	//	return;
+	//}
+	//const AnimationClip& clip = animations_[currentAnimation_];
+
+	if (frameNumber > clip.frameCount_)
+	{
+		std::cout << "Error: frame number out of bounds" << std::endl;
+		return;
+	}
+
+	const BoneStructure& boneStructure = resourceManager_.boneStructures_[boneStructureIndex_];
+
+	globalTransforms.clear();
+
+	glm::mat4 globalTransform = boneStructure.boneInfo_[0].invBindPose_;
+	glm::mat4 transform;
+	std::vector<glm::mat4> finalTransform;
+
+	if (boneStructure.boneInfo_[0].animated_)
+	{
+		globalTransform = 
+			glm::translate(glm::mat4(1.0f), clip.positions_[1][frameNumber].pos_) *
+			glm::toMat4(clip.rotations_[1][frameNumber].quat_) * 
+			glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber].scale_));
+	}
+
+	globalTransforms.push_back(globalTransform);
+	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[0].offset_);
+
+	for (int i = 1; i < boneStructure.boneInfo_.size() - 1; i++)
+	{
+		glm::mat4 transform = boneStructure.boneInfo_[i].invBindPose_;
+		if (boneStructure.boneInfo_[i].animated_)
+		{
+			transform =
+				glm::translate(glm::mat4(1.0f), clip.positions_[i][frameNumber].pos_) *
+				glm::toMat4(clip.rotations_[i][frameNumber].quat_) *
+				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber].scale_));
+		}
+
+		glm::mat4 parent(1.0f);
+		int parentIndex = boneStructure.boneInfo_[i].parent_;
+		if (parentIndex < finalTransform.size())
+		{
+			parent = globalTransforms[parentIndex];
+		}
+		else
+		{
+			parent = glm::mat4(1.0f);
+			std::cout << "ERROR: parent joint not found in final transform matrix" << std::endl;
+		}
+
+		globalTransform = parent * transform;
+		globalTransforms.push_back(globalTransform);
+
+		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[i].offset_);
+	}
+	setPose(finalTransform, renderable);
+	dontUpdate_ = true;
 }
 
 Animator::~Animator()
@@ -98,14 +182,18 @@ void Animator::setPose(std::vector<glm::mat4> pose, Renderable& renderable)
 
 void Animator::update(float currentTime, Renderable& renderable)
 {
+	if (dontUpdate_)
+	{
+		return;
+	}
 	currentTime = std::clock();
 	std::vector<glm::mat4> finalTransform;
 
 	globalTransforms.clear();
 
-	const BoneStructure& boneStructure_ = resourceManager_.boneStructures_[boneStructureIndex_];
+	const BoneStructure& boneStructure = resourceManager_.boneStructures_[boneStructureIndex_];
 
-	glm::mat4 globalTransform = boneStructure_.boneInfo_[0].invBindPose_;
+	glm::mat4 globalTransform = boneStructure.boneInfo_[0].invBindPose_;
 
 	unsigned int frameIndex = 0;
 	if (currentAnimation_ != -1)
@@ -127,7 +215,7 @@ void Animator::update(float currentTime, Renderable& renderable)
 		else
 			localTime_ = std::clamp(((currentTime - startTime_)*clip.playbackRate_), 0.0f, clip.duration_);
 
-		if (boneStructure_.boneInfo_[0].animated_)
+		if (boneStructure.boneInfo_[0].animated_)
 			globalTransform = interpolateTransforms(1, clip, frameIndex);
 	}
 
@@ -149,17 +237,17 @@ void Animator::update(float currentTime, Renderable& renderable)
 
 	globalTransforms.push_back(globalTransform);
 	
-	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_.boneInfo_[0].offset_); //model -> joint space
+	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[0].offset_); //model -> joint space
 
 	glm::mat4 parent(1.0f);
 	//get global positions of each joint
-	for (int i = 1; i < boneStructure_.boneInfo_.size()-1; i++)
+	for (int i = 1; i < boneStructure.boneInfo_.size()-1; i++)
 	{
-		glm::mat4 currentPose(boneStructure_.boneInfo_[i].invBindPose_ );
-		if (currentAnimation_ != -1 && boneStructure_.boneInfo_[i].animated_)
+		glm::mat4 currentPose(boneStructure.boneInfo_[i].invBindPose_ );
+		if (currentAnimation_ != -1 && boneStructure.boneInfo_[i].animated_)
 			currentPose = interpolateTransforms(i, animations_[currentAnimation_], frameIndex);
 
-		int parentIndex = boneStructure_.boneInfo_[i].parent_;
+		int parentIndex = boneStructure.boneInfo_[i].parent_;
 		if (parentIndex < finalTransform.size())
 		{
 			parent = globalTransforms[parentIndex];
@@ -174,19 +262,10 @@ void Animator::update(float currentTime, Renderable& renderable)
 
 		globalTransforms.push_back(globalTransform);
 
-		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure_.boneInfo_[i].offset_);
+		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[i].offset_);
 	}
 
 	setPose(finalTransform, renderable);
-}
-
-
-glm::vec3 interpolateVec(glm::vec3 a, glm::vec3 b, float time)
-{
-	float x = a.x + time*(b.x - a.x);
-	float y = a.y + time*(b.y - a.y);
-	float z = a.z + time*(b.z - a.z);
-	return { x, y, z };
 }
 
 glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex)
@@ -194,7 +273,6 @@ glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& c
 	glm::mat4 pos;
 	glm::mat4 rotation;
 	glm::mat4 scale;
-
 
 	KeyPosition startPos = clip.positions_[jointIndex][frameIndex];
 	KeyPosition endPos = clip.positions_[jointIndex][frameIndex + 1];
@@ -222,4 +300,16 @@ glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& c
 
 	glm::mat4 output = pos * rotation * scale;
 	return output;
+}
+
+int Animator::findAnimationIndexByName(const std::string& animationName)
+{
+	for (int i = 0; i < animations_.size(); i++)
+	{
+		if (animations_[i].name_ == animationName)
+		{
+			return i;
+		}
+	}
+	return -1;
 }

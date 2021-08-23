@@ -22,6 +22,14 @@ BaseCamera* Scene::getCurrentCamera() const
 	}
 }
 
+void Scene::frameBufferResizedCallback(const Events::FrameBufferResizedEvent& e)
+{
+	for (BaseCamera* camera : cameras_)
+	{
+		camera->resetProjectionMatrix(e.width_, e.height_);
+	}
+}
+
 void Scene::update(float deltaTime)
 {
 	auto v = registry_.view<Transform, Renderable>();
@@ -35,8 +43,10 @@ void Scene::update(float deltaTime)
 		transform.applyTransformToMesh(mesh);
 
 		if (cameras_.size() != 0)
+		{
 			mesh.ubo_.view = cameras_[currentCamera_]->getView();
-		
+			mesh.ubo_.proj = cameras_[currentCamera_]->projectionMatrix;
+		}
 
 		auto animator = registry_.try_get<Animator>(entity); 
 		if (animator)

@@ -15,6 +15,7 @@ namespace Events
 		MousePressed,
 		MouseReleased,
 		MouseMoved,
+		MouseScrolled,
 		FrameBufferResized
 	};
 
@@ -73,12 +74,26 @@ namespace Events
 
 	struct MouseReleasedEvent : Event
 	{
-		float mouseCode;
+		int mouseCode;
 
 		MouseReleasedEvent(float keyCode) :
 			mouseCode(keyCode){}
 
 		EVENT_TYPE_FUNCS(MouseReleased)
+	};
+	//********************************************
+
+	//*************MouseScrollEvent***************
+
+	struct MouseScrolledEvent : Event
+	{
+		float scrollXOffset;
+		float scrollYOffset;
+
+		MouseScrolledEvent(float scrollX, float scrollY) :
+			scrollXOffset(scrollX), scrollYOffset(scrollY){}
+
+		EVENT_TYPE_FUNCS(MouseScrolled)
 	};
 	//********************************************
 

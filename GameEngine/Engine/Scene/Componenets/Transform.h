@@ -26,6 +26,8 @@ public:
 	glm::quat rot_ = { 0.0f, 0.0f, 0.0f, 1.0f };
 	glm::quat oldRot_ = { 0.0f, 0.0f, 0.0f, 0.0f };
 
+	glm::vec3 forwardDirection_ = { 0.0f, 0.0f, 0.0f };
+
 	Entity* parent_ = nullptr;
 
 	glm::mat4 finalTransform_ = glm::mat4(1.0f);

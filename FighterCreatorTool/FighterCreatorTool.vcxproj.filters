@@ -18,10 +18,30 @@
     <ClCompile Include="FighterCreatorTool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AnimationDataFileExporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FighterCreatorTool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Hitbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationDataFileExporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\Settings\EngineSettings.ini" />
+    <None Include="shaders\animatedMesh.frag" />
+    <None Include="shaders\animatedMesh.vert" />
+    <None Include="shaders\imgui.frag" />
+    <None Include="shaders\imgui.vert" />
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
+    <None Include="shaders\texturedMeshShader.frag" />
+    <None Include="shaders\texturedMeshShader.vert" />
   </ItemGroup>
 </Project>

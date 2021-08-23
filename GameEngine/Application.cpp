@@ -16,6 +16,7 @@ Application::Application()
 	renderer_->init();
 	scene_ = new Scene();
 	debugManager_ = renderer_->debugDrawManager_;
+	debugManager_->scene_ = scene_;
 }
 
 Application::~Application()
@@ -33,6 +34,8 @@ void Application::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher dispatcher(e);
 	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&VkRenderer::frameBufferResizeCallback, renderer_, std::placeholders::_1));
+	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&Scene::frameBufferResizedCallback, scene_, std::placeholders::_1));
+
 	//callbacks defined in client
 	for (auto fn : callbacks_)
 	{

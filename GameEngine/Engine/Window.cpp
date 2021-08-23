@@ -70,6 +70,13 @@ Window::Window()
 		info->callback(e);
 	});
 
+	glfwSetScrollCallback(window_, [](GLFWwindow* window, double xOffset, double yOffset) {
+		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);
+
+		Events::MouseScrolledEvent e(xOffset, yOffset);
+		info->callback(e);
+	});
+
 	glfwSetFramebufferSizeCallback(window_, [](GLFWwindow* window, int width, int height)
 	{
 		WindowInfo* info = (WindowInfo*)glfwGetWindowUserPointer(window);

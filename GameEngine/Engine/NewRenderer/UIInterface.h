@@ -98,15 +98,44 @@ namespace UI
 
 		UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator);
 
+		~UIInterface();
+
 		void recreateUI(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass);
 
 		void drawRect(int width, int height, glm::vec2 pos, glm::vec4 color);
 
-		~UIInterface();
+		void showImGuiDemoWindow();
 
 		void prepareFrame();
 
 		void renderFrame(VkCommandBuffer& curentBuffer);
+
+		//IMGUI interface
+		bool beginMenu(const std::string& menuName);
+		bool addMenuItem(const std::string& menuItem, bool* clickedOn);
+		void endMenu();
+		void beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen = NULL);
+		void EndWindow();
+		void addText(const std::string& text);
+		bool addInput(const std::string& defaulText, std::string* input);
+		void openPopup(const std::string& popupName);
+		void closePopup();
+		bool beginPopup(const std::string& popupName, bool* isOpen);
+		void endPopup();
+		bool addButton(const std::string& buttonText);
+		void makeColumns(const std::string& tableName, int numCols);
+		void addSeperator();
+		void nextColumn();
+		bool addSelectable(const std::string& label, bool selected);
+		bool beginPopupContextItem(const std::string& name);
+		bool beginMainMenuBar();
+		void endMainMenuBar();
+		bool addInputFloat(std::string text, float& output, float defaultVal);
+		bool addInputInt(std::string text, int& output, int step);
+		bool addSlider(const std::string& text, int& input, int start, int end);
+		bool isMouseOverUI();
+		glm::vec2 getCursorPos();
+		
 
 		std::vector<UI::RenderInfo> drawData_;
 		std::vector<VkDeviceSize> vertexOffsets_;
@@ -126,6 +155,9 @@ namespace UI
 		VkBuffer indexBuffer_;
 		VmaAllocation vertexBufferMem_;
 		VmaAllocation indexBufferMem_;
+
+	private:
+		char imGuiInputBuffer[256];
 
 	};
 }

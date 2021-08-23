@@ -24,7 +24,7 @@ namespace PipelineBuilder
 	};
 
 	template<class Vertex>
-	PipelineBuilder::PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, VkPushConstantRange* range, bool depthEnabled, bool cullingEnabled, bool isLine = false)
+	PipelineBuilder::PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, std::vector<VkPushConstantRange> range, bool depthEnabled, bool cullingEnabled, bool isLine = false)
 	{
 	PipelineBuilder::PipelineResources* retVals = new PipelineBuilder::PipelineResources(logicalDevice);
 
@@ -79,6 +79,7 @@ namespace PipelineBuilder
 	multisampling.minSampleShading = .2f; // min fraction for sample shading; closer to one is smooth
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.depthTestEnable = VK_FALSE;
 	if (depthEnabled)
 	{
 		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -91,7 +92,14 @@ namespace PipelineBuilder
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
+	colorBlendAttachment.blendEnable = VK_TRUE;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	//colorBlendAttachment.blendEnable = VK_FALSE;
 
 	VkPipelineColorBlendStateCreateInfo colorBlending{};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -111,11 +119,10 @@ namespace PipelineBuilder
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = layout;
 	}
-	if (range)
-	{
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = range;
-	}
+
+	pipelineLayoutInfo.pushConstantRangeCount = range.size();
+
+	pipelineLayoutInfo.pPushConstantRanges = range.data();
 	
 	if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &retVals->pipelineLayout_) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout!");
