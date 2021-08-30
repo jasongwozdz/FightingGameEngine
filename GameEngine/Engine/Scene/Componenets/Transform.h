@@ -16,7 +16,18 @@ public:
 	Transform(float x, float y, float z);
 
 	Transform(glm::vec3 pos);
-	
+
+	void setScale(float scale);
+
+	void drawDebugGui();
+
+	glm::mat4 calculateTransform();
+
+	void applyTransformToMesh(Renderable& mesh);
+
+public:
+	glm::mat4 finalTransform_ = glm::mat4(1.0f);
+
 	glm::vec3 pos_ = {0.0f, 0.0f, 0.0f};
 	glm::vec3 oldPos_ = { 0.0f, 0.0f, 0.0f};
 
@@ -30,18 +41,8 @@ public:
 
 	Entity* parent_ = nullptr;
 
-	glm::mat4 finalTransform_ = glm::mat4(1.0f);
-
 	float drawDebugGui_ = false;
-
+private:
 	bool calculateTransform_ = true;
-
-	void setScale(float scale);
-
-	void drawDebugGui();
-
-	glm::mat4 calculateTransform();
-
-	void applyTransformToMesh(Renderable& mesh);
 };
 

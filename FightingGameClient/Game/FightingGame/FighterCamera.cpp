@@ -19,18 +19,6 @@ glm::vec3 FighterCamera::midPoint(const glm::vec3& p1, const glm::vec3& p2)
 	return { (p1.x + p2.x) / 2, (p1.y + p2.y) / 2, (p1.y + p2.y) / 2 };
 }
 
-float FighterCamera::calculateX(const glm::vec3& f1pos, const glm::vec3& f2pos, const glm::vec3& mid)
-{
-	glm::vec3 diff = (f2pos - f1pos);
-	float mag = sqrt((diff.x * diff.x)+(diff.y * diff.y)+(diff.z* diff.z));
-	float x =  -sqrt(mag * abs(camera_->position.x));
-	if (x < lowestX_)
-	{
-		x = lowestX_;
-	}
-	return x;
-}
-
 bool FighterCamera::shouldAddNewCameraPos()
 {
 	float dt = CURR_TIME - lastUpdate_;
@@ -46,11 +34,10 @@ bool FighterCamera::shouldAddNewCameraPos()
 
 void FighterCamera::onUpdate(float deltaTime)
 {
-
 	Entity& f1 = *fighter1_->entity_;
 	Entity& f2 = *fighter2_->entity_;
 	glm::vec3& f1pos = f1.getComponent<Transform>().pos_;
 	glm::vec3& f2pos = f2.getComponent<Transform>().pos_;
 	glm::vec3 mid = midPoint(f1pos, f2pos);
-	camera_->position.y = -mid.y;
+	camera_->position.y = mid.y;
 }

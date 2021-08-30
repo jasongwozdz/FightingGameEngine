@@ -15,23 +15,42 @@ glm::vec3 Fighter::getPosition() const
 {
 	Transform& transform = entity_->getComponent<Transform>();
 	glm::vec3 pos = transform.pos_;
-	if (side_ == left)
-	{
-		pos.z *= -1;
-	}
 	return pos;
 }
 
-Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side) :
-	entity_(entity), inputHandler_(inputHandler),side_(side)
+void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
 {
-	std::vector<InputKey> attackInput = { Input::Action::light };
-	attackInputs_.push_back({ attackInput, (int)attackInput.size(), 200l});
-	numAttacks_++;
+	currentHitboxes_.clear();
+	currentHurtboxes_.clear();
+	currentPushBoxes_.clear();
+	for (Hitbox hitbox : hitboxes)
+	{
+		switch (hitbox.layer_)
+		{
+			case Hitbox::HitboxLayer::Push:
+			{
+				currentPushBoxes_.push_back(hitbox);
+				break;
+			}
+			case Hitbox::HitboxLayer::Hit:
+			{
+				currentHitboxes_.push_back(hitbox);
+				break;
+			}
+			case Hitbox::HitboxLayer::Hurt:
+			{
+				currentHurtboxes_.push_back(hitbox);
+				break;
+			}
+		}
+	}
+}
 
-	attackInput = { Input::Action::strong };
-	attackInputs_.push_back({ attackInput, 1, 200l, 1});
-	numAttacks_++;
+Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterSide side) :
+	entity_(entity), inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData)
+{
+	enterState(idle);
+	pastTime_ = getCurrentTime();
 }
 
 void Fighter::setPosition(glm::vec3 pos)
@@ -53,11 +72,6 @@ void Fighter::flipSide()
 	swapped = swapped >> 15;
 	side_ = (FighterSide)swapped;
 
-	//r_flipChildHitboxes(entity_->getComponent<Hitbox>());
-
-	terminalYSpeed_ *= -1;
-	gravity_ *= -1;
-
 	flipSide_ = false;
 }
 
@@ -72,7 +86,6 @@ void Fighter::updateTransform()
 
 void Fighter::handleState()
 {
-	std::cout << "state: " << state_ << std::endl;
 	switch (state_)
 	{
 	case FighterState::idle:
@@ -172,24 +185,27 @@ void Fighter::enterState(FighterState state)
 	switch (state)
 	{
 	case FighterState::idle:
-		entity_->getComponent<Animator>().setAnimation(-1);
+		entity_->getComponent<Animator>().setAnimation(idleStateData_.animationName);
+		setCurrentHitboxes(idleStateData_.hitboxData[0]);
 		break;
 	case FighterState::walkingForward:
-		entity_->getComponent<Animator>().setAnimation(0);
+		entity_->getComponent<Animator>().setAnimation(walkingStateData_.animationName);
+		setCurrentHitboxes(walkingStateData_.hitboxData[0]);
 		break;
 	case FighterState::walkingBackward:
-		entity_->getComponent<Animator>().setAnimation(0);
+		entity_->getComponent<Animator>().setAnimation(walkingStateData_.animationName);
+		setCurrentHitboxes(walkingStateData_.hitboxData[0]);
 		break;
 	case FighterState::crouching:
 		entity_->getComponent<Animator>().setAnimation(-1);
 		currentXspeed_ = 0.0f;
 		break;
 	case FighterState::attacking:
-		entity_->getComponent<Animator>().setAnimation(-1);
+		entity_->getComponent<Animator>().setAnimation(attacks_[currentAttack_].animationName_);
 		currentXspeed_ = 0;
 		break;
 	case FighterState::hitstun:
-		entity_->getComponent<Animator>().setAnimation(0);
+		entity_->getComponent<Animator>().setAnimation(-1);
 		break;
 	case FighterState::jumping:
 		currentYspeed_ = terminalYSpeed_;
@@ -292,6 +308,8 @@ void Fighter::onUpdate(float delta)
 	{
 		processInput();
 	}
+	if (side_ == left)
+		std::cout << getPosition().y << std::endl;
 	handleState();
 	updateTransform();
 	speed_ = baseSpeed_ * deltaTime_;

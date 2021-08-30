@@ -1,17 +1,17 @@
 #pragma once
-#include "Singleton.h"
-#include <vulkan/vulkan.h>
 #include <map>
 #include <iostream>
 #include <vector>
+#include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include <assimp/Importer.hpp> 
+#include <assimp/Importer.hpp>
 #include <assimp/scene.h>     
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
-#include "Vertex.h"
 #include "Scene/Componenets/Animator.h"
+#include "Singleton.h"
+#include "Vertex.h"
 
 
 #define MAX_BONES_PER_VERTEX 4
@@ -144,7 +144,7 @@ public:
 	
 	std::map<std::string, uintptr_t> m_resourceRegistry;
 
-	ModelReturnVals& loadObjFile(std::string& filePath);
+	ModelReturnVals& loadObjFile(const std::string& filePath);
 
 	TextureReturnVals& loadTextureFile(const std::string& filePath);
 

@@ -69,7 +69,6 @@ Renderable::Renderable(const Renderable& other) :
 	logicalDevice_(other.logicalDevice_),
 	isLine_(other.isLine_)
 {
-	std::cout << "Jason copied" << std::endl;
 	textureResources_ = other.textureResources_;
 	ubo_ = other.ubo_;
 }
@@ -84,7 +83,6 @@ Renderable::~Renderable()
 
 void Renderable::deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice)
 {
-	std::cout << "Jason delete mesh" << std::endl;
 	vmaDestroyBuffer(allocator, vertexBuffer_, vertexMem_);
 	vmaDestroyBuffer(allocator, indexBuffer_, indexMem_);
 	for (int i = 0; i < uniformBuffer_.size(); i++)

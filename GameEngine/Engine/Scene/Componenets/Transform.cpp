@@ -52,17 +52,17 @@ glm::mat4 Transform::calculateTransform()
 			parentTrans = glm::translate(glm::mat4(1.0f), parent_->getComponent<Transform>().pos_);
 		}
 
-		if (pos_ != oldPos_ || scale_ != oldScale_ || rot_ != oldRot_)
+		if (pos_ != oldPos_ || scale_ != oldScale_ || rot_ != oldRot_)//only calculate new finalTransformation_ if anything has changed
 		{
+			glm::mat4 scale = glm::scale(glm::mat4(1.0f), scale_);
+			glm::mat4 rot = glm::toMat4(glm::normalize(rot_));
 			glm::mat4 trans = glm::translate(parentTrans, pos_);
-			glm::mat4 rotationTrans = glm::toMat4(glm::normalize(rot_)) * trans;
-			glm::mat4 rotationTransScale = glm::scale(rotationTrans, scale_);
 
 			oldPos_ = pos_;
 			oldScale_ = scale_;
 			oldRot_ = rot_;
 
-			finalTransform_ = rotationTransScale;
+			finalTransform_ = trans * rot * scale;
 		}
 	}
 	return finalTransform_;

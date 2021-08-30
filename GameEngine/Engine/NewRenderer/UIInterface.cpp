@@ -93,21 +93,6 @@ UI::UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDev
 	vkDeviceWaitIdle(logicalDevice);
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
 
-	//VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	//samplerLayoutBinding.binding = 0;
-	//samplerLayoutBinding.descriptorCount = 1;
-	//samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//samplerLayoutBinding.pImmutableSamplers = nullptr;
-	//samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//std::array<VkDescriptorSetLayoutBinding, 1> bindings = { samplerLayoutBinding};
-	//VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	//layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	//layoutInfo.pBindings = bindings.data();
-
-	//vkCreateDescriptorSetLayout(logicalDevice, &layoutInfo, nullptr, &descriptorLayout_);
-
 	std::vector<char> vertexShaderCode = readShaderFile("./shaders/gui2d.vert.spv");
 	std::vector<char> fragmentShaderCode = readShaderFile("./shaders/gui2d.frag.spv");
 
@@ -207,21 +192,6 @@ void UI::UIInterface::recreateUI(VkInstance& instance, VkPhysicalDevice& physica
 
 	vkDeviceWaitIdle(logicalDevice);
 	ImGui_ImplVulkan_DestroyFontUploadObjects();
-
-	//VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	//samplerLayoutBinding.binding = 0;
-	//samplerLayoutBinding.descriptorCount = 1;
-	//samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//samplerLayoutBinding.pImmutableSamplers = nullptr;
-	//samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//std::array<VkDescriptorSetLayoutBinding, 1> bindings = { samplerLayoutBinding};
-	//VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	//layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	//layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	//layoutInfo.pBindings = bindings.data();
-
-	//vkCreateDescriptorSetLayout(logicalDevice, &layoutInfo, nullptr, &descriptorLayout_);
 
 	std::vector<char> vertexShaderCode = readShaderFile("./shaders/gui2d.vert.spv");
 	std::vector<char> fragmentShaderCode = readShaderFile("./shaders/gui2d.frag.spv");
@@ -500,6 +470,29 @@ bool UI::UIInterface::addInputInt(std::string text, int& output, int step)
 bool UI::UIInterface::addSlider(const std::string& text, int& input, int start, int end)
 {
 	return(ImGui::SliderInt(text.c_str(), &input, start, end));
+}
+
+void  UI::UIInterface::addTextToTransparentBackground(const std::string& text, glm::vec2 pos, const glm::vec4& color, float scale)
+{
+	assert(pos.x < EngineSettings::getSingleton().windowWidth);
+	assert(pos.y < EngineSettings::getSingleton().windowHeight);
+
+	bool windowOpen = true;
+
+	ImGuiWindowFlags windowFlags = 0;
+	windowFlags |= ImGuiWindowFlags_NoBackground;
+	windowFlags |= ImGuiWindowFlags_NoTitleBar;
+	windowFlags |= ImGuiWindowFlags_NoResize;
+	windowFlags |= ImGuiWindowFlags_NoMove;
+	windowFlags |= ImGuiWindowFlags_AlwaysAutoResize;
+
+	//ImGui::SetNextWindowSize({ width, height }, ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowPos({ pos.x, pos.y });
+	ImGui::Begin("Temp", &windowOpen, windowFlags);
+	ImFont* font = ImGui::GetFont();
+	font->Scale = scale;
+	ImGui::TextColored({color.x, color.y, color.z, color.w}, text.c_str());
+	ImGui::End();
 }
 
 glm::vec2 UI::UIInterface::getCursorPos()

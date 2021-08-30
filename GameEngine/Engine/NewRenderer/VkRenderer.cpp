@@ -1060,7 +1060,6 @@ void VkRenderer::cleanup()
 
 	vkDestroyDevice(logicalDevice_, nullptr);
 
-
 	vkDestroySurfaceKHR(instance_, surface_, nullptr);
 
 	vkDestroyInstance(instance_, nullptr);

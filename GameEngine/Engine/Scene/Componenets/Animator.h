@@ -43,7 +43,8 @@ struct AnimationClip
 {
 	std::string name_;
 	float framesPerSecond_;
-	float playbackRate_ = .0005;
+	float playbackRate_ = 3;
+		//.0005;
 	float duration_;
 	int frameCount_;
 	bool isLooping_ = true;
@@ -117,6 +118,8 @@ public:
 
 	ResourceManager& resourceManager_;
 
+	std::vector<AnimationClip> animations_;
+
 private:
 	//TEST CONSTRUCTOR 
 	Animator(std::vector<AnimationClip> animations);
@@ -134,5 +137,4 @@ private:
 	std::vector<glm::mat4> boneTransforms_;
 	unsigned int lastIndex_ = 0;
 	bool dontUpdate_ = false; //set to true when getAnimationPoseByFrame is called
-	std::vector<AnimationClip> animations_;
 };

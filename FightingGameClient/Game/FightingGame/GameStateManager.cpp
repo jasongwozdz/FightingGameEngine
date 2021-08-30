@@ -1,146 +1,135 @@
+#include <chrono>
+
 #include "GameStateManager.h"
 #include "EngineSettings.h"
 #include "NewRenderer/UIInterface.h"
 #include "../Engine/File.h"
+#include "Attack.h"
 
-GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, float arenaWidth, float arenaHeight) :
+#define NUM_FIGHTERS 2
+
+//return in milliseconds
+extern double getCurrentTime();
+
+GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, Arena& arena) :
 	ui_(UI::UIInterface::getSingleton()),
-	debugManager_(debugDrawManager)
+	debugManager_(debugDrawManager),
+	arena_(arena)
 {
-	arena_ = { arenaWidth, arenaHeight, {0.0, 0.0, -1.75f} };
-
 	fighterResources_.fighters_[0] = fighter1;
 	fighterResources_.fighters_[1] = fighter2;
+	timerResources_.startTime = getCurrentTime() * .001;//convert to seconds
 };
 
 GameStateManager::~GameStateManager()
 {
 }
 
-bool GameStateManager::r_checkAttackCollision(const Hitbox& hitbox, const float hitboxXMin, const float hitboxXMax, const float hitboxYMin, const float hitboxYMax, glm::vec3 pos, bool left) const
+bool GameStateManager::checkAttackCollision(Fighter& attackingFighter, Fighter& recievingFighter)
 {
-	//glm::vec3 newPos = pos + hitbox.pos_;
-	glm::vec3 newPos = hitbox.pos_;
-	if (left)
+	const std::vector<Hitbox>& hurtboxes = attackingFighter.currentHurtboxes_;
+	const std::vector<Hitbox>& hitboxes = recievingFighter.currentHitboxes_;
+	glm::vec3 attackFighterPos = attackingFighter.getPosition();
+	glm::vec3 recievingFighterPos = recievingFighter.getPosition();
+	for (const Hitbox& hurtbox : hurtboxes)
 	{
-		newPos.y *= -1;
-	}
-	newPos += pos;
-	if (hitbox.layer_ == Hitbox::HitboxLayer::Hit)
-	{
-		float fighterXMin = newPos.y - (hitbox.width_ / 2);
-		float fighterXMax = newPos.y + (hitbox.width_ / 2);
-		float fighterYMin = newPos.z - (hitbox.height_ / 2);
-		float fighterYMax = newPos.z + (hitbox.height_ / 2);
+		glm::vec3 newPos = hurtbox.pos_;
+		if (attackingFighter.side_ == left) newPos.y *= -1;
 
-		if (hitboxXMin < fighterXMax && hitboxXMax > fighterXMin && hitboxYMax > fighterYMin && hitboxYMin < fighterYMax)
+		float hitboxXMin = attackFighterPos.y + (newPos.y - hurtbox.width_ / 2);
+		float hitboxXMax = attackFighterPos.y + (newPos.y + hurtbox.width_ / 2);
+		float hitboxYMin = attackFighterPos.z + (newPos.z - hurtbox.height_ / 2);
+		float hitboxYMax = attackFighterPos.z + (newPos.z + hurtbox.height_ / 2);
+		
+		for (const Hitbox& hitbox : hitboxes) 
 		{
-			return true;
-		}
-	}
+			glm::vec3 newPos = hitbox.pos_;
+			if (recievingFighter.side_ == left) newPos.y *= -1;
 
-	for (int i = 0; i < hitbox.children_.size(); i++)
-	{
-		if (r_checkAttackCollision(hitbox.children_[i], hitboxXMin, hitboxXMax, hitboxYMin, hitboxYMax, newPos, left)) return true;
-	}
-	return false;
-}
+			float fighterXMin = recievingFighterPos.y + (newPos.y - hitbox.width_ / 2);
+			float fighterXMax = recievingFighterPos.y + (newPos.y + hitbox.width_ / 2);
+			float fighterYMin = recievingFighterPos.z + (newPos.z - hitbox.height_ / 2);
+			float fighterYMax = recievingFighterPos.z + (newPos.z + hitbox.height_ / 2);
 
-//Fighter1 is attacking fighter2 is defending.  Third argument is the attack that fighter1 is performing 
-bool GameStateManager::checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack)
-{
-	Hitbox& h2 = fighter2.entity_->getComponent<Hitbox>();
-
-	//y is x and z is y in 2d
-	glm::vec3 pos1 = fighter1.getPosition();
-	glm::vec3 pos2 = fighter2.getPosition();
-
-	glm::vec2 hurtboxPos = attack.hurtboxPos[attack.currentFrame - attack.startupFrames];
-	if (fighter1.side_ == left)hurtboxPos.x *= -1;
-	glm::vec2 pos = { (pos1.y + hurtboxPos.x), (pos1.z + hurtboxPos.y) };
-
-	int currentAttackFrame = attack.currentFrame - attack.startupFrames;
-	float hitboxXMin = pos.x - attack.hurtboxWidthHeight[currentAttackFrame].x / 2;
-	float hitboxXMax = pos.x + attack.hurtboxWidthHeight[currentAttackFrame].x / 2;
-	float hitboxYMin = pos.y - attack.hurtboxWidthHeight[currentAttackFrame].y / 2;
-	float hitboxYMax = pos.y + attack.hurtboxWidthHeight[currentAttackFrame].y / 2;
-
-	if (r_checkAttackCollision(h2, hitboxXMin, hitboxXMax, hitboxYMin, hitboxYMax, pos2, fighter2.side_ == left))
-	{
-		attack.handled_ = true;
-		return fighter2.onHit(attack.hitPushMag, attack.hitstunFrames, attack.blockstunFrames);
-	}
-	return false;
-}
-
-bool GameStateManager::fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms)
-{
-	Hitbox& h1 = *(*hitboxes);
-
-	Transform& p1 = *(*transforms);
-
-	hitboxes++;
-	transforms++;
-
-	Hitbox& h2 = *(*hitboxes);
-	Transform& p2 = *(*transforms);
-
-	float xMax1 = p1.pos_.y + h1.width_ / 2;
-	float xMin1 = p1.pos_.y - h1.width_ / 2;
-
-	float xMax2 = p2.pos_.y + h2.width_ / 2;
-	float xMin2 = p2.pos_.y - h2.width_ / 2;
-
-	float yMax1 = p1.pos_.z + h1.height_ / 2;
-	float yMin1 = p1.pos_.z - h1.height_ / 2;
-
-	float yMax2 = p2.pos_.z + h2.height_ / 2;
-	float yMin2 = p2.pos_.z - h2.height_ / 2;
-
-	if ((xMax1 > xMin2 && xMin1 < xMax2) && (yMax1 >= yMin2 && yMax2 >= yMin1))
-	{
-		return true;
-	}
-	return false;
-}
-
-void GameStateManager::clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena)
-{
-	for (int i = 0; i < 2; i++)
-	{
-		Hitbox& hitbox = *(*hitboxes);
-		Transform& p = *(*transforms);
-
-		glm::vec3 pos = fighterResources_.fighters_[i]->getPosition();
-
-		if ((hitbox.width_ / 2 + pos.y) > (arena->pos.y + (arena->width / 2)))
-		{
-			p.pos_.y = (arena->pos.y + (arena->width / 2)) - (hitbox.width_ / 2);
-		}
-
-		if ((pos.y - hitbox.width_ / 2) < (-arena->width / 2 + arena->pos.y))
-		{
-			p.pos_.y = (-arena->width / 2 + arena->pos.y) + (hitbox.width_ / 2);
-		}
-
-		float fighterZ = pos.z;
-		if ((fighterZ - (hitbox.height_ / 2 )) < (arena->pos.z ))
-		{
-			p.pos_.z = (arena->pos.z + hitbox.height_/2);
-			if (fighterResources_.fighters_[i]->side_ == left)
+			if (hitboxXMin < fighterXMax && hitboxXMax > fighterXMin && hitboxYMax > fighterYMin && hitboxYMin < fighterYMax)
 			{
-				p.pos_.z *= -1;
-			}
-			fighterResources_.fighters_[i]->currentYspeed_ = 0;
-			if (fighterResources_.fighters_[i]->state_ == jumping)
-			{
-				fighterResources_.fighters_[i]->onHit(0, 30, 30);
-
+				return true;
 			}
 		}
 
-		hitboxes++;
-		transforms++;
+	}
+	return false;
+}
+
+bool GameStateManager::fighterCollisionCheck()
+{
+	Fighter* fighter1 = fighterResources_.fighters_[0];
+	Fighter* fighter2 = fighterResources_.fighters_[1];
+	Transform& fighter1Trans = fighter1->entity_->getComponent<Transform>();
+	Transform& fighter2Trans = fighter2->entity_->getComponent<Transform>();
+
+	for (const Hitbox& fighter1Pushbox : fighter1->currentPushBoxes_)
+	{
+		for (const Hitbox& fighter2PushBox : fighter2->currentPushBoxes_)
+		{
+			float xMax1 = fighter1Trans.pos_.y + fighter1Pushbox.width_ / 2;
+			float xMin1 = fighter1Trans.pos_.y - fighter1Pushbox.width_ / 2;
+
+			float xMax2 = fighter2Trans.pos_.y + fighter2PushBox.width_ / 2;
+			float xMin2 = fighter2Trans.pos_.y - fighter2PushBox.width_ / 2;
+
+			float yMax1 = fighter1Trans.pos_.z + fighter1Pushbox.height_ / 2;
+			float yMin1 = fighter1Trans.pos_.z - fighter1Pushbox.height_ / 2;
+
+			float yMax2 = fighter2Trans.pos_.z + fighter2PushBox.height_ / 2;
+			float yMin2 = fighter2Trans.pos_.z - fighter2PushBox.height_ / 2;
+
+			if ((xMax1 > xMin2 && xMin1 < xMax2) && (yMax1 >= yMin2 && yMax2 >= yMin1))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void GameStateManager::clampFighterOutOfBounds()
+{
+	for (int fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
+	{
+		Fighter* fighter = fighterResources_.fighters_[fighterIndex];
+		Transform& fighterTransform = fighter->entity_->getComponent<Transform>();
+		glm::vec3 fighterPos = fighter->getPosition();
+		//if (fighter->side_ == left) fighterPos.z *= -1;
+		for (const Hitbox& pushbox : fighter->currentPushBoxes_)
+		{
+			if ((pushbox.width_ / 2 + fighterPos.y) > (arena_.pos.y + (arena_.width / 2)))
+			{
+				fighterTransform.pos_.y = (arena_.pos.y + (arena_.width / 2)) - (pushbox.width_ / 2);
+			}
+
+			if ((fighterPos.y - pushbox.width_ / 2) < (-arena_.width / 2 + arena_.pos.y))
+			{
+				fighterTransform.pos_.y = (-arena_.width / 2 + arena_.pos.y) + (pushbox.width_ / 2);
+			}
+
+			float fighterZ = fighterPos.z;
+			float arenaPosZ = arena_.pos.z;
+			if ((fighterZ - (pushbox.height_ / 2 )) < (arena_.pos.z ))
+			{
+				fighterTransform.pos_.z = (arena_.pos.z + pushbox.height_/2);
+				//if (fighter->side_ == left)
+				//{
+				//	fighterTransform.pos_.z *= -1;
+				//}
+				fighter->currentYspeed_ = 0;
+				if (fighter->state_ == jumping)
+				{
+					fighter->onHit(0, 30, 30);
+
+				}
+			}
+		}
 	}
 }
 
@@ -159,61 +148,16 @@ void GameStateManager::drawHealthBars()
 	ui_.drawRect(backHealthBarWidth, 50, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
 }
 
-void GameStateManager::r_drawHitboxDebug(const Hitbox& hitbox, const glm::vec3 pos, bool left) const
-{
-	glm::vec3 newPos = hitbox.pos_;
-	if (left)
-	{
-		newPos.y *= -1;
-	}
-	newPos += pos;
-	glm::vec3 color;
-	if (hitbox.layer_ == Hitbox::HitboxLayer::Push)
-	{
-		color = { 0, 255, 0 };
-	}
-	else if (hitbox.layer_ == Hitbox::HitboxLayer::Hurt)
-	{
-		color = { 255, 255, 0 };
-	}
-	else
-	{
-		color = { 255, 0, 0 };
-	}
-	debugManager_->drawRect(newPos, color, 0, true, -hitbox.width_ / 2, hitbox.width_ / 2, -hitbox.height_ / 2, hitbox.height_ / 2);
-	for (int i = 0; i < hitbox.children_.size(); i++)
-	{
-		r_drawHitboxDebug(hitbox.children_[i], newPos, left);
-	}
-}
-
-void GameStateManager::drawHitboxDebug(const Hitbox& hitbox, const Fighter& fighter) const
-{
-	glm::vec3 pos = fighter.getPosition();
-	//pos.y *= -1;
-	r_drawHitboxDebug(hitbox, pos, fighter.side_ == left);
-}
-
 void GameStateManager::update(float time)
 {
-	//TODO: clean this up
-	Hitbox& h1 = fighterResources_.fighters_[0]->entity_->getComponent<Hitbox>();
-	Hitbox& h2 = fighterResources_.fighters_[1]->entity_->getComponent<Hitbox>();
-	Hitbox* hitboxes[2] = { &h1, &h2 };
-
-	if (debug_)
-	{
-		drawHitboxDebug(h1, *fighterResources_.fighters_[0]);
-		drawHitboxDebug(h2, *fighterResources_.fighters_[1]);
-	}
 
 	Transform& t1 = fighterResources_.fighters_[0]->entity_->getComponent<Transform>();
 	Transform& t2 = fighterResources_.fighters_[1]->entity_->getComponent<Transform>();
 	Transform* transforms[2] = { &t1, &t2 };
-	clampFighterOutOfBounds(hitboxes, transforms, &arena_);
+	clampFighterOutOfBounds();
 
-	bool fightersCollided = fighterCollisionCheck(hitboxes, transforms);
-	if (fightersCollided)
+	//if fighters collide then determine what direction they should be pushed
+	if (fighterCollisionCheck())
 	{
 		float speed1 = fighterResources_.fighters_[0]->speed_;
 		float speed2 = fighterResources_.fighters_[1]->speed_;
@@ -232,9 +176,16 @@ void GameStateManager::update(float time)
 	updateAttacks();
 	checkFighterSide();
 	drawHealthBars();
+	updateTimer();
 
 	if(debug_)
 	{
+		drawHitboxDebug();
+
+		debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 }, 0, 0, 1.0f);//x
+		debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 }, 0, 0, 1.0f);//y
+		debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 }, 0, 0, 1.0f);//z
+
 		debugManager_->drawGrid(arena_.pos, {0, 1, 0}, 0.0f, 21, 21, { 255, 255, 255 }, true); //floor
 
 		glm::vec3 pos = arena_.pos;
@@ -264,107 +215,135 @@ void GameStateManager::update(float time)
 		pos.z += (arena_.width / 4);
 		debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }, true); //right wall
 	}
+}
 
+void GameStateManager::updateTimer()
+{
+	const glm::vec4 TIMER_COLOR = {0, 1, 1, 1};
+	const float TIMER_TEXT_SCALE = 4.0f;
+
+	float currentTime = getCurrentTime() * 0.001f;//convert to seconds
+	uint32_t secondsInMatch = (uint32_t)(currentTime - timerResources_.startTime);
+
+	glm::vec2 windowPos{};
+	windowPos.y = EngineSettings::getSingleton().windowHeight * 0.05f;
+	if(secondsInMatch > 9)//adjust window position based on number of digits in secondsInMatch
+	{ 
+		windowPos.x = EngineSettings::getSingleton().windowWidth * 0.46f;
+	}
+	else if (secondsInMatch > 99)
+	{
+		windowPos.x = EngineSettings::getSingleton().windowWidth * 0.44f;
+	}
+	else
+	{
+		windowPos.x = EngineSettings::getSingleton().windowWidth * 0.49f;
+	}
+
+	if (secondsInMatch >= timerResources_.maxTime)
+	{
+		if (fighterResources_.healthBar[0] < fighterResources_.healthBar[1])
+		{
+			std::cout << "TIMEOUT: Fighter 1 wins" << std::endl;
+		}
+		else if (fighterResources_.healthBar[1] < fighterResources_.healthBar[0])
+		{
+			std::cout << "TIMEOUT: Fighter 2 wins" << std::endl;
+		}
+		else
+		{
+			std::cout << "TIMEOUT: DRAW" << std::endl;
+		}
+		exit(1);
+	}
+	UI::UIInterface::getSingleton().addTextToTransparentBackground(std::to_string(secondsInMatch), windowPos, TIMER_COLOR, TIMER_TEXT_SCALE);
 }
 
 void GameStateManager::updateAttacks()
 {
 	int attackIndex1 = fighterResources_.fighters_[0]->currentAttack_;
 	int attackIndex2 = fighterResources_.fighters_[1]->currentAttack_;
-	Attack* attack = nullptr;
-	if (attackIndex1 != -1)
+	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
 	{
-		attack = &fighterResources_.fighters_[0]->attacks_[attackIndex1];
-		if (attack->currentFrame >= attack->startupFrames && attack->currentFrame < (attack->startupFrames + attack->activeFrames))
+		int attackIndex = fighterResources_.fighters_[fighterIndex]->currentAttack_;
+		if (attackIndex != -1)//current fighter is in the middle of an attack 
 		{
-			if (debug_)
+			uint32_t opposingFighterIndex = fighterIndex ^ 1;
+			Attack& attack = fighterResources_.fighters_[fighterIndex]->attacks_[attackIndex];
+			fighterResources_.fighters_[fighterIndex]->setCurrentHitboxes(attack.hitboxesPerFrame[attack.currentFrame]);
+			//Check if we are in active frames so that attack collision can be checked
+			if (attack.currentFrame >= attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
 			{
-				drawHitboxDebug(0, attack);
-			}
-
-			if (!attack->handled_)
-			{
-				if (checkAttackCollision(*fighterResources_.fighters_[0], *fighterResources_.fighters_[1], *attack))
+				if (!attack.handled_)
 				{
-					fighterResources_.healthBar[1] -= attack->damage;
+					if (checkAttackCollision(*fighterResources_.fighters_[fighterIndex], *fighterResources_.fighters_[opposingFighterIndex]))
+					{
+						attack.handled_ = true;
+						if (fighterResources_.fighters_[opposingFighterIndex]->onHit(attack.hitPushMag, attack.hitstunFrames, attack.blockstunFrames))
+						{
+							fighterResources_.healthBar[opposingFighterIndex] -= attack.damage;							
+						}
+					}
+				}
+				else if(fighterResources_.fighters_[fighterIndex]->attackBuffer_.size() > 0)//check if next attack in buffer can cancel current attack 
+				{
+					int nextAttack = fighterResources_.fighters_[fighterIndex]->attackBuffer_.front();
+					if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[fighterIndex]->currentAttack_, nextAttack))
+					{
+						attack.currentFrame = 0;
+						attack.handled_ = false;
+						fighterResources_.fighters_[fighterIndex]->currentAttack_ = nextAttack;
+						fighterResources_.fighters_[fighterIndex]->attackBuffer_.pop();
+					}
 				}
 			}
-			else if(fighterResources_.fighters_[0]->attackBuffer_.size() > 0)
+
+			attack.currentFrame++;
+			//attack is finished
+			if (attack.currentFrame >= (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
 			{
-				int nextAttack = fighterResources_.fighters_[0]->attackBuffer_.front();
-				if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[0]->currentAttack_, nextAttack))
-				{
-					attack->currentFrame = 0;
-					attack->handled_ = false;
-					fighterResources_.fighters_[0]->currentAttack_ = nextAttack;
-					fighterResources_.fighters_[0]->attackBuffer_.pop();
-				}
+				attack.currentFrame = 0;
+				attack.handled_ = false;
+				fighterResources_.fighters_[fighterIndex]->currentAttack_ = -1;
+				fighterResources_.fighters_[fighterIndex]->setCurrentHitboxes(fighterResources_.fighters_[fighterIndex]->defaultHitboxes_);
+				return;
 			}
 		}
-
-		if (attack->currentFrame >= (attack->startupFrames + attack->recoveryFrames + attack->activeFrames))
-		{
-			attack->currentFrame = 0;
-			attack->handled_ = false;
-			fighterResources_.fighters_[0]->currentAttack_ = -1;
-			return;
-		}
-		attack->currentFrame++;
-	}
-
-	if (attackIndex2 != -1)
-	{
-		attack = &fighterResources_.fighters_[1]->attacks_[attackIndex2];
-		if (attack->currentFrame >= attack->startupFrames && attack->currentFrame < (attack->startupFrames + attack->activeFrames))
-		{
-			if (debug_)
-			{
-				drawHitboxDebug(1, attack);
-			}
-
-			if (!attack->handled_)
-			{
-				if (checkAttackCollision(*fighterResources_.fighters_[1], *fighterResources_.fighters_[0], *attack))
-				{
-					fighterResources_.healthBar[0] -= attack->damage;
-				}
-			}
-			else if(fighterResources_.fighters_[1]->attackBuffer_.size() > 0)
-			{
-				int nextAttack = fighterResources_.fighters_[1]->attackBuffer_.front();
-				if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[1]->currentAttack_, nextAttack))
-				{
-					attack->currentFrame = 0;
-					attack->handled_ = false;
-					fighterResources_.fighters_[1]->currentAttack_ = nextAttack;
-					fighterResources_.fighters_[1]->attackBuffer_.pop();
-				}
-			}
-		}
-
-		if (attack->currentFrame >= (attack->startupFrames + attack->recoveryFrames + attack->activeFrames))
-		{
-			attack->currentFrame = 0;
-			attack->handled_ = false;
-			fighterResources_.fighters_[1]->currentAttack_ = -1;
-			return;
-		}
-
-		attack->currentFrame++;
 	}
 }
 
-void GameStateManager::drawHitboxDebug(int fighterIndex, Attack* attack)
+void GameStateManager::drawHitboxDebug()
 {
-	int currentAttackFrame = attack->currentFrame - attack->startupFrames;
-	glm::vec2 hurtboxDim = attack->hurtboxWidthHeight[currentAttackFrame];
-	glm::vec2 hurtboxPos = attack->hurtboxPos[currentAttackFrame];
+	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
+	{
+		Fighter* currentFighter = fighterResources_.fighters_[fighterIndex];
+		glm::vec3 fighterPos = currentFighter->getPosition();
+		for (const Hitbox& pushbox : currentFighter->currentPushBoxes_)
+		{
+			glm::vec3 newPos = pushbox.pos_;
+			if (currentFighter->side_ == left) newPos.y *= -1;
+			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
 
-	if (fighterResources_.fighters_[fighterIndex]->side_ == left)hurtboxPos.x *= -1;
-	glm::vec3 fighterPos = fighterResources_.fighters_[fighterIndex]->getPosition() ;
-	glm::vec3 pos = { 0.0f, fighterPos.y + hurtboxPos.x, fighterPos.z + hurtboxPos.y };
+			debugManager_->drawRect(pushBoxPos, { 0, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+		}
+		for (const Hitbox& pushbox : currentFighter->currentHurtboxes_)
+		{
+			glm::vec3 newPos = pushbox.pos_;
+			if (currentFighter->side_ == left) newPos.y *= -1;
+			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
+	
+			debugManager_->drawRect(pushBoxPos, { 255, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+		}
+		for (const Hitbox& pushbox : currentFighter->currentHitboxes_)
+		{
+			glm::vec3 newPos = pushbox.pos_;
+			if (currentFighter->side_ == left) newPos.y *= -1;
+			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
 
-	debugManager_->drawRect(pos, { 255, 0, 0 }, 0, false, -hurtboxDim[0] / 2, hurtboxDim[0] / 2, -hurtboxDim[1] / 2, hurtboxDim[1] / 2);
+			debugManager_->drawRect(pushBoxPos, { 255, 0, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+		}
+	}
+	
 }
 
 void GameStateManager::checkFighterSide()

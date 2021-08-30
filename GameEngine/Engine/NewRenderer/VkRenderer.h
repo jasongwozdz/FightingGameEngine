@@ -9,11 +9,13 @@
 #include "../NewRenderer/UIInterface.h"
 #include "Renderable.h"
 
-class DebugDrawManager; // forware declare this class to remove cyclical dependency between DebugDrawManager.h->Scene.h->VkRenderer.h
+class DebugDrawManager;
 
 class VkRenderer : Singleton<VkRenderer>
 {
 public:
+	static VkRenderer& getSingleton();
+	static VkRenderer* getSingletonPtr();
 	VkRenderer(Window& window);
 	void init();
 	void draw(std::vector<Renderable*>& objectsToDraw);
@@ -23,52 +25,21 @@ public:
 	void prepareFrame();
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
 	void updateUniformBuffer(Renderable& mesh);
-
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	std::vector<char> readShaderFile(const std::string& filename);
 
-	static VkRenderer& getSingleton();
-	static VkRenderer* getSingletonPtr();
-	
-	uint32_t width_;
-	uint32_t height_;
-
-	VkExtent2D windowExtent_;
-
-	VkDevice logicalDevice_;
-
-	VkRenderPass renderPass_;
-
+public:
 	Window& window_;
-
 	UI::UIInterface* ui_;
-	
 	DebugDrawManager* debugDrawManager_;
 
-	VkInstance instance_;
-
-	VkDebugUtilsMessengerEXT debugMessenger_;
-
-	VkSurfaceKHR surface_;
-
-	VkPhysicalDevice physicalDevice_;
-
-	VkQueue graphicsQueue_;
-	uint32_t graphicsQueueFamiliy_;
-	
-	VkCommandPool cmdPool_;
-	VkCommandBuffer cmdBuffer_;
-
-	VkSwapchainKHR swapchain_;
-
-	VmaAllocator allocator_;
-
+	uint32_t width_;
+	uint32_t height_;
 	bool recreateSwapchain_;
-
-	std::vector<VkFramebuffer> frameBuffers_;
-	
 	int frameNumber_ = 0;
 
+
+	//Vulkan Stuff
 	struct
 	{
 		VkImageView depthImageView_;
@@ -90,18 +61,29 @@ public:
 		VkFormat imageFormat_;
 		int imageCount_;
 	}swapChainResources_;
-
+	VkExtent2D windowExtent_;
+	VkDevice logicalDevice_;
+	VkRenderPass renderPass_;
+	VkInstance instance_;
+	VkDebugUtilsMessengerEXT debugMessenger_;
+	VkSurfaceKHR surface_;
+	VkPhysicalDevice physicalDevice_;
+	VkQueue graphicsQueue_;
+	uint32_t graphicsQueueFamiliy_;
+	VkCommandPool cmdPool_;
+	VkCommandBuffer cmdBuffer_;
+	VkSwapchainKHR swapchain_;
+	VmaAllocator allocator_;
+	std::vector<VkFramebuffer> frameBuffers_;
 	VkFence renderFence_;
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
-
 	std::vector<PipelineBuilder::PipelineResources*> pipelines_;
-
-	//std::map<PipelineTypes, std::vector<RenderableObject*>> pipelineMap_;
-
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
 	
+private:
+
 	void createDefaultRenderPass();
 
 	void createDefualtDepthResources();

@@ -11,7 +11,7 @@ Window::Window()
 	windowInfo_.width = EngineSettings::getSingleton().windowWidth;
 	windowInfo_.height = EngineSettings::getSingleton().windowHeight;
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Dog Game", nullptr, nullptr);
+	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Engine", nullptr, nullptr);
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetWindowUserPointer(window_, &windowInfo_);
 

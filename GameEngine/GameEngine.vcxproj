@@ -92,15 +92,15 @@
       <PreprocessorDefinitions>ENGINE_EXPORTS;_DEBUG;GAMEENGINE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Program Files\KTX-Software\include;C:\Users\jsngw\source\repos\assimp-master\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\KTX-Software\lib;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Program Files\KTX-Software\bin;C:\Users\jsngw\source\repos\assimp-master\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/VERBOSE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -151,7 +151,7 @@
       <PreprocessorDefinitions>ENGINE_EXPORTS;NDEBUG;GAMEENGINE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Users\jsngw\source\repos\Vulkan\external\assimp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\tinyobjloader-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\stb-master;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\include;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glm;C:\VulkanSDK\Include;C:\Program Files\KTX-Software\include;C:\Users\jsngw\source\repos\assimp-master\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -160,8 +160,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalLibraryDirectories>C:\Users\jsngw\source\repos\Vulkan\external\Debug;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Users\jsngw\source\repos\Vulkan\libs\assimp;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\KTX-Software\lib;C:\Users\jsngw\Documents\Visual Studio 2017\Libraries\glfw-3.3.2.bin.WIN64\lib-vc2015;C:\VulkanSDK\Lib;C:\Program Files\KTX-Software\bin;C:\Users\jsngw\source\repos\assimp-master\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;ktx.lib;assimp-vc141-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/VERBOSE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>

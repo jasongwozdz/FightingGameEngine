@@ -4,6 +4,7 @@
 #include "InputHandler.h"
 #include "EngineSettings.h"
 #include "Hitbox.h"
+#include "Attack.h"
 
 
 //Hitbox structure used for all differrent types of hitboxs(hurtboxes, collisions, etc..) 
@@ -11,50 +12,15 @@
 
 typedef uint8_t InputKey;
 
-struct Attack
-{
-	Attack() = default;
-
-	Attack(int startup, int active, int recovery, std::vector<glm::vec2> hurtboxWidthHeightIn, std::vector<glm::vec2> hurtboxPosIn, int animationIndexIn, Hitbox hurtboxIn, int blockstun, int hitstun, float pushMag, int dam) :
-		startupFrames(startup), activeFrames(active), recoveryFrames(recovery),hurtboxWidthHeight(hurtboxWidthHeightIn), hurtboxPos(hurtboxPosIn), animationIndex_(animationIndexIn), hurtbox_(hurtboxIn), blockstunFrames(blockstun), hitstunFrames(hitstun), hitPushMag(pushMag), damage(dam)
-	{}
-
-	int currentFrame = -1;
-
-	int startupFrames; //no hurtox active
-	int activeFrames; //hurtbox active
-	int recoveryFrames; //no hurtbox active
-
-	int blockstunFrames;
-	int hitstunFrames;
-
-	//glm::vec2* hurtboxWidthHeight; //array the size of active frames
-	std::vector<glm::vec2> hurtboxWidthHeight; //array the size of active frames
-	//glm::vec2* hurtboxPos; //array the size of active frames
-	std::vector<glm::vec2> hurtboxPos; //array the size of active frames
-
-	int animationIndex_;
-	std::string animationName_;
-	Hitbox hurtbox_;
-
-	float hitPushMag; //magnitude of push when hit
-	float blockPushMag; //magnitude of push when blocked
-
-	bool handled_ = false;
-
-	int damage = 0;
-
-	bool jumpAttack = false;
-};
 
 struct AttackInput
 {
 	//user defined
 	std::vector<InputKey> attackInput;
 	int numInputs = 1;
-	double dtBetweenAttacks; // IN MILLISECONDS
 	int attackIndex = 0;
 	//struct private
+	double dtBetweenAttacks; // IN MILLISECONDS
 	double lastCheckTime = 0;
 	float currentInput = 0;
 };
@@ -77,10 +43,16 @@ enum FighterSide
 	right = 1
 };
 
+struct FighterStateData
+{
+	std::string animationName;
+	std::vector<std::vector<Hitbox>> hitboxData;
+};
+
 class Fighter
 {
 public:
-	Fighter(Entity* entity, InputHandler& inputHandler, FighterSide side = right);
+	Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterSide side = right);
 
 	void onUpdate(float delta);
 
@@ -88,13 +60,22 @@ public:
 
 	void flipSide();
 
+	bool onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames); //returns bool if hit was successful 
+
+	void setOrKeepState(FighterState state);
+
+	glm::vec3 getPosition() const;
+
+	void setCurrentHitboxes(const std::vector<Hitbox>& hitboxes);
+
+public:
+	Entity* entity_;
+
 	FighterSide side_;
 
 	glm::vec3 gamePos_;
 	
 	bool controllable_ = false;
-
-	Entity* entity_;
 
 	FighterState state_ = idle;
 
@@ -134,15 +115,18 @@ public:
 	bool flipSide_ = false;
 
 	const double timeToClearBuffer_ = 5; //ms
+
 	double clearAttackBufferTime_ = 0;
 
+	FighterStateData idleStateData_;
+	FighterStateData walkingStateData_;
 	std::vector<Attack> attacks_;
 
-	bool onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames); //returns bool if hit was successful 
+	std::vector<Hitbox> defaultHitboxes_;
 
-	void setOrKeepState(FighterState state);
-
-	glm::vec3 getPosition() const;
+	std::vector<Hitbox> currentHurtboxes_;
+	std::vector<Hitbox> currentHitboxes_;
+	std::vector<Hitbox> currentPushBoxes_;
 
 
 private:
@@ -159,6 +143,8 @@ private:
 
 	//returns true if attack input is complete and populates attackIndex with correspoding attack
 	bool checkAttackInput(int currentAttackInput, int& attackIndex);
+
+private:
 
 	float movedThisFrame_;
 

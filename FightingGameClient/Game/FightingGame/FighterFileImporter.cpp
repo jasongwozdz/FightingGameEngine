@@ -3,6 +3,12 @@
 
 #include "FighterFileImporter.h"
 
+
+static int getSizeOfString(const std::string& string)
+{
+	return string.size();
+}
+
 FighterFileImporter::FighterFileImporter(const std::string& filePath)
 {
 	file_.open(filePath, std::ios::in);
@@ -14,6 +20,73 @@ FighterFileImporter::FighterFileImporter(const std::string& filePath)
 	{
 		std::cout << "couldn't open file" << std::endl;
 	}
+}
+
+std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::string hitboxData)
+{
+	std::vector<std::vector<Hitbox>> returnData;
+	for (std::string::iterator character = hitboxData.begin(); character < hitboxData.end(); character++)
+	{
+		if (*character == '[')
+		{
+			std::vector<Hitbox> frameData;
+			while (*(++character) != ']')
+			{
+				if (*character == '{')
+				{
+					Hitbox h{};
+					//loops through each field needed to populate hitbox data
+					for (int currentField = 0; currentField < 6; currentField++)
+					{
+						std::string currNum;
+						while (*(++character) != ',' && *character != '}')
+						{
+							currNum.push_back(*character);
+						}
+
+						switch (currentField)
+						{
+							case 0:
+							{
+								h.width_ = std::stof(currNum);
+								break;
+							}
+							case 1:
+							{
+								h.height_ = std::stof(currNum);
+								break;
+							}
+							case 2:
+							{
+								h.pos_.x = std::stof(currNum);
+								break;
+							}
+							case 3:
+							{
+								h.pos_.y = std::stof(currNum);
+								break;
+							}
+							case 4:
+							{
+								h.pos_.z = std::stof(currNum);
+								break;
+							}
+							case 5:
+							{
+								h.layer_ = (Hitbox::HitboxLayer)std::stoi(currNum);
+								break;
+							}
+						}
+						currNum.clear();
+
+						}
+					frameData.push_back(h);
+					}
+				}
+				returnData.push_back(frameData);
+			}
+		}
+	return returnData;
 }
 
 //This will populate exportData_
@@ -35,6 +108,39 @@ void FighterFileImporter::readFile()
 	{
 		exportData_.rightSideRotation = std::stof(currentLine.substr(20));
 	}
+
+	//get up rotation
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.upRotation = std::stof(currentLine.substr(getSizeOfString("UpRotation : ")));
+	}
+
+	//get idleAnimation name
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.idleData.animationName = currentLine.substr(getSizeOfString("IdleAnimation : "));
+	}
+
+	//get idleHitboxData
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("IdleHitboxData : ")));
+		exportData_.idleData.hitboxData = extractedHitboxData;
+	}
+
+	//get WalkAnimation name
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.walkingData.animationName = currentLine.substr(getSizeOfString("WalkAnimation : "));
+	}
+
+	//get walkHitboxData 
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("WalkHitboxData : ")));
+		exportData_.walkingData.hitboxData = extractedHitboxData;
+	}
+
 	while (std::getline(file_, currentLine))
 	{
 		Attack attack{};
@@ -63,8 +169,18 @@ void FighterFileImporter::readFile()
 			}
 			if (std::getline(file_, currentLine))
 			{
+				attack.hitPushMag = std::stof(currentLine.substr(10));
+			}
+			if (std::getline(file_, currentLine))
+			{
 				attack.damage = std::stoi(currentLine.substr(9));
 			}
+			std::vector<InputKey> attackInput;
+			if (std::getline(file_, currentLine))
+			{
+				attackInput.push_back(std::stoi(currentLine.substr(8)));
+			}
+			exportData_.inputData.push_back(attackInput);
 			int numFrames = 0;
 			if (std::getline(file_, currentLine))
 			{
@@ -75,7 +191,7 @@ void FighterFileImporter::readFile()
 			attack.hurtboxPos.resize(numFrames);
 			if (std::getline(file_, currentLine))
 			{
-				AttackData parsedAttackData{};
+				AnimationData parsedAttackData{};
 				for (std::string::iterator character = currentLine.begin(); character < currentLine.end(); character++)
 				{
 					if (*character == '[')
@@ -135,6 +251,7 @@ void FighterFileImporter::readFile()
 								}
 							}
 							parsedAttackData.hitboxData.push_back(frameData);
+							attack.hitboxesPerFrame.push_back(frameData);
 						}
 					}
 				exportData_.attackData.push_back(parsedAttackData);

@@ -1,13 +1,53 @@
 #include "FighterFactory.h"
 #include "ResourceManager.h"
+#include "FighterFileImporter.h"
 
 FighterFactory::FighterFactory(Scene& scene) :
 	scene_(scene)
 {}
 
-Fighter* createFighter(const std::string& fighterFilePath, InputHandler& inputHandler)
+Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, InputHandler& inputHandler)
 {
-	
+	FighterFileImporter fighterFileImporter(fighterFilePath);
+	ResourceManager& resourceManager = ResourceManager::getSingleton();
+	AnimationReturnVals ret = resourceManager.loadAnimationFile(fighterFileImporter.exportData_.modelFilePath);
+	TextureReturnVals texVals = resourceManager.loadTextureFile((std::string&)fighterFileImporter.exportData_.textureFilePath);
+	Entity* entity = scene_.addEntity("Fighter");
+	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Fighter");
+	entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter");
+	Transform& transform = entity->addComponent<Transform>( 1.0f, 1.0f, 1.0f );
+	transform.rot_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
+	transform.rot_ = glm::rotate(transform.rot_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
+	transform.setScale(0.02f);
+
+	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
+	animator.setAnimation("Idle");
+
+	FighterStateData idleStateData;
+	idleStateData.animationName = fighterFileImporter.exportData_.idleData.animationName;
+	idleStateData.hitboxData = fighterFileImporter.exportData_.idleData.hitboxData;
+
+	FighterStateData walkingStateData;
+	walkingStateData.animationName = fighterFileImporter.exportData_.walkingData.animationName;
+	walkingStateData.hitboxData = fighterFileImporter.exportData_.walkingData.hitboxData;
+
+	Fighter* fighter = new Fighter(entity, inputHandler, idleStateData, walkingStateData);
+	fighter->defaultHitboxes_ = fighterFileImporter.exportData_.idleData.hitboxData[0];
+
+	fighter->setCurrentHitboxes(fighter->defaultHitboxes_);
+	fighter->currentHitboxes_ = fighter->defaultHitboxes_;
+	fighter->attacks_ = fighterFileImporter.exportData_.attacks;
+	for (int i = 0; i < fighterFileImporter.exportData_.inputData.size(); i++)
+	{
+		AttackInput attackInput{};
+		attackInput.attackInput = fighterFileImporter.exportData_.inputData[i];
+		attackInput.attackIndex = i;
+		attackInput.numInputs = fighterFileImporter.exportData_.inputData[i].size();
+		fighter->attackInputs_.push_back(attackInput);
+	}
+
+
+	return fighter;
 }
 
 bool FighterFactory::populateAttackInput(std::string inputFile, Fighter* fighter)
@@ -218,7 +258,7 @@ Fighter* FighterFactory::createFighter(const std::string& modelPath, const std::
 	child = { 2.0f, 2.0f, {0.0f, -1.1f, 0.0f}, Hitbox::HitboxLayer::Hit};
 	hitbox.children_.push_back(child);
 
-	Fighter* fighter = new Fighter(entity, inputHandler);
+	Fighter* fighter = new Fighter(entity, inputHandler, {}, {});
 	populateAttackInput("", fighter);
 	populateAttacks("", fighter);
 

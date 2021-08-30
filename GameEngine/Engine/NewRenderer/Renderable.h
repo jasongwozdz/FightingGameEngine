@@ -42,17 +42,21 @@ struct TextureResources
 class ENGINE_API Renderable
 {
 public:
-	Renderable();
-
 	Renderable(std::vector<Vertex> vertex, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName);
 
 	Renderable(Renderable&& other);
 
 	Renderable(const Renderable& other);
 
+	~Renderable();
+
+	//repopulates vertex and index buffers
+	void setVertAndIndicies(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
+
+	void deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice);
+
 	Renderable& operator=(Renderable&& other)
 	{
-		std::cout << "Move assignement operator" << std::endl;
 		depthEnabled_ = other.depthEnabled_;
 		uploaded_ = other.uploaded_;
 		delete_ = other.delete_;
@@ -90,7 +94,6 @@ public:
 
 	Renderable& operator=(Renderable const& other)
 	{
-		std::cout << "JASON: Assigned" << std::endl;
 		depthEnabled_ = other.depthEnabled_;
 		uploaded_ = other.uploaded_;
 		delete_ = other.delete_;
@@ -115,12 +118,14 @@ public:
 		return *this;
 	}
 
-	void setVertAndIndicies(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
-
-	~Renderable();
-	
-	//Ubo* ubo_;
+public:
 	Ubo ubo_;
+
+	PipelineTypes pipelineType_ = PipelineTypes::BASIC_PIPELINE;
+
+	uint32_t renderableObjectId_;
+
+	TextureResources textureResources_;
 
 	std::vector<Vertex> vertices_;
 	std::vector<uint32_t> indices_;
@@ -144,14 +149,7 @@ public:
 	std::vector<VkBuffer> uniformBuffer_;
 	std::vector<VmaAllocation> uniformMem_;
 
-	PipelineTypes pipelineType_ = PipelineTypes::BASIC_PIPELINE;
-
-	uint32_t renderableObjectId_;
-
 	VkDescriptorSetLayout descriptorLayout_;
 	std::vector<VkDescriptorSet> descriptorSets_;
 
-	TextureResources textureResources_;
-
-	void deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice);
 };

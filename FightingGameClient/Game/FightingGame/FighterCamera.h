@@ -8,7 +8,6 @@ class FighterCamera
 public:
 	FighterCamera(BaseCamera* camera, const Fighter* fighter1, const Fighter* fighter2);
 
-	//editable
 	const float cameraUpdateFrequency_ = 0.05f;
 	const float framesPerUpdate_ = 1;
 
@@ -29,8 +28,6 @@ public:
 	glm::vec3 nextPos;
 
 	glm::vec3 midPoint(const glm::vec3& p1, const glm::vec3& p2);
-
-	float calculateX(const glm::vec3& p1, const glm::vec3& p2, const glm::vec3& mid);
 
 	bool shouldAddNewCameraPos();
 

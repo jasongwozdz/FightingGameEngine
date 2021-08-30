@@ -83,13 +83,6 @@ void Animator::setAnimation(std::string name)
 
 void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable)
 {
-	//if (animationIndex > animations_.size())
-	//{
-	//	std::cout << "Error: incorrect animation index" << std::endl;
-	//	return;
-	//}
-	//const AnimationClip& clip = animations_[currentAnimation_];
-
 	if (frameNumber > clip.frameCount_)
 	{
 		std::cout << "Error: frame number out of bounds" << std::endl;
@@ -123,7 +116,7 @@ void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int f
 			transform =
 				glm::translate(glm::mat4(1.0f), clip.positions_[i][frameNumber].pos_) *
 				glm::toMat4(clip.rotations_[i][frameNumber].quat_) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber].scale_));
+				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[i][frameNumber].scale_));
 		}
 
 		glm::mat4 parent(1.0f);
@@ -200,12 +193,12 @@ void Animator::update(float currentTime, Renderable& renderable)
 	{
 		AnimationClip clip = animations_[currentAnimation_];
 
-		for (unsigned int i = lastIndex_; i < clip.positions_[1].size() - 2; i++)
+		for (unsigned int i = lastIndex_; i < clip.positions_[2].size() - 2; i++)
 		{
-			if (clip.positions_[1][i + 1].time_ > localTime_)
+			if (clip.positions_[2][i + 1].time_ > localTime_)
 			{
 				frameIndex = i;
-				lastIndex_ = (frameIndex) % (clip.positions_[1].size()-3);
+				lastIndex_ = (frameIndex) % (clip.positions_[2].size()-3);
 				break;
 			}
 		}

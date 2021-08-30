@@ -85,10 +85,10 @@ private:
 
 		VkBuffer vertexBuffer_;
 		VkBuffer indexBuffer_;
-		std::vector<VkBuffer> storageBuffers_;
+		VkBuffer storageBuffer_;
 		VmaAllocation vertexBufferMem_;
 		VmaAllocation indexBufferMem_;
-		std::vector<VmaAllocation> storageBuffersMem_;
+		VmaAllocation storageBufferMem_;
 		VkDescriptorSetLayout storageBufferDescriptorLayout_;
 		std::vector<VkDescriptorSet> descriptorSets_;
 

@@ -9,6 +9,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <assert.h>
 #include <stb_image.h>
+#include <ktx.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -63,7 +64,7 @@ namespace std {
 	};
 }
 
-ModelReturnVals& ResourceManager::loadObjFile(std::string& filePath) {
+ModelReturnVals& ResourceManager::loadObjFile(const std::string& filePath) {
 	auto find = m_resourceRegistry.find(filePath);
 	ModelReturnVals* vals;
 	if (find == m_resourceRegistry.end())
@@ -170,7 +171,14 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		}
 
 	}
-	sample.frameCount_ = sample.positions_[1].size();
+
+	for (std::vector<KeyPosition> positions : sample.positions_)
+	{
+		if(positions.size() > 0)
+		{
+			sample.frameCount_ = sample.positions_[2].size();
+		}
+	}
 	return true;
 }
 
@@ -199,6 +207,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		{
 			animationClips.push_back(a);
 		}
+		a.frameCount_ = a.positions_[a.positions_.size() - 1].size();
 	}
 	return true;
 }
@@ -270,7 +279,17 @@ aiBone* ResourceManager::findRootBone(aiNode* node, aiMesh* mesh)
 
 void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStructure& boneStructure)
 {
+	//Blenders root node is "Scene" and we don't want to use this to calculate the globalInverseTransform
+	//if (!std::strcmp(root->mName.C_Str(), "Scene")) 
+	//{
+	//	root = root->mChildren[0];
+	//	//boneStructure.globalInverseTransform_ = glm::inverse((glm::make_mat4(&realRoot->mTransformation.a1)));
+	//}
+	////else
+	//{
+
 	boneStructure.globalInverseTransform_ = glm::inverse(glm::transpose(glm::make_mat4(&root->mTransformation.a1)));
+	//}
 	//boneStructure.boneInfo_.push_back({ glm::transpose(glm::make_mat4(&root->mTransformation.a1)), root->mName.C_Str(), -1});
 	//recursivePopulateBoneStructure(root, mesh, boneStructure);
 	recursivePopulateBoneStructure(root, mesh, boneStructure, 0);
@@ -289,8 +308,9 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 		BoneStructure boneStructure(0);
 		//BoneStructure* boneStructure = new BoneStructure(0);
 
-		const aiScene* scene = importer.ReadFile(filePath
-			.c_str(), 0);
+		//const aiScene* scene = importer.ReadFile(filePath
+			//.c_str(), 0);
+		const aiScene* scene = aiImportFile(filePath.c_str(), 0);
 		assert(scene != nullptr);
 
 		uint32_t vertexCount(0);		
@@ -316,6 +336,11 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 				//add boneIDs/weights for each vertex 
 				std::string boneNameS = std::string(currBone->mName.C_Str());
 				int boneIndex = boneStructure.findBoneByBoneName(boneNameS);
+				if (boneIndex == -1)
+				{
+					std::cout << "ResourceManager::loadAnimationFile ERROR: couldn't find bone" << std::endl;
+					continue;
+				}
 				boneStructure.boneInfo_[boneIndex].offset_ = glm::transpose(glm::make_mat4(&currBone->mOffsetMatrix.a1));
 				for (uint32_t k = 0; k < numWeights; ++k)
 				{
@@ -389,16 +414,39 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 	if (find == m_resourceRegistry.end())
 	{
 		int texWidth, texHeight, texChannels;
-		unsigned char* pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-		if (!pixels) {
-			std::cout << "invalid texture path" << std::endl;
-			assert(1 == 0);
+		unsigned char* pixels;
+		if (filePath.find(".ktx") != std::string::npos)
+		{
+			ktxTexture* texture;
+			KTX_error_code result;
+			result = ktxTexture_CreateFromNamedFile(filePath.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
+			assert(result == KTX_SUCCESS);
+			texWidth = texture->baseWidth;
+			texHeight = texture->baseHeight;
+			texChannels = texture->numLevels;
+
+			//ktx_size_t offset;
+			//result = ktxTexture_GetImageOffset(texture, 0, 0, 0, &offset);
+			//assert(result == KTX_SUCCESS);
+			pixels = ktxTexture_GetData(texture);
+			ktx_size_t size = ktxTexture_GetDataSize(texture);
+
+			returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
+
+			ktxTexture_Destroy(texture);
 		}
+		else
+		{
+			pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+			if (!pixels) {
+				std::cout << "invalid texture path" << std::endl;
+				assert(1 == 0);
+			}
+			returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
 
-		returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
-
-		stbi_image_free(pixels);
-
+			stbi_image_free(pixels);
+		}
+	
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(returnVals);
 	}
 	else

@@ -97,20 +97,17 @@ namespace UI
 		static UIInterface* getSingletonPtr();
 
 		UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator);
-
 		~UIInterface();
-
 		void recreateUI(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass);
 
-		void drawRect(int width, int height, glm::vec2 pos, glm::vec4 color);
-
-		void showImGuiDemoWindow();
-
 		void prepareFrame();
-
 		void renderFrame(VkCommandBuffer& curentBuffer);
 
+		//Custom UI elements
+		void drawRect(int width, int height, glm::vec2 pos, glm::vec4 color);
+
 		//IMGUI interface
+		void showImGuiDemoWindow();
 		bool beginMenu(const std::string& menuName);
 		bool addMenuItem(const std::string& menuItem, bool* clickedOn);
 		void endMenu();
@@ -133,10 +130,11 @@ namespace UI
 		bool addInputFloat(std::string text, float& output, float defaultVal);
 		bool addInputInt(std::string text, int& output, int step);
 		bool addSlider(const std::string& text, int& input, int start, int end);
+		void addTextToTransparentBackground(const std::string& text, glm::vec2 pos, const glm::vec4& color, float scale);
 		bool isMouseOverUI();
-		glm::vec2 getCursorPos();
-		
+		glm::vec2 getCursorPos();//Get cursor position using Imgui api
 
+	private:
 		std::vector<UI::RenderInfo> drawData_;
 		std::vector<VkDeviceSize> vertexOffsets_;
 		std::vector<VkDeviceSize> indexOffsets_;
@@ -144,20 +142,13 @@ namespace UI
 		std::vector<uint32_t> indicies_;
 		VkDeviceSize globalVertexOffset_ = 0;
 		VkDeviceSize globalIndexOffset_ = 0;
-
 		PipelineBuilder::PipelineResources* uiPipeline_;
-
 		VkDescriptorSetLayout descriptorLayout_;
-
 		VmaAllocator& allocator_;
-
 		VkBuffer vertexBuffer_;
 		VkBuffer indexBuffer_;
 		VmaAllocation vertexBufferMem_;
 		VmaAllocation indexBufferMem_;
-
-	private:
 		char imGuiInputBuffer[256];
-
 	};
 }

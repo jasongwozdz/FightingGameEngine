@@ -7,6 +7,7 @@ struct Arena
 	float width;
 	float depth;
 	glm::vec3 pos;
+	Entity* backgroundEntity;
 };
 
 struct HealthBar
@@ -59,10 +60,6 @@ struct FighterResources
 	//first element in the array is right side fighter second element is left side
 	Fighter* fighters_[2];
 
-	Entity* hurtboxDebug_[2];
-
-	//std::vector<Attack> fighterAttacks_[2];
-
 	CancelAttackMap cancelAttackMap_[2];
 
 	int healthBar[2] = { 100, 100 }; 
@@ -71,26 +68,7 @@ struct FighterResources
 class GameStateManager
 {
 public:
-	GameStateManager& operator=(GameStateManager&& other)
-	{
-		std::cout << "assignment" << std::endl;
-
-		fighterResources_.fighters_[0] = other.fighterResources_.fighters_[0];
-		fighterResources_.fighters_[1] = other.fighterResources_.fighters_[1];
-		other.fighterResources_.fighters_[0] = nullptr;
-		other.fighterResources_.fighters_[1] = nullptr;
-
-		fighterResources_.hurtboxDebug_[0] = other.fighterResources_.hurtboxDebug_[0];
-		fighterResources_.hurtboxDebug_[1] = other.fighterResources_.hurtboxDebug_[1];
-		other.fighterResources_.hurtboxDebug_[0] = nullptr;
-		other.fighterResources_.hurtboxDebug_[1] = nullptr; 
-
-		return *this;
-	}
-
-	GameStateManager() = default;
-
-	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, float arenaWidth, float arenaHeight);
+	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, Arena& arena);
 
 	~GameStateManager();
 
@@ -98,31 +76,43 @@ public:
 
 	bool debug_ = true;
 
+	GameStateManager& operator=(GameStateManager&& other)
+	{
+		fighterResources_.fighters_[0] = other.fighterResources_.fighters_[0];
+		fighterResources_.fighters_[1] = other.fighterResources_.fighters_[1];
+		other.fighterResources_.fighters_[0] = nullptr;
+		other.fighterResources_.fighters_[1] = nullptr;
+
+		return *this;
+	}
+
 private:
-	bool r_checkAttackCollision(const Hitbox& hitbox, const float hitboxXMin, const float hitboxXMax, const float hitboxYMin, const float hitboxYMax, glm::vec3 pos, bool left) const;
+	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2);
 
-	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2, Attack& attack);
-
-	void clampFighterOutOfBounds(Hitbox** hitboxes, Transform** transforms, Arena* arena);
+	//Keeps fighters within the bounds of the arena.  Also handles when a jump reaches the floor
+	void clampFighterOutOfBounds();
 	
-	bool fighterCollisionCheck(Hitbox** hitboxes, Transform** transforms);
+	bool fighterCollisionCheck();
 
 	void updateAttacks();
 
-	void r_drawHitboxDebug(const Hitbox& hitbox, glm::vec3 pos, bool left) const;
-	void drawHitboxDebug(const Hitbox& hitbox, const Fighter& fighter) const;
+	void drawHitboxDebug();
 
 	void drawHealthBars();
 
-	void drawHitboxDebug(int fighterIndex, Attack* attack);
-
 	void checkFighterSide();
 
+	void updateTimer();
+
+private:
 	Arena arena_;
-
-	FighterResources fighterResources_;
-
 	UI::UIInterface& ui_;
-
 	DebugDrawManager* debugManager_;
+
+	FighterResources fighterResources_;//stores both fighters and other things that are needed to keep track of gamestate such as healthbars
+
+	struct {
+		const int maxTime = 120;//seconds
+		float startTime; // seconds
+	} timerResources_;
 };

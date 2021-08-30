@@ -21,8 +21,6 @@
 		} 	\
 	} while(0)
 
-std::string sphereModelLoc = "models/geosphere.obj";
-
 DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
 	allocator_(allocator)
 {
@@ -56,6 +54,9 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
 		debugPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
+
+		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
+		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
 
 		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(Vertex);
 
@@ -135,6 +136,9 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
 		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
 
+		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
+		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
+
 		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(Vertex);
 
 		VkBufferCreateInfo vBufferInfo{};
@@ -164,51 +168,53 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		//need to create a buffer for eachframe
 		const unsigned int imageCount = VkRenderer::getSingleton().swapChainResources_.imageCount_;
 		pickerPipelineInfo.descriptorSets_.resize(imageCount);
-		pickerPipelineInfo.storageBuffers_.resize(imageCount);
-		pickerPipelineInfo.storageBuffersMem_.resize(imageCount);
-		//for (int i = 0; i < imageCount; i++)
-		{
 
-			VkDescriptorSetAllocateInfo storageBufferAlloc{};
-			storageBufferAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-			storageBufferAlloc.descriptorPool = descriptorPool;
-			storageBufferAlloc.descriptorSetCount = 1;
-			storageBufferAlloc.pSetLayouts = &pickerPipelineInfo.storageBufferDescriptorLayout_;
+		VkDescriptorSetAllocateInfo storageBufferAlloc{};
+		storageBufferAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		storageBufferAlloc.descriptorPool = descriptorPool;
+		storageBufferAlloc.descriptorSetCount = 1;
+		storageBufferAlloc.pSetLayouts = &pickerPipelineInfo.storageBufferDescriptorLayout_;
 
-			VK_CHECK(vkAllocateDescriptorSets(logicalDevice, &storageBufferAlloc, &pickerPipelineInfo.descriptorSets_[0]));
+		VK_CHECK(vkAllocateDescriptorSets(logicalDevice, &storageBufferAlloc, &pickerPipelineInfo.descriptorSets_[0]));
 
-			VkBufferCreateInfo sBufferInfo{};
-			sBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-			sBufferInfo.pNext = nullptr;
-			sBufferInfo.size = sizeof(int) * DEPTH_ARRAY_SCALE;
-			sBufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+		VkBufferCreateInfo sBufferInfo{};
+		sBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		sBufferInfo.pNext = nullptr;
+		sBufferInfo.size = sizeof(int) * DEPTH_ARRAY_SCALE;
+		sBufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
-			VmaAllocationCreateInfo vmaInfo{};
-			vmaInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+		vmaInfo = {};
+		vmaInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
 
-			vmaCreateBuffer(allocator_, &sBufferInfo, &vmaInfo, &pickerPipelineInfo.storageBuffers_[0], &pickerPipelineInfo.storageBuffersMem_[0], nullptr);
+		vmaCreateBuffer(allocator_, &sBufferInfo, &vmaInfo, &pickerPipelineInfo.storageBuffer_, &pickerPipelineInfo.storageBufferMem_, nullptr);
 
-			VkDescriptorBufferInfo storageBufferInfo{};
-			storageBufferInfo.buffer = pickerPipelineInfo.storageBuffers_[0];
-			storageBufferInfo.offset = 0;
-			storageBufferInfo.range = sizeof(int) * DEPTH_ARRAY_SCALE;
+		VkDescriptorBufferInfo storageBufferInfo{};
+		storageBufferInfo.buffer = pickerPipelineInfo.storageBuffer_;
+		storageBufferInfo.offset = 0;
+		storageBufferInfo.range = sizeof(int) * DEPTH_ARRAY_SCALE;
 
-			VkWriteDescriptorSet storageBufferDescriptorWrite{};
-			storageBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			storageBufferDescriptorWrite.dstSet = pickerPipelineInfo.descriptorSets_[0];
-			storageBufferDescriptorWrite.dstBinding = 0;
-			storageBufferDescriptorWrite.dstArrayElement = 0;
-			storageBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-			storageBufferDescriptorWrite.descriptorCount = 1;
-			storageBufferDescriptorWrite.pBufferInfo = &storageBufferInfo;
+		VkWriteDescriptorSet storageBufferDescriptorWrite{};
+		storageBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		storageBufferDescriptorWrite.dstSet = pickerPipelineInfo.descriptorSets_[0];
+		storageBufferDescriptorWrite.dstBinding = 0;
+		storageBufferDescriptorWrite.dstArrayElement = 0;
+		storageBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		storageBufferDescriptorWrite.descriptorCount = 1;
+		storageBufferDescriptorWrite.pBufferInfo = &storageBufferInfo;
 
-			vkUpdateDescriptorSets(logicalDevice, 1, &storageBufferDescriptorWrite, 0, nullptr);
-		}
+		vkUpdateDescriptorSets(logicalDevice, 1, &storageBufferDescriptorWrite, 0, nullptr);
 	}
 }
 
 DebugDrawManager::~DebugDrawManager()
 {
+	vmaDestroyBuffer(allocator_, vertexBuffer_, vertexBufferMem_);
+	vmaDestroyBuffer(allocator_, indexBuffer_, indexBufferMem_);
+
+	vmaDestroyBuffer(allocator_, pickerPipelineInfo.vertexBuffer_, pickerPipelineInfo.vertexBufferMem_);
+	vmaDestroyBuffer(allocator_, pickerPipelineInfo.indexBuffer_, pickerPipelineInfo.indexBufferMem_);
+	vmaDestroyBuffer(allocator_, pickerPipelineInfo.storageBuffer_, pickerPipelineInfo.storageBufferMem_);
+
 }
 
 void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const int currentImageIndex)
@@ -300,13 +306,11 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 	}
 }
 
-
-
 bool DebugDrawManager::getSelectedObject(int& id)
 {
 	bool found = false;
 	void* data;
-	vmaMapMemory(allocator_, pickerPipelineInfo.storageBuffersMem_[0], &data);
+	vmaMapMemory(allocator_, pickerPipelineInfo.storageBufferMem_, &data);
 
 	unsigned int* depthArrayData = static_cast<unsigned int*>(data);
 	for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
@@ -320,7 +324,7 @@ bool DebugDrawManager::getSelectedObject(int& id)
 
 	std::memset(depthArrayData, 0, sizeof(int)* DEPTH_ARRAY_SCALE);
 
-	vmaUnmapMemory(allocator_, pickerPipelineInfo.storageBuffersMem_[0]);
+	vmaUnmapMemory(allocator_, pickerPipelineInfo.storageBufferMem_);
 	return found;
 }
 
@@ -332,15 +336,15 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
 	mesh.numIndicies = NUM_INDICIES;
 	mesh.numVerticies = NUM_VERTICIES;
 
-	//glm::vec3 p1 = { 0.0f, minX, maxY };
-	//glm::vec3 p2 = { 0.0f, minX, minY };
-	//glm::vec3 p3 = { 0.0f, maxX, minY };
-	//glm::vec3 p4 = { 0.0f, maxX, maxY };
+	glm::vec3 p1 = { 0.0f, minX, maxY };
+	glm::vec3 p2 = { 0.0f, minX, minY };
+	glm::vec3 p3 = { 0.0f, maxX, minY };
+	glm::vec3 p4 = { 0.0f, maxX, maxY };
 
-	glm::vec3 p1 = { minX, 0.0f, maxY };
-	glm::vec3 p2 = { minX, 0.0f, minY };
-	glm::vec3 p3 = { maxX, 0.0f, minY };
-	glm::vec3 p4 = { maxX, 0.0f, maxY };
+	//glm::vec3 p1 = { minX, 0.0f, maxY };
+	//glm::vec3 p2 = { minX, 0.0f, minY };
+	//glm::vec3 p3 = { maxX, 0.0f, minY };
+	//glm::vec3 p4 = { maxX, 0.0f, maxY };
 
 	pickerPipelineInfo.vertices_.push_back({ p1, color});
 	pickerPipelineInfo.vertices_.push_back({ p2, color});
@@ -412,7 +416,7 @@ void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float duration, 
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 	
 	glm::mat4 model = glm::mat4(1.0f);
-	pos.y *= -1;//I HAVE NO IDEA WHY I HAVE TO DO THIS TO GET THE DEBUG TO MATCH THE COORDINATES OF EVERYTHING ELSE
+	//pos.y *= -1;//I HAVE NO IDEA WHY I HAVE TO DO THIS TO GET THE DEBUG TO MATCH THE COORDINATES OF EVERYTHING ELSE
 	model = glm::translate(model, pos);
 
 	mesh.pushConstantInfo.modelMatrix = model;

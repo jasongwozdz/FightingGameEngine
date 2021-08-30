@@ -18,7 +18,7 @@
     <ClCompile Include="FighterCreatorTool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationDataFileExporter.cpp">
+    <ClCompile Include="FighterFileExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClInclude Include="Hitbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationDataFileExporter.h">
+    <ClInclude Include="FighterFileExporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -166,9 +166,10 @@
     <ClCompile Include="Game\FightingGame\FighterFactory.cpp" />
     <ClCompile Include="Game\FightingGame\GameStateManager.cpp" />
     <ClCompile Include="Game\FightingGame\InputHandler.cpp" />
-    <ClCompile Include="Game\Sandbox.cpp" />
+    <ClCompile Include="Game\GameBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\FightingGame\Attack.h" />
     <ClInclude Include="Game\FightingGame\FighterFileImporter.h" />
     <ClInclude Include="Game\CameraController.h" />
     <ClInclude Include="Game\FightingGame\Fighter.h" />
@@ -177,7 +178,7 @@
     <ClInclude Include="Game\FightingGame\GameStateManager.h" />
     <ClInclude Include="Game\FightingGame\Hitbox.h" />
     <ClInclude Include="Game\FightingGame\InputHandler.h" />
-    <ClInclude Include="Game\Sandbox.h" />
+    <ClInclude Include="Game\GameBase.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />
