@@ -100,7 +100,6 @@ void GameStateManager::clampFighterOutOfBounds()
 		Fighter* fighter = fighterResources_.fighters_[fighterIndex];
 		Transform& fighterTransform = fighter->entity_->getComponent<Transform>();
 		glm::vec3 fighterPos = fighter->getPosition();
-		//if (fighter->side_ == left) fighterPos.z *= -1;
 		for (const Hitbox& pushbox : fighter->currentPushBoxes_)
 		{
 			if ((pushbox.width_ / 2 + fighterPos.y) > (arena_.pos.y + (arena_.width / 2)))
@@ -115,13 +114,10 @@ void GameStateManager::clampFighterOutOfBounds()
 
 			float fighterZ = fighterPos.z;
 			float arenaPosZ = arena_.pos.z;
-			if ((fighterZ - (pushbox.height_ / 2 )) < (arena_.pos.z ))
+			float pushBoxZ = pushbox.pos_.z - pushbox.height_ / 2;
+			if ((fighterZ - pushBoxZ) < (arena_.pos.z ))
 			{
-				fighterTransform.pos_.z = (arena_.pos.z + pushbox.height_/2);
-				//if (fighter->side_ == left)
-				//{
-				//	fighterTransform.pos_.z *= -1;
-				//}
+				fighterTransform.pos_.z = (arena_.pos.z + pushBoxZ);
 				fighter->currentYspeed_ = 0;
 				if (fighter->state_ == jumping)
 				{
@@ -332,7 +328,7 @@ void GameStateManager::drawHitboxDebug()
 			if (currentFighter->side_ == left) newPos.y *= -1;
 			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
 	
-			debugManager_->drawRect(pushBoxPos, { 255, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+			debugManager_->drawRect(pushBoxPos, { 255, 0, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
 		}
 		for (const Hitbox& pushbox : currentFighter->currentHitboxes_)
 		{
@@ -340,7 +336,7 @@ void GameStateManager::drawHitboxDebug()
 			if (currentFighter->side_ == left) newPos.y *= -1;
 			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
 
-			debugManager_->drawRect(pushBoxPos, { 255, 0, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+			debugManager_->drawRect(pushBoxPos, { 255, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
 		}
 	}
 	

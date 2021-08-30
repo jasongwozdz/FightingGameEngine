@@ -7,9 +7,13 @@
 FighterCamera::FighterCamera(BaseCamera* camera, const Fighter* fighter1, const Fighter* fighter2) :
 	fighter1_(fighter1), fighter2_(fighter2), camera_(camera)
 {
+	const float CAMERA_DISTANCE_FROM_FIGHTERS = 12.0f;
+	const float CAMERA_HEIGHT = 2;
+
 	posQueue.push(basePos_);
 	glm::vec3 mid = midPoint(fighter1_->entity_->getComponent<Transform>().pos_, fighter2_->entity_->getComponent<Transform>().pos_);
-	camera_->position = { mid.x - 20, mid.y, mid.z+3 };
+
+	camera_->position = { mid.x - CAMERA_DISTANCE_FROM_FIGHTERS, mid.y, mid.z+CAMERA_HEIGHT };
 	glm::vec3 direction = mid - camera_->position;
 	camera_->viewDirection = direction;
 };

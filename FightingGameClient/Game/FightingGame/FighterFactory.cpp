@@ -18,7 +18,7 @@ Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, Input
 	Transform& transform = entity->addComponent<Transform>( 1.0f, 1.0f, 1.0f );
 	transform.rot_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
 	transform.rot_ = glm::rotate(transform.rot_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
-	transform.setScale(0.02f);
+	transform.setScale(0.019f);
 
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation("Idle");

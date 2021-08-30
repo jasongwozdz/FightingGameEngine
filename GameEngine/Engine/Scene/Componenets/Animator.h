@@ -43,8 +43,7 @@ struct AnimationClip
 {
 	std::string name_;
 	float framesPerSecond_;
-	float playbackRate_ = 3;
-		//.0005;
+	float playbackRate_ = 1;
 	float duration_;
 	int frameCount_;
 	bool isLooping_ = true;
@@ -52,18 +51,6 @@ struct AnimationClip
 	std::vector<std::vector<KeyRotation>> rotations_;
 	std::vector<std::vector<KeyScale>> scale_;
 };
-
-//struct CustomElement
-//{
-//	float time_;
-//	void* data;
-//};
-//
-//struct CustomAnimatedElementClip
-//{
-//	std::vector<CustomElement> elements_;
-//	void(*interpolateFunction)(float,int);
-//};
 
 
 class ENGINE_API Animator

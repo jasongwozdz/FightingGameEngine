@@ -263,3 +263,12 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/FighterCreatorTool/Animation_0 - Copy.fgAnim
+/FighterCreatorTool/Animation_0 - Copy (2).fgAnim
+/FightingGameClient/Textures/Robot_Normal.tga
+/FightingGameClient/Textures/Robot_Color.tga
+/FightingGameClient/Textures/goblin_etc2_unorm.ktx
+/FightingGameClient/Textures/goblin_bc3_unorm.ktx
+/FightingGameClient/Textures/goblin_astc_8x8_unorm.ktx
+/FightingGameClient/Textures/goblin.png
+/FightingGameClient/imgui.ini

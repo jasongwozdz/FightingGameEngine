@@ -17,7 +17,6 @@ public:
 private:
 	void drawUI();
 	void drawMeshMenus();
-
 	bool loadMesh(const std::string& filePath, std::string& error);
 	Entity* loadEntity(const std::string& filepPath);
 	void onEvent(Events::Event& event);
@@ -102,7 +101,9 @@ private:
 		int startup = 1;
 		int active = 0;
 		int recovery = 0;
-
+		float blockStun = 1.0f;
+		float hitstun = 1.0f;
+		float damage = 1.0f;
 	} currentAnimationData_;
 
 	std::vector<AnimationData> attackAnimationData_;

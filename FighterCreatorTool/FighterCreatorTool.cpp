@@ -21,15 +21,6 @@ void FighterCreatorTool::onStartup()
 	baseCamera_ = new BaseCamera({ 0.0, cameraDistanceFromFighter_, 0.0 }, { 0.0, -10.0, 0.0 }, { 0.0f, 0.0f, 1.0f });
 	scene_->addCamera(baseCamera_);
 	std::string error;
-	//Remove when finished testing
-	//if (!loadMesh("C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Models\\goblin.dae", error))
-	//{
-	//	std::cout << error << std::endl;
-	//}
-	if (!loadMesh("C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Models\\RobotKyle.gltf", error))
-	{
-		std::cout << error << std::endl;
-	}
 
 	addEventCallback(std::bind(&FighterCreatorTool::onEvent, this, std::placeholders::_1));
 }
@@ -233,7 +224,6 @@ void FighterCreatorTool::drawMeshMenus()
 		{
 			exportCurrentAnimationData();
 		}
-
 	}
 	ui_->EndWindow();
 }
@@ -271,18 +261,29 @@ void FighterCreatorTool::drawUI()
 
 	if (loadInMesh)
 	{
-		ui_->beginWindow("Load in Mesh", 500, 500, &loadInMesh);
+		ui_->beginWindow("Load in Mesh and Texture Data", 500, 500, &loadInMesh);
 		ui_->addText("Input file location to model here");
-		std::string input;
-		if (ui_->addInput("input file path", &input))//true when enter is pressed
+		std::string meshInput;
+		if (ui_->addInput("input file path", &meshInput))//true when enter is pressed
 		{
 			Entity* ent = NULL;
-			if (!loadMesh(input, error))
+			if (!loadMesh(meshInput, error))
 			{
 				errorLoadingMesh = true;
 				ui_->openPopup("ERROR");
 			}
 		}
+
+		ui_->addText("Set Texture before loading mesh");
+		std::string textureInput;
+		if (ui_->addInput("Texture Path", &textureInput))//true when enter is pressed
+		{
+			if (std::filesystem::exists(textureInput))
+			{
+				texturePath_ = textureInput;
+			}
+		}
+
 
 		if (errorLoadingMesh)
 		{
@@ -322,17 +323,7 @@ void FighterCreatorTool::drawUI()
 		}
 		if (currentAnimationData_.animation)
 		{
-			if (ui_->addButton("Play"))
-			{
-				animator.setAnimation(currentAnimationData_.animation->name_);
-				rotateMeshRight();
-			}
-			if (ui_->addButton("Stop"))
-			{
-				animator.setAnimation(-1);
-			}
-			//ui_->addSlider("Frame selection", currentAnimationData_.currentFrame, 0, currentAnimationData_.getTotalAttackFrames() - 1);
-			ui_->addSlider("Frame selection", currentAnimationData_.currentFrame, 0, currentAnimationData_.animation->frameCount_-1);
+			ui_->addSlider("Frame Slider", currentAnimationData_.currentFrame, 0, currentAnimationData_.animation->frameCount_-1);
 			ui_->addInputInt("Select frame", currentAnimationData_.currentFrame, 1);
 			if (currentAnimationData_.currentFrame < 0)
 			{
@@ -345,6 +336,9 @@ void FighterCreatorTool::drawUI()
 			ui_->addInputInt("Startup", currentAnimationData_.startup, 1);
 			ui_->addInputInt("Active", currentAnimationData_.active, 1);
 			ui_->addInputInt("Recovery", currentAnimationData_.recovery, 1);
+			ui_->addInputFloat("BlockStun", currentAnimationData_.blockStun, 1);
+			ui_->addInputFloat("Hitstun", currentAnimationData_.hitstun, 1);
+			ui_->addInputFloat("Damage", currentAnimationData_.damage, 1);
 			ui_->addText("Select Attack input");
 			if (ui_->beginPopupContextItem("Attack Input"))
 			{
@@ -546,8 +540,7 @@ bool FighterCreatorTool::loadMesh(const std::string& filePath, std::string& erro
 
 Entity* FighterCreatorTool::loadEntity(const std::string& filePath)
 {
-	//const std::string DEFAULT_TEXTURE_PATH = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Textures\\missingTexture.jpg";
-	const std::string DEFAULT_TEXTURE_PATH = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Textures\\Robot_Color.png";
+	const std::string DEFAULT_TEXTURE_PATH = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Textures\\missingTexture.jpg";
 
 	if (texturePath_.size() == 0)
 	{
@@ -611,7 +604,6 @@ void FighterCreatorTool::exportCurrentAnimationData()
 		exportAttack.hitboxes = animationData.hitboxData;
 		//Add option to set these later
 		exportAttack.blockStun = 1.0f; 
-		exportAttack.blockStun = 1.0f;
 		exportAttack.hitstun = 1.0f;
 		exportAttack.damage = 1.0f;
 		exportData.attacks.push_back(exportAttack);
@@ -623,8 +615,6 @@ void FighterCreatorTool::exportCurrentAnimationData()
 	exportData.walkData.hitboxData = walkForwardAnimationData_.hitboxData;
 	exportData.rightSideRotation = rightSideRotation_;
 	exportData.textureFilePath = texturePath_;
-
-	//exportData.textureFilePath = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Textures\\missingTexture.jpg";
 
 	FighterFileExporter exporter(exportData);
 }

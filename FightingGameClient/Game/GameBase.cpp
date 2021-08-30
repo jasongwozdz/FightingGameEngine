@@ -33,11 +33,13 @@ void GameBase::initScene()
 	const glm::vec3 STARTING_POSITION_RIGHT = { 0.0f, 5.0f, 1.0f };
 	const glm::vec3 STARTING_POSITION_LEFT =  {0.0f, -5.0f, 1.0f};
 
-	const std::string fighterFilePath = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim";
-	fighter_ = fighterFactory_->createFighter(fighterFilePath, *inputHandler_);
+	const std::string fighterFilePath1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 1 here
+	const std::string fighterFilePath2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 2 here
+
+	fighter_ = fighterFactory_->createFighter(fighterFilePath1, *inputHandler_);
 	fighter_->setPosition(STARTING_POSITION_RIGHT);
 	fighter_->controllable_ = true;
-	fighter2_ = fighterFactory_->createFighter(fighterFilePath, *inputHandlerRight_);
+	fighter2_ = fighterFactory_->createFighter(fighterFilePath2, *inputHandlerRight_);
 	fighter2_->controllable_ = true;
 	fighter2_->setPosition(STARTING_POSITION_LEFT);
 
