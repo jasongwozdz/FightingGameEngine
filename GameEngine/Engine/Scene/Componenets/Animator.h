@@ -43,7 +43,7 @@ struct AnimationClip
 {
 	std::string name_;
 	float framesPerSecond_;
-	float playbackRate_ = 1;
+	float playbackRate_ = 2;
 	float duration_;
 	int frameCount_;
 	bool isLooping_ = true;
