@@ -1,5 +1,5 @@
 # Fighting Game Engine
-A simple 3D fighting game engine featuring a tool to easily create fighters.  Renderer is written in Vulkan.
+A simple 3D fighting game engine featuring a tool to easily create fighters.  Renderer uses Vulkan for its graphics api.
 ![alt text](https://github.com/jasongwozdz/FightingGameEngine/blob/master/Images/NonDebugView.JPG)
 
 # In game debug view
