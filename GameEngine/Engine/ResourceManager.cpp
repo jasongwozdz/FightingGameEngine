@@ -9,7 +9,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <assert.h>
 #include <stb_image.h>
-#include <ktx.h>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
@@ -92,18 +91,28 @@ ModelReturnVals& ResourceManager::loadObjFile(const std::string& filePath) {
 					attrib.vertices[3 * index.vertex_index + 2]
 				};
 
-				vertex.texCoord = {
-					attrib.texcoords[2 * index.texcoord_index + 0],
-					1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-				};
+				if (index.texcoord_index != -1)//obj might not have tex coords
+				{
+					vertex.texCoord = {
+						attrib.texcoords[2 * index.texcoord_index + 0],
+						1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+					};
+				}
 
-				vertex.normal = {
-					attrib.normals[3 * index.normal_index + 0],
-					attrib.normals[3 * index.normal_index + 1],
-					attrib.normals[3 * index.normal_index + 2]
+				if (index.normal_index != -1) //obj might not have a normals
+				{
+					vertex.normal = {
+						attrib.normals[3 * index.normal_index + 0],
+						attrib.normals[3 * index.normal_index + 1],
+						attrib.normals[3 * index.normal_index + 2]
+					};
+				}
+				
+				vertex.color = {
+					attrib.colors[3 * index.vertex_index + 0],
+					attrib.colors[3 * index.vertex_index + 1],
+					attrib.colors[3 * index.vertex_index + 2]
 				};
-
-				vertex.color = { 1.0f, 1.0f, 1.0f };
 
 				if (uniqueVertices.count(vertex) == 0) {
 					uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
@@ -415,37 +424,14 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 	{
 		int texWidth, texHeight, texChannels;
 		unsigned char* pixels;
-		if (filePath.find(".ktx") != std::string::npos)
-		{
-			ktxTexture* texture;
-			KTX_error_code result;
-			result = ktxTexture_CreateFromNamedFile(filePath.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &texture);
-			assert(result == KTX_SUCCESS);
-			texWidth = texture->baseWidth;
-			texHeight = texture->baseHeight;
-			texChannels = texture->numLevels;
-
-			//ktx_size_t offset;
-			//result = ktxTexture_GetImageOffset(texture, 0, 0, 0, &offset);
-			//assert(result == KTX_SUCCESS);
-			pixels = ktxTexture_GetData(texture);
-			ktx_size_t size = ktxTexture_GetDataSize(texture);
-
-			returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
-
-			ktxTexture_Destroy(texture);
+		pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+		if (!pixels) {
+			std::cout << "invalid texture path" << std::endl;
+			assert(1 == 0);
 		}
-		else
-		{
-			pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-			if (!pixels) {
-				std::cout << "invalid texture path" << std::endl;
-				assert(1 == 0);
-			}
-			returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
+		returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
 
-			stbi_image_free(pixels);
-		}
+		stbi_image_free(pixels);
 	
 		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(returnVals);
 	}

@@ -33,6 +33,7 @@ void GameBase::initScene()
 	const glm::vec3 STARTING_POSITION_RIGHT = { 0.0f, 5.0f, 1.0f };
 	const glm::vec3 STARTING_POSITION_LEFT =  {0.0f, -5.0f, 1.0f};
 
+	//TODO: add UI interface to select files without having to hardcode it
 	const std::string fighterFilePath1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 1 here
 	const std::string fighterFilePath2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 2 here
 
@@ -57,25 +58,22 @@ void GameBase::initScene()
 	const float ARENA_DEPTH = 21;
 	arena_ = { ARENA_WIDTH, ARENA_DEPTH, ARENA_STARTING_POINT };
 
-	//generateArenaBackground();
+	generateArenaBackground();
 }
 
 void GameBase::generateArenaBackground()
 {
-	const glm::vec3 ARENA_STARTING_POINT =  {0.0, 0.0, -1.75f};
-	const float ARENA_WIDTH = 21;
-	const float ARENA_DEPTH = 21;
+	const glm::vec3 BACKGROUND_POS = { 16.0f, 11.0f, -1.5f };//set position of background here
 	
-	const std::string arenaBackground = "./Models/viking_room.obj";
-	const std::string arenaBackgroundTexturePath = "./Textures/viking_room.png";
+	const std::string arenaBackground = "./Models/WaverlyTownHall-02_1mil_meters_sf.obj";
+	const std::string arenaBackgroundTexturePath = "./Textures/WaverlyTownHall-02_1mil_meters_sf.jpg";
 
 	arena_.backgroundEntity = scene_->addEntity("ArenaBackground");
 	const ModelReturnVals& backgroundModelData = resourceManager_->loadObjFile(arenaBackground);
 	const TextureReturnVals& textureReturnVals = resourceManager_->loadTextureFile(arenaBackgroundTexturePath);
 	arena_.backgroundEntity->addComponent<Renderable>(backgroundModelData.vertices, backgroundModelData.indices, false, "ArenaBackground");
 	arena_.backgroundEntity->addComponent<Textured>(textureReturnVals.pixels, textureReturnVals.textureWidth, textureReturnVals.textureHeight, textureReturnVals.textureChannels, "ArenaBackground");
-	Transform& arenaTransform = arena_.backgroundEntity->addComponent<Transform>(-10.0f, 0.0f, -1.5f);
-	arenaTransform.scale_ = { 15.0f, 15.0f, 15.0f };
+	Transform& arenaTransform = arena_.backgroundEntity->addComponent<Transform>(BACKGROUND_POS.x, BACKGROUND_POS.y, BACKGROUND_POS.z);
 }
 
 void GameBase::handleMouseClick(Events::MousePressedEvent& e)
