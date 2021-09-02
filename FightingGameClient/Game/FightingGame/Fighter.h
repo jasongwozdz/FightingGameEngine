@@ -128,6 +128,7 @@ public:
 	std::vector<Hitbox> currentHitboxes_;
 	std::vector<Hitbox> currentPushBoxes_;
 
+	std::map<int, std::vector<int>>  cancelAttackMap_;
 
 private:
 

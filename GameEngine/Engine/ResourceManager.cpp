@@ -260,7 +260,6 @@ void ResourceManager::recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh,
 
 		recursivePopulateBoneStructure(children[i], mesh, boneStructure);
 	}
-
 }
 
 aiBone* ResourceManager::findRootBone(aiNode* node, aiMesh* mesh)
@@ -288,19 +287,7 @@ aiBone* ResourceManager::findRootBone(aiNode* node, aiMesh* mesh)
 
 void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStructure& boneStructure)
 {
-	//Blenders root node is "Scene" and we don't want to use this to calculate the globalInverseTransform
-	//if (!std::strcmp(root->mName.C_Str(), "Scene")) 
-	//{
-	//	root = root->mChildren[0];
-	//	//boneStructure.globalInverseTransform_ = glm::inverse((glm::make_mat4(&realRoot->mTransformation.a1)));
-	//}
-	////else
-	//{
-
 	boneStructure.globalInverseTransform_ = glm::inverse(glm::transpose(glm::make_mat4(&root->mTransformation.a1)));
-	//}
-	//boneStructure.boneInfo_.push_back({ glm::transpose(glm::make_mat4(&root->mTransformation.a1)), root->mName.C_Str(), -1});
-	//recursivePopulateBoneStructure(root, mesh, boneStructure);
 	recursivePopulateBoneStructure(root, mesh, boneStructure, 0);
 }
 
@@ -314,12 +301,10 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 		std::vector<BoneInfo> boneInfo;
 		std::vector<VertexBoneInfo> vertexBoneInfo;
 		std::vector<AnimationClip> animationClips;
-		BoneStructure boneStructure(0);
-		//BoneStructure* boneStructure = new BoneStructure(0);
+		BoneStructure boneStructure(0);//initialize boneStructure
 
-		//const aiScene* scene = importer.ReadFile(filePath
-			//.c_str(), 0);
-		const aiScene* scene = aiImportFile(filePath.c_str(), 0);
+		const aiScene* scene = importer.ReadFile(filePath
+			.c_str(), 0);
 		assert(scene != nullptr);
 
 		uint32_t vertexCount(0);		

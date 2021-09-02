@@ -24,6 +24,8 @@
 DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
 	allocator_(allocator)
 {
+	//initalize vulkan pipelines
+	//create normal debug pipeline
 	{
 		std::vector<char> vertexShaderCode = ShaderUtils::readShaderFile("./shaders/debug.vert.spv");
 		std::vector<char> fragmentShaderCode = ShaderUtils::readShaderFile("./shaders/debug.frag.spv");
@@ -53,7 +55,7 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		ranges.push_back(range);
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-		debugPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
+		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
 
 		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
 		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
@@ -69,7 +71,7 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		VmaAllocationCreateInfo vmaInfo{};
 		vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-		vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer_, &vertexBufferMem_, nullptr);
+		vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &debugPipelineInfo.vertexBuffer_, &debugPipelineInfo.vertexBufferMem_, nullptr);
 
 		size_t indexBufferSize = 2000 * 6 * sizeof(uint32_t);
 
@@ -81,12 +83,11 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-		vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer_, &indexBufferMem_, nullptr);
+		vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &debugPipelineInfo.indexBuffer_, &debugPipelineInfo.indexBufferMem_, nullptr);
 	}
 
 	//create picker pipeline
 	{
-
 		VkDescriptorSetLayoutBinding storageBufferLayoutBinding{};
 		storageBufferLayoutBinding.binding = 0;
 		storageBufferLayoutBinding.descriptorCount = 1; 
@@ -164,18 +165,13 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &pickerPipelineInfo.indexBuffer_, &pickerPipelineInfo.indexBufferMem_, nullptr);
 
-		//create storage buffer
-		//need to create a buffer for eachframe
-		const unsigned int imageCount = VkRenderer::getSingleton().swapChainResources_.imageCount_;
-		pickerPipelineInfo.descriptorSets_.resize(imageCount);
-
 		VkDescriptorSetAllocateInfo storageBufferAlloc{};
 		storageBufferAlloc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		storageBufferAlloc.descriptorPool = descriptorPool;
 		storageBufferAlloc.descriptorSetCount = 1;
 		storageBufferAlloc.pSetLayouts = &pickerPipelineInfo.storageBufferDescriptorLayout_;
 
-		VK_CHECK(vkAllocateDescriptorSets(logicalDevice, &storageBufferAlloc, &pickerPipelineInfo.descriptorSets_[0]));
+		VK_CHECK(vkAllocateDescriptorSets(logicalDevice, &storageBufferAlloc, &pickerPipelineInfo.descriptorSet_));
 
 		VkBufferCreateInfo sBufferInfo{};
 		sBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -195,7 +191,7 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		VkWriteDescriptorSet storageBufferDescriptorWrite{};
 		storageBufferDescriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		storageBufferDescriptorWrite.dstSet = pickerPipelineInfo.descriptorSets_[0];
+		storageBufferDescriptorWrite.dstSet = pickerPipelineInfo.descriptorSet_;
 		storageBufferDescriptorWrite.dstBinding = 0;
 		storageBufferDescriptorWrite.dstArrayElement = 0;
 		storageBufferDescriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
@@ -208,61 +204,65 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 DebugDrawManager::~DebugDrawManager()
 {
-	vmaDestroyBuffer(allocator_, vertexBuffer_, vertexBufferMem_);
-	vmaDestroyBuffer(allocator_, indexBuffer_, indexBufferMem_);
-
+	vmaDestroyBuffer(allocator_, debugPipelineInfo.vertexBuffer_, debugPipelineInfo.vertexBufferMem_);
+	vmaDestroyBuffer(allocator_, debugPipelineInfo.indexBuffer_, debugPipelineInfo.indexBufferMem_);
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.vertexBuffer_, pickerPipelineInfo.vertexBufferMem_);
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.indexBuffer_, pickerPipelineInfo.indexBufferMem_);
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.storageBuffer_, pickerPipelineInfo.storageBufferMem_);
-
 }
 
 void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const int currentImageIndex)
 {
-
 	VkDeviceSize offsets[1] = { 0 };
-	if (vertices_.size() > 0)
+	if (debugPipelineInfo.vertices_.size() > 0)//make sure there is something to draw for this pipeline
 	{
-		size_t vertexBufferSize = vertices_.size() * sizeof(Vertex);
-		size_t indexBufferSize = indicies_.size()  * sizeof(uint32_t);
+		//Calculate the total size of the debugPipeline vertex and index buffer
+		size_t vertexBufferSize = debugPipelineInfo.vertices_.size() * sizeof(Vertex);
+		size_t indexBufferSize = debugPipelineInfo.indicies_.size()  * sizeof(uint32_t);
 
+		//populate the vertex buffer 
 		void* data;
-		vmaMapMemory(allocator_, vertexBufferMem_, &data);
-		memcpy(data, vertices_.data(), vertexBufferSize);
-		vmaUnmapMemory(allocator_, vertexBufferMem_);
+		vmaMapMemory(allocator_, debugPipelineInfo.vertexBufferMem_, &data);
+		memcpy(data, debugPipelineInfo.vertices_.data(), vertexBufferSize);
+		vmaUnmapMemory(allocator_, debugPipelineInfo.vertexBufferMem_);
 
+		//populate the index buffer
 		void* indexData;
-		vmaMapMemory(allocator_,  indexBufferMem_, &indexData);
-		memcpy(indexData, indicies_.data(), indexBufferSize);
-		vmaUnmapMemory(allocator_, indexBufferMem_);
+		vmaMapMemory(allocator_,  debugPipelineInfo.indexBufferMem_, &indexData);
+		memcpy(indexData, debugPipelineInfo.indicies_.data(), indexBufferSize);
+		vmaUnmapMemory(allocator_, debugPipelineInfo.indexBufferMem_);
 
-		vkCmdBindPipeline(currentBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, debugPipeline_->pipeline_);
+		//bind the debugPipeline and begin drawing
+		vkCmdBindPipeline(currentBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, debugPipelineInfo.pipeline_->pipeline_);
 
-		vkCmdBindVertexBuffers(currentBuffer, 0, 1, &vertexBuffer_, offsets);
+		vkCmdBindVertexBuffers(currentBuffer, 0, 1, &debugPipelineInfo.vertexBuffer_, offsets);
 
-		vkCmdBindIndexBuffer(currentBuffer, indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(currentBuffer, debugPipelineInfo.indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
-		for (int i = 0; i < drawData_.size(); i++)
+		for (int i = 0; i < debugPipelineInfo.drawData_.size(); i++)
 		{
-			glm::mat4 mvp = (scene_->getCurrentCamera()->projectionMatrix) * (scene_->getCurrentCamera()->getView()) * drawData_[i].pushConstantInfo.modelMatrix;
+			// calculate the model view projection matrix using the  camera being used in the current scene_
+			glm::mat4 mvp = (scene_->getCurrentCamera()->projectionMatrix) * (scene_->getCurrentCamera()->getView()) * debugPipelineInfo.drawData_[i].pushConstantInfo.modelMatrix;
 
-			vkCmdPushConstants(currentBuffer, debugPipeline_->pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantInfo), &mvp);
+			vkCmdPushConstants(currentBuffer, debugPipelineInfo.pipeline_->pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantInfo), &mvp);
 
-			vkCmdDrawIndexed(currentBuffer, static_cast<uint32_t>(drawData_[i].numIndicies), 1, indexOffsets_[i], vertexOffsets_[i], 0);
+			vkCmdDrawIndexed(currentBuffer, static_cast<uint32_t>(debugPipelineInfo.drawData_[i].numIndicies), 1, debugPipelineInfo.indexOffsets_[i], debugPipelineInfo.vertexOffsets_[i], 0);
 		
 		}
 
-		vertices_.clear();
-		indicies_.clear();
-		indexOffsets_.clear();
-		vertexOffsets_.clear();
-		drawData_.clear();
-		globalVertexOffset_ = 0;
-		globalIndexOffset_ = 0;
+		//clear all data for next frame
+		debugPipelineInfo.vertices_.clear();
+		debugPipelineInfo.indicies_.clear();
+		debugPipelineInfo.indexOffsets_.clear();
+		debugPipelineInfo.vertexOffsets_.clear();
+		debugPipelineInfo.drawData_.clear();
+		debugPipelineInfo.globalVertexOffset_ = 0;
+		debugPipelineInfo.globalIndexOffset_ = 0;
 
 	}
-	if (pickerPipelineInfo.vertices_.size() > 0)
+	if (pickerPipelineInfo.vertices_.size() > 0)//make sure there is something to draw for this pipeline
 	{
+		//Calculate the total size of the debugPipeline vertex and index buffer
 		size_t vertexBufferSize = pickerPipelineInfo.vertices_.size() * sizeof(Vertex);
 		size_t indexBufferSize = pickerPipelineInfo.indicies_.size() * sizeof(uint32_t);
 
@@ -276,6 +276,7 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 		memcpy(indexData, pickerPipelineInfo.indicies_.data(), indexBufferSize);
 		vmaUnmapMemory(allocator_, pickerPipelineInfo.indexBufferMem_);
 
+		//bind the pickerPipeline and begin drawing
 		vkCmdBindPipeline(currentBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickerPipelineInfo.pipeline_->pipeline_);
 
 		vkCmdBindVertexBuffers(currentBuffer, 0, 1, &pickerPipelineInfo.vertexBuffer_, offsets);
@@ -283,19 +284,23 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 		vkCmdBindIndexBuffer(currentBuffer, pickerPipelineInfo.indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 		for (int i = 0; i < pickerPipelineInfo.drawData_.size(); i++)
 		{
+			// calculate the model view projection matrix using the  camera being used in the current scene_
 			glm::mat4 mvp = (scene_->getCurrentCamera()->projectionMatrix) * (scene_->getCurrentCamera()->getView()) * pickerPipelineInfo.drawData_[i].pushConstantVertexInfo.modelMatrix;
 
+			//this pipeline needs to push info to both the vertex and fragment shader
 			vkCmdPushConstants(currentBuffer, pickerPipelineInfo.pipeline_->pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantPickerVertexInfo), &mvp);
 
 			pickerPipelineInfo.drawData_[i].pushConstantFragmentInfo.mousePos = mouseInfo_;
-
+			
+			//pass in the current mouse data and unqiue id for this mesh into the fragment shader for mouse picking
 			vkCmdPushConstants(currentBuffer, pickerPipelineInfo.pipeline_->pipelineLayout_, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(PushConstantPickerVertexInfo), sizeof(PushConstantPickerFragmentInfo), &pickerPipelineInfo.drawData_[i].pushConstantFragmentInfo);
 
-			vkCmdBindDescriptorSets(currentBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickerPipelineInfo.pipeline_->pipelineLayout_, 0, 1, &pickerPipelineInfo.descriptorSets_[0], 0, nullptr);
+			vkCmdBindDescriptorSets(currentBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pickerPipelineInfo.pipeline_->pipelineLayout_, 0, 1, &pickerPipelineInfo.descriptorSet_, 0, nullptr);
 
 			vkCmdDrawIndexed(currentBuffer, static_cast<uint32_t>(pickerPipelineInfo.drawData_[i].numIndicies), 1, pickerPipelineInfo.indexOffsets_[i], pickerPipelineInfo.vertexOffsets_[i], 0);
 		}
 
+		//clear data for next frame
 		pickerPipelineInfo.vertices_.clear();
 		pickerPipelineInfo.indicies_.clear();
 		pickerPipelineInfo.indexOffsets_.clear();
@@ -306,16 +311,22 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 	}
 }
 
+//Create a storage buffer that will be readable by the CPU and populated by the fragement shader.
+//The fragment shader will use the current depth value at the mouses current position to calculate which index in the storage buffer to store the unqiueId of the object it is currently working on.
+//The uniqueId is passed in as the last argument in drawFilledRect
+//the first non-zero id in the depth buffer is whatever object you are currently hovering over.
+//The client can then call this method to see if the mouse is currently hovering over one of the drawFilledRect's that it created.
+//Got this idea from https://blog.gavs.space/post/003-vulkan-mouse-picking/
 bool DebugDrawManager::getSelectedObject(int& id)
 {
-	bool found = false;
-	void* data;
+	bool found = false;//was an object selected
+	void* data;//storage buffer data
 	vmaMapMemory(allocator_, pickerPipelineInfo.storageBufferMem_, &data);
 
-	unsigned int* depthArrayData = static_cast<unsigned int*>(data);
+	unsigned int* depthArrayData = static_cast<unsigned int*>(data);//cast the pointer to an array
 	for (int i = 0; i < DEPTH_ARRAY_SCALE; i++)
 	{
-		if (depthArrayData[i] != 0)
+		if (depthArrayData[i] != 0)//if an element is 0 then that means a rect is being hovered over
 		{
 			id = depthArrayData[i];
 			found = true;
@@ -328,6 +339,15 @@ bool DebugDrawManager::getSelectedObject(int& id)
 	return found;
 }
 
+/*
+ p1-------------p2
+ |				 |
+ |				 |
+ |				 |
+ |				 |
+ |				 |
+ p3-------------p4
+*/
 void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  glm::vec3& axisOfRotation, const float rotationAngle, const float minX, const float maxX, const float minY, const float maxY, int uniqueId)
 {
 	const unsigned int NUM_INDICIES = 6;
@@ -336,15 +356,11 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
 	mesh.numIndicies = NUM_INDICIES;
 	mesh.numVerticies = NUM_VERTICIES;
 
+	//Need to fix this so that the X can be adjusted.  Currently assuming that we will only be looking down the X axis
 	glm::vec3 p1 = { 0.0f, minX, maxY };
 	glm::vec3 p2 = { 0.0f, minX, minY };
 	glm::vec3 p3 = { 0.0f, maxX, minY };
 	glm::vec3 p4 = { 0.0f, maxX, maxY };
-
-	//glm::vec3 p1 = { minX, 0.0f, maxY };
-	//glm::vec3 p2 = { minX, 0.0f, minY };
-	//glm::vec3 p3 = { maxX, 0.0f, minY };
-	//glm::vec3 p4 = { maxX, 0.0f, maxY };
 
 	pickerPipelineInfo.vertices_.push_back({ p1, color});
 	pickerPipelineInfo.vertices_.push_back({ p2, color});
@@ -360,7 +376,6 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
 	pickerPipelineInfo.indicies_.push_back(3);
 
 	glm::mat4 model = glm::mat4(1.0f);
-	pos.y *= -1;//I HAVE NO IDEA WHY I HAVE TO DO THIS TO GET THE DEBUG TO MATCH THE COORDINATES OF EVERYTHING ELSE
 	model = glm::translate(model, pos);
 
 	mesh.pushConstantVertexInfo.modelMatrix = model;
@@ -382,7 +397,7 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
  |				 |
  p3-------------p4
 */
-void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float duration, float depthEnabled, float minX, float maxX, float minY, float maxY)
+void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float minX, float maxX, float minY, float maxY)
 {
 	const unsigned int NUM_INDICIES = 8;
 	const unsigned int NUM_VERTICIES = 4;
@@ -390,57 +405,49 @@ void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float duration, 
 	mesh.numIndicies = NUM_INDICIES;
 	mesh.numVerticies = NUM_VERTICIES;
 
+	//Need to fix this so that the X can be adjusted.  Currently assuming that we will only be looking down the X axis
 	glm::vec3 p1 = { 0.0f, minX, maxY };
 	glm::vec3 p2 = { 0.0f, maxX, maxY };
 	glm::vec3 p3 = { 0.0f, minX, minY };
 	glm::vec3 p4 = { 0.0f, maxX, minY };
 
-	vertices_.push_back({ p1, color});
-	vertices_.push_back({ p2, color});
-	vertices_.push_back({ p3, color});
-	vertices_.push_back({ p4, color});
+	debugPipelineInfo.vertices_.push_back({ p1, color});
+	debugPipelineInfo.vertices_.push_back({ p2, color});
+	debugPipelineInfo.vertices_.push_back({ p3, color});
+	debugPipelineInfo.vertices_.push_back({ p4, color});
 
-	indicies_.push_back(0);
-	indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(1);
 
-	indicies_.push_back(1);
-	indicies_.push_back(3);
+	debugPipelineInfo.indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(3);
 
-	indicies_.push_back(3);
-	indicies_.push_back(2);
+	debugPipelineInfo.indicies_.push_back(3);
+	debugPipelineInfo.indicies_.push_back(2);
 
-	indicies_.push_back(2);
-	indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(2);
+	debugPipelineInfo.indicies_.push_back(0);
 
 	size_t vertexBufferSize = NUM_INDICIES * sizeof(Vertex);
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 	
 	glm::mat4 model = glm::mat4(1.0f);
-	//pos.y *= -1;//I HAVE NO IDEA WHY I HAVE TO DO THIS TO GET THE DEBUG TO MATCH THE COORDINATES OF EVERYTHING ELSE
 	model = glm::translate(model, pos);
 
 	mesh.pushConstantInfo.modelMatrix = model;
 
-	drawData_.push_back(mesh);
-	vertexOffsets_.push_back(globalVertexOffset_);
-	indexOffsets_.push_back(globalIndexOffset_);
+	debugPipelineInfo.drawData_.push_back(mesh);
+	debugPipelineInfo.vertexOffsets_.push_back(debugPipelineInfo.globalVertexOffset_);
+	debugPipelineInfo.indexOffsets_.push_back(debugPipelineInfo.globalIndexOffset_);
 
-	globalVertexOffset_ += NUM_VERTICIES;
-	globalIndexOffset_ += NUM_INDICIES;
+	debugPipelineInfo.globalVertexOffset_ += NUM_VERTICIES;
+	debugPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
 }
 
-void DebugDrawManager::addPoint(glm::vec3 pos, glm::vec3 color, float duration, float depthEnabled)
-{
-	//ModelReturnVals	returnVals = ResourceManager::getSingleton().loadObjFile(sphereModelLoc);
-	//Entity* point = scene_->addEntity("point");
-	//Renderable& r = point->addComponent<Renderable>(returnVals.vertices, returnVals.indices, true, "debug_point");
-	//Transform& t = point->addComponent<Transform>(pos);
-	//t.setScale(5.f);
-	//t.parent_ = parent;
-	//return point;
-}
-
-void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color, float lineWidth, float duration, bool depthEnabled)
+/*
+p1 --------------- p2
+*/
+void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color)
 {
 	unsigned int NUM_INDICIES = 2;
 	unsigned int NUM_VERTICIES = NUM_INDICIES;
@@ -452,23 +459,30 @@ void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 col
 	size_t vertexBufferSize = NUM_VERTICIES * sizeof(Vertex);
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 	
-	fromPos.x *= -1;//coordinates still don't match on screen
-	toPos.x *= -1;
+	debugPipelineInfo.vertices_.push_back({ fromPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
+	debugPipelineInfo.vertices_.push_back({ toPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
 
-	vertices_.push_back({ fromPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
-	vertices_.push_back({ toPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
-	
-	indicies_.push_back(0);
-	indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(1);
 
-	drawData_.push_back(mesh);
-	vertexOffsets_.push_back(globalVertexOffset_);
-	indexOffsets_.push_back(globalIndexOffset_);
-	globalVertexOffset_ += NUM_VERTICIES;
-	globalIndexOffset_ += NUM_INDICIES;
+	debugPipelineInfo.drawData_.push_back(mesh);
+	debugPipelineInfo.vertexOffsets_.push_back(debugPipelineInfo.globalVertexOffset_);
+	debugPipelineInfo.indexOffsets_.push_back(debugPipelineInfo.globalIndexOffset_);
+	debugPipelineInfo.globalVertexOffset_ += NUM_VERTICIES;
+	debugPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
 }
 
-void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axisOfRotation, const float rotationAngle, const int width, const int height, const glm::vec3& color, bool depthEnabled)
+/*
+-----------------------------
+| | | | | | | | | | | | | | |
+-----------------------------
+| | | | | | | | | | | | | | |
+-----------------------------
+| | | | | | | | | | | | | | |
+-----------------------------
+*/
+
+void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axisOfRotation, const float rotationAngle, const int width, const int height, const glm::vec3& color)
 {
 	unsigned int NUM_INDICIES = (height + width) * 2;
 	unsigned int NUM_VERTICIES = NUM_INDICIES;
@@ -490,10 +504,10 @@ void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axis
 
 	for (int i = 0; i < height; i++)
 	{
-		vertices_.push_back({p1, color});
-		indicies_.push_back(i * 2);
-		vertices_.push_back({p2, color});
-		indicies_.push_back(i * 2 + 1);
+		debugPipelineInfo.vertices_.push_back({p1, color});
+		debugPipelineInfo.indicies_.push_back(i * 2);
+		debugPipelineInfo.vertices_.push_back({p2, color});
+		debugPipelineInfo.indicies_.push_back(i * 2 + 1);
 
 		p1.y++;
 		p2.y++;
@@ -501,10 +515,10 @@ void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axis
 
 	for (int i = 0; i < width; i++)
 	{
-		vertices_.push_back({p3, color});
-		indicies_.push_back((height*2) + (i * 2));
-		vertices_.push_back({p4, color});
-		indicies_.push_back((height*2) + (i * 2 + 1));
+		debugPipelineInfo.vertices_.push_back({p3, color});
+		debugPipelineInfo.indicies_.push_back((height*2) + (i * 2));
+		debugPipelineInfo.vertices_.push_back({p4, color});
+		debugPipelineInfo.indicies_.push_back((height*2) + (i * 2 + 1));
 
 		p3.x++;
 		p4.x++;
@@ -517,10 +531,9 @@ void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axis
 
 	mesh.pushConstantInfo.modelMatrix = model;
 
-	drawData_.push_back(mesh);
-	vertexOffsets_.push_back(globalVertexOffset_);
-	indexOffsets_.push_back(globalIndexOffset_);
-	globalVertexOffset_ += NUM_VERTICIES;
-	globalIndexOffset_ += NUM_INDICIES;
-
+	debugPipelineInfo.drawData_.push_back(mesh);
+	debugPipelineInfo.vertexOffsets_.push_back(debugPipelineInfo.globalVertexOffset_);
+	debugPipelineInfo.indexOffsets_.push_back(debugPipelineInfo.globalIndexOffset_);
+	debugPipelineInfo.globalVertexOffset_ += NUM_VERTICIES;
+	debugPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
 }

@@ -10,17 +10,7 @@ struct Arena
 	Entity* backgroundEntity;
 };
 
-struct HealthBar
-{
-	Entity entity;
-	float progress;
-	std::vector<glm::vec2> verticesOuter
-	{
-		{0, 0}, {0, 1}, {1,0}, {1,1}
-	};
-	std::vector<uint32_t> indicies;
-};
-
+//Used to store what attacks can cancel into eachother.  If an attack A is cancelable in attack B  That means that if attack A is next in the fighters attackBuffer and attack B is the current attack.  Attack A will become the new attack starting from its first frame
 struct CancelAttackMap
 {
 	std::map<int, std::vector<int>>  cancelAttackMap_;
@@ -55,36 +45,17 @@ struct CancelAttackMap
 	}
 };
 
-struct FighterResources
-{
-	//first element in the array is right side fighter second element is left side
-	Fighter* fighters_[2];
-
-	CancelAttackMap cancelAttackMap_[2];
-
-	int healthBar[2] = { 100, 100 }; 
-};
-
 class GameStateManager
 {
 public:
 	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, Arena& arena);
 
-	~GameStateManager();
+	~GameStateManager() = default;
 
 	void update(float time);
 
-	bool debug_ = true;
-
-	GameStateManager& operator=(GameStateManager&& other)
-	{
-		fighterResources_.fighters_[0] = other.fighterResources_.fighters_[0];
-		fighterResources_.fighters_[1] = other.fighterResources_.fighters_[1];
-		other.fighterResources_.fighters_[0] = nullptr;
-		other.fighterResources_.fighters_[1] = nullptr;
-
-		return *this;
-	}
+public:
+	bool debug_ = true; //should debug be drawn
 
 private:
 	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2);
@@ -92,25 +63,40 @@ private:
 	//Keeps fighters within the bounds of the arena.  Also handles when a jump reaches the floor
 	void clampFighterOutOfBounds();
 	
+	//checks if fighters collided with eachother and pushes them based on their current speeds
 	bool fighterCollisionCheck();
 
+	//handles attack state for both fighters
 	void updateAttacks();
 
-	void drawHitboxDebug();
-
+	//Calculates the size of each health bar before sending draw commands to the ui interface
 	void drawHealthBars();
 
 	void checkFighterSide();
 
 	void updateTimer();
 
+	//draws grids to visualize arena bounds, fighters hitboxes, hurtboxes, and pushboxes.  Also draws x,y,z axis lines
+	void drawDebug();
+
+	void drawHitboxDebug();
+	
+	void drawHitbox(const glm::vec3& fighterPos, FighterSide side, const Hitbox& hitbox, const glm::vec3& color);//helper method for drawHitboxDebug
+
+	//Helper method that just checks if 2 hitboxes are colliding
+	bool areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2);
+
 private:
 	Arena arena_;
 	UI::UIInterface& ui_;
 	DebugDrawManager* debugManager_;
+	struct {
+		Fighter* fighters_[2];
+		CancelAttackMap cancelAttackMap_[2];
+		int healthBar[2] = { 100, 100 }; 
+	}fighterResources_;//stores both fighters their cancelAttackMap and healthBars
 
-	FighterResources fighterResources_;//stores both fighters and other things that are needed to keep track of gamestate such as healthbars
-
+	//stores timer state
 	struct {
 		const int maxTime = 120;//seconds
 		float startTime; // seconds

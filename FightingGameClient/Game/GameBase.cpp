@@ -58,7 +58,7 @@ void GameBase::initScene()
 	const float ARENA_DEPTH = 21;
 	arena_ = { ARENA_WIDTH, ARENA_DEPTH, ARENA_STARTING_POINT };
 
-	generateArenaBackground();
+	//generateArenaBackground();
 }
 
 void GameBase::generateArenaBackground()

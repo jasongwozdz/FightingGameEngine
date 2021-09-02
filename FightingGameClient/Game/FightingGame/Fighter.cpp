@@ -25,10 +25,16 @@ void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
 	currentPushBoxes_.clear();
 	for (Hitbox hitbox : hitboxes)
 	{
+		if(side_ == left)
+		{ 
+			hitbox.pos_.y *= -1;
+		}
+
 		switch (hitbox.layer_)
 		{
 			case Hitbox::HitboxLayer::Push:
 			{
+				
 				currentPushBoxes_.push_back(hitbox);
 				break;
 			}
@@ -67,10 +73,20 @@ void Fighter::flipSide()
 	glm::quat rot = entity_->getComponent<Transform>().rot_;
 	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
 	entity_->getComponent<Transform>().rot_ = flipRot * rot;
-	uint16_t swapped  = ~(uint16_t)side_;
-	swapped = swapped << 15;
-	swapped = swapped >> 15;
-	side_ = (FighterSide)swapped;
+	side_ = FighterSide(side_ ^ 1);
+
+	for (Hitbox& hitbox : currentHitboxes_)
+	{
+		hitbox.pos_.y *= -1;
+	}
+	for (Hitbox& hitbox : currentHurtboxes_)
+	{
+		hitbox.pos_.y *= -1;
+	}
+	for (Hitbox& hitbox : currentHitboxes_)
+	{
+		hitbox.pos_.y *= -1;
+	}
 
 	flipSide_ = false;
 }

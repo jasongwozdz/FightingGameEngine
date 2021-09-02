@@ -1,9 +1,7 @@
 #include <chrono>
-
 #include "GameStateManager.h"
 #include "EngineSettings.h"
 #include "NewRenderer/UIInterface.h"
-#include "../Engine/File.h"
 #include "Attack.h"
 
 #define NUM_FIGHTERS 2
@@ -18,40 +16,39 @@ GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDr
 {
 	fighterResources_.fighters_[0] = fighter1;
 	fighterResources_.fighters_[1] = fighter2;
+	fighterResources_.cancelAttackMap_[0].cancelAttackMap_ = fighter1->cancelAttackMap_;
+	fighterResources_.cancelAttackMap_[1].cancelAttackMap_ = fighter1->cancelAttackMap_;
+
 	timerResources_.startTime = getCurrentTime() * .001;//convert to seconds
 };
 
-GameStateManager::~GameStateManager()
+void GameStateManager::update(float time)
 {
+	clampFighterOutOfBounds();
+	fighterCollisionCheck();
+	updateAttacks();
+	checkFighterSide();
+	drawHealthBars();
+	updateTimer();
+
+	if(debug_)
+	{
+		drawDebug();
+	}
 }
 
 bool GameStateManager::checkAttackCollision(Fighter& attackingFighter, Fighter& recievingFighter)
 {
+	//Grab all hurtboxes from the attacking fighter and all hitboxes from the recieving fighter and do a collision check 
 	const std::vector<Hitbox>& hurtboxes = attackingFighter.currentHurtboxes_;
 	const std::vector<Hitbox>& hitboxes = recievingFighter.currentHitboxes_;
 	glm::vec3 attackFighterPos = attackingFighter.getPosition();
 	glm::vec3 recievingFighterPos = recievingFighter.getPosition();
 	for (const Hitbox& hurtbox : hurtboxes)
 	{
-		glm::vec3 newPos = hurtbox.pos_;
-		if (attackingFighter.side_ == left) newPos.y *= -1;
-
-		float hitboxXMin = attackFighterPos.y + (newPos.y - hurtbox.width_ / 2);
-		float hitboxXMax = attackFighterPos.y + (newPos.y + hurtbox.width_ / 2);
-		float hitboxYMin = attackFighterPos.z + (newPos.z - hurtbox.height_ / 2);
-		float hitboxYMax = attackFighterPos.z + (newPos.z + hurtbox.height_ / 2);
-		
 		for (const Hitbox& hitbox : hitboxes) 
 		{
-			glm::vec3 newPos = hitbox.pos_;
-			if (recievingFighter.side_ == left) newPos.y *= -1;
-
-			float fighterXMin = recievingFighterPos.y + (newPos.y - hitbox.width_ / 2);
-			float fighterXMax = recievingFighterPos.y + (newPos.y + hitbox.width_ / 2);
-			float fighterYMin = recievingFighterPos.z + (newPos.z - hitbox.height_ / 2);
-			float fighterYMax = recievingFighterPos.z + (newPos.z + hitbox.height_ / 2);
-
-			if (hitboxXMin < fighterXMax && hitboxXMax > fighterXMin && hitboxYMax > fighterYMin && hitboxYMin < fighterYMax)
+			if(areHitboxesColliding(attackFighterPos, hurtbox, recievingFighterPos, hitbox))
 			{
 				return true;
 			}
@@ -70,22 +67,26 @@ bool GameStateManager::fighterCollisionCheck()
 
 	for (const Hitbox& fighter1Pushbox : fighter1->currentPushBoxes_)
 	{
-		for (const Hitbox& fighter2PushBox : fighter2->currentPushBoxes_)
+		for (const Hitbox& fighter2Pushbox : fighter2->currentPushBoxes_)
 		{
-			float xMax1 = fighter1Trans.pos_.y + fighter1Pushbox.width_ / 2;
-			float xMin1 = fighter1Trans.pos_.y - fighter1Pushbox.width_ / 2;
-
-			float xMax2 = fighter2Trans.pos_.y + fighter2PushBox.width_ / 2;
-			float xMin2 = fighter2Trans.pos_.y - fighter2PushBox.width_ / 2;
-
-			float yMax1 = fighter1Trans.pos_.z + fighter1Pushbox.height_ / 2;
-			float yMin1 = fighter1Trans.pos_.z - fighter1Pushbox.height_ / 2;
-
-			float yMax2 = fighter2Trans.pos_.z + fighter2PushBox.height_ / 2;
-			float yMin2 = fighter2Trans.pos_.z - fighter2PushBox.height_ / 2;
-
-			if ((xMax1 > xMin2 && xMin1 < xMax2) && (yMax1 >= yMin2 && yMax2 >= yMin1))
+			if(areHitboxesColliding(fighter1Trans.pos_, fighter1Pushbox, fighter2Trans.pos_, fighter2Pushbox))
 			{
+				//if fighters collide determine how they should be pushed
+				float speed1 = fighterResources_.fighters_[0]->speed_;
+				float speed2 = fighterResources_.fighters_[1]->speed_;
+				//flip the speed of whichever fighter is on the left
+				if (fighterResources_.fighters_[0]->side_ == left)				{
+					speed2 *= -1;
+				}
+				else
+				{
+					speed1 *= -1;
+				}
+				//apply each fighters speed to eachother
+				//if both fighters are moving towards eachother they will move in place
+				//if only one fighter is moving towards the other then the non moving fighter will be pushed
+				fighter2Trans.pos_.y += speed1;
+				fighter1Trans.pos_.y += speed2;
 				return true;
 			}
 		}
@@ -95,6 +96,7 @@ bool GameStateManager::fighterCollisionCheck()
 
 void GameStateManager::clampFighterOutOfBounds()
 {
+	//make sure fighter is within the bounds of the Arena
 	for (int fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
 	{
 		Fighter* fighter = fighterResources_.fighters_[fighterIndex];
@@ -102,6 +104,7 @@ void GameStateManager::clampFighterOutOfBounds()
 		glm::vec3 fighterPos = fighter->getPosition();
 		for (const Hitbox& pushbox : fighter->currentPushBoxes_)
 		{
+			//check if the fighter is colliding with the sides of the arena, if they are push them out
 			if ((pushbox.width_ / 2 + fighterPos.y) > (arena_.pos.y + (arena_.width / 2)))
 			{
 				fighterTransform.pos_.y = (arena_.pos.y + (arena_.width / 2)) - (pushbox.width_ / 2);
@@ -112,16 +115,16 @@ void GameStateManager::clampFighterOutOfBounds()
 				fighterTransform.pos_.y = (-arena_.width / 2 + arena_.pos.y) + (pushbox.width_ / 2);
 			}
 
+			//check if fighter is colliding with the bottom of the arena if they are push them up
 			float fighterZ = fighterPos.z;
-			float arenaPosZ = arena_.pos.z;
 			float pushBoxZ = pushbox.pos_.z - pushbox.height_ / 2;
 			if ((fighterZ - pushBoxZ) < (arena_.pos.z ))
 			{
 				fighterTransform.pos_.z = (arena_.pos.z + pushBoxZ);
-				fighter->currentYspeed_ = 0;
+				fighter->currentYspeed_ = 0; //reset the current Y speed
 				if (fighter->state_ == jumping)
 				{
-					fighter->onHit(0, 30, 30);
+					fighter->onHit(0, 30, 30);// add 30 frames of recovery to the fighter after landing from a jump
 
 				}
 			}
@@ -131,6 +134,7 @@ void GameStateManager::clampFighterOutOfBounds()
 
 void GameStateManager::drawHealthBars()
 {
+	//calculate size of bars relative to the size of the current window
 	float height = EngineSettings::getSingleton().windowHeight;
 	float width = EngineSettings::getSingleton().windowWidth;
 	float backHealthBarWidth =  width * 0.25;
@@ -144,73 +148,43 @@ void GameStateManager::drawHealthBars()
 	ui_.drawRect(backHealthBarWidth, 50, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
 }
 
-void GameStateManager::update(float time)
+void GameStateManager::drawDebug()
 {
+	drawHitboxDebug();
 
-	Transform& t1 = fighterResources_.fighters_[0]->entity_->getComponent<Transform>();
-	Transform& t2 = fighterResources_.fighters_[1]->entity_->getComponent<Transform>();
-	Transform* transforms[2] = { &t1, &t2 };
-	clampFighterOutOfBounds();
+	debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 });//x
+	debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 });//y
+	debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 });//z
 
-	//if fighters collide then determine what direction they should be pushed
-	if (fighterCollisionCheck())
-	{
-		float speed1 = fighterResources_.fighters_[0]->speed_;
-		float speed2 = fighterResources_.fighters_[1]->speed_;
-		if (fighterResources_.fighters_[0]->side_ == left)
-		{
-			speed2 *= -1;
-		}
-		else
-		{
-			speed1 *= -1;
-		}
-		t2.pos_.y += speed1;
-		t1.pos_.y += speed2;
-	}
+	debugManager_->drawGrid(arena_.pos, {0, 1, 0}, 0.0f, 21, 21, { 255, 255, 255 }); //floor
 
-	updateAttacks();
-	checkFighterSide();
-	drawHealthBars();
-	updateTimer();
+	glm::vec3 pos = arena_.pos;
+	pos.x += (arena_.width / 2);
+	pos.z += (arena_.width / 4);
+	glm::vec3 rotationAxis = { 0, 1, 0 };
+	float rotationAngle = 90.f;
+	debugManager_->drawGrid(pos, rotationAxis, rotationAngle, (arena_.width/2 + 1), arena_.depth, { 255, 255, 255 }); //back wall
 
-	if(debug_)
-	{
-		drawHitboxDebug();
+	pos = arena_.pos;
+	rotationAxis = { 0, 1, 0 };
+	rotationAngle = 0.0f;
+	pos.z += (arena_.width / 2);
+	debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth, { 255, 255, 255 }); //ceiling
 
-		debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 }, 0, 0, 1.0f);//x
-		debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 }, 0, 0, 1.0f);//y
-		debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 }, 0, 0, 1.0f);//z
+	pos = arena_.pos;
+	rotationAxis = { 1, 0, 0 };
+	rotationAngle = 90.0f;
+	pos.y += arena_.width / 2;
+	pos.z += (arena_.width / 4);
+	debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }); //left wall
 
-		debugManager_->drawGrid(arena_.pos, {0, 1, 0}, 0.0f, 21, 21, { 255, 255, 255 }, true); //floor
+	pos = arena_.pos;
+	rotationAxis = { 1, 0, 0 };
+	rotationAngle = 90.0f;
+	pos.y -= arena_.width / 2;
+	pos.z += (arena_.width / 4);
+	debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }); //right wall
 
-		glm::vec3 pos = arena_.pos;
-		pos.x += (arena_.width / 2);
-		pos.z += (arena_.width / 4);
-		glm::vec3 rotationAxis = { 0, 1, 0 };
-		float rotationAngle = 90.f;
-		debugManager_->drawGrid(pos, rotationAxis, rotationAngle, (arena_.width/2 + 1), arena_.depth, { 255, 255, 255 }, true); //back wall
-
-		pos = arena_.pos;
-		rotationAxis = { 0, 1, 0 };
-		rotationAngle = 0.0f;
-		pos.z += (arena_.width / 2);
-		debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth, { 255, 255, 255 }, true); //ceiling
-
-		pos = arena_.pos;
-		rotationAxis = { 1, 0, 0 };
-		rotationAngle = 90.0f;
-		pos.y += arena_.width / 2;
-		pos.z += (arena_.width / 4);
-		debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }, true); //left wall
-
-		pos = arena_.pos;
-		rotationAxis = { 1, 0, 0 };
-		rotationAngle = 90.0f;
-		pos.y -= arena_.width / 2;
-		pos.z += (arena_.width / 4);
-		debugManager_->drawGrid(pos, rotationAxis, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }, true); //right wall
-	}
 }
 
 void GameStateManager::updateTimer()
@@ -252,7 +226,7 @@ void GameStateManager::updateTimer()
 		}
 		exit(1);
 	}
-	UI::UIInterface::getSingleton().addTextToTransparentBackground(std::to_string(secondsInMatch), windowPos, TIMER_COLOR, TIMER_TEXT_SCALE);
+	ui_.addTextToTransparentBackground(std::to_string(secondsInMatch), windowPos, TIMER_COLOR, TIMER_TEXT_SCALE);
 }
 
 void GameStateManager::updateAttacks()
@@ -308,6 +282,13 @@ void GameStateManager::updateAttacks()
 	}
 }
 
+void GameStateManager::drawHitbox(const glm::vec3& fighterPos, FighterSide side, const Hitbox& hitbox, const glm::vec3& color)
+{
+	glm::vec3 newPos = hitbox.pos_;
+	glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
+	debugManager_->drawRect(pushBoxPos, color, -hitbox.width_ / 2, hitbox.width_ / 2, -hitbox.height_ / 2, hitbox.height_ / 2);
+}
+
 void GameStateManager::drawHitboxDebug()
 {
 	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
@@ -316,30 +297,17 @@ void GameStateManager::drawHitboxDebug()
 		glm::vec3 fighterPos = currentFighter->getPosition();
 		for (const Hitbox& pushbox : currentFighter->currentPushBoxes_)
 		{
-			glm::vec3 newPos = pushbox.pos_;
-			if (currentFighter->side_ == left) newPos.y *= -1;
-			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
-
-			debugManager_->drawRect(pushBoxPos, { 0, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+			drawHitbox(fighterPos, currentFighter->side_, pushbox, { 0, 255, 0 });
 		}
 		for (const Hitbox& pushbox : currentFighter->currentHurtboxes_)
 		{
-			glm::vec3 newPos = pushbox.pos_;
-			if (currentFighter->side_ == left) newPos.y *= -1;
-			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
-	
-			debugManager_->drawRect(pushBoxPos, { 255, 0, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+			drawHitbox(fighterPos, currentFighter->side_, pushbox, { 255, 0, 0 });
 		}
 		for (const Hitbox& pushbox : currentFighter->currentHitboxes_)
 		{
-			glm::vec3 newPos = pushbox.pos_;
-			if (currentFighter->side_ == left) newPos.y *= -1;
-			glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
-
-			debugManager_->drawRect(pushBoxPos, { 255, 255, 0 }, 0, false, -pushbox.width_ / 2, pushbox.width_ / 2, -pushbox.height_ / 2, pushbox.height_ / 2);
+			drawHitbox(fighterPos, currentFighter->side_, pushbox, {  255, 255, 0 });
 		}
 	}
-	
 }
 
 void GameStateManager::checkFighterSide()
@@ -359,4 +327,23 @@ void GameStateManager::checkFighterSide()
 	{
 		fighter2.flipSide_ = true;
 	}
+}
+
+bool GameStateManager::areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2)
+{
+	float hitbox1YMin = pos1.y + (hitbox1.pos_.y - hitbox1.width_ / 2);
+	float hitbox1YMax = pos1.y + (hitbox1.pos_.y + hitbox1.width_ / 2);
+	float hitbox1ZMin = pos1.z + (hitbox1.pos_.z - hitbox1.height_ / 2);
+	float hitbox1ZMax = pos1.z + (hitbox1.pos_.z + hitbox1.height_ / 2);
+
+	float hitbox2YMin = pos2.y + (hitbox2.pos_.y - hitbox2.width_ / 2);
+	float hitbox2YMax = pos2.y + (hitbox2.pos_.y + hitbox2.width_ / 2);
+	float hitbox2ZMin = pos2.z + (hitbox2.pos_.z - hitbox2.height_ / 2);
+	float hitbox2ZMax = pos2.z + (hitbox2.pos_.z + hitbox2.height_ / 2);
+
+	if (hitbox1YMin < hitbox2YMax && hitbox1YMax > hitbox2YMin && hitbox1ZMax > hitbox2ZMin && hitbox1ZMin < hitbox2ZMax)
+	{
+		return true;
+	}
+	return false;
 }
