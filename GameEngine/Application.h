@@ -33,7 +33,6 @@ public:
 
 private:
 	std::vector<std::function<void(Events::Event&)>> callbacks_;
-	float endTime_;
 	std::map<int, int> keyBinds_;
 	bool drawUi_;
 	void onEvent(Events::Event& e);

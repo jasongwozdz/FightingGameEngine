@@ -12,3 +12,10 @@ struct VulkanImage
 	VkImage image_;
 	VmaAllocation mem_;
 };
+
+struct TextureResources
+{
+	VulkanImage image_;
+	VkImageView view_;
+	VkSampler sampler_;
+};

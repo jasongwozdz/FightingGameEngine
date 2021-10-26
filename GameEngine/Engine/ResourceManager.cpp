@@ -154,7 +154,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		for (int j = 0; j < currentNode->mNumPositionKeys; j++)
 		{
 			glm::vec3 pos = glm::make_vec3(&currentNode->mPositionKeys[j].mValue.x);
-			float time = currentNode->mPositionKeys[j].mTime;
+			float time = currentNode->mPositionKeys[j].mTime/sample.framesPerSecond_;
 			sample.positions_[boneIndex].push_back({ time, pos });
 		}
 
@@ -166,8 +166,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 			rot.y = currentNode->mRotationKeys[j].mValue.y;
 			rot.z = currentNode->mRotationKeys[j].mValue.z;
 			rot.w = currentNode->mRotationKeys[j].mValue.w;
-			//{ currentNode->mRotationKeys[j].mValue.x, currentNode->mRotationKeys[j].mValue.y, currentNode->mRotationKeys[j].mValue.z, currentNode->mRotationKeys[j].mValue.w };
-			float time = currentNode->mRotationKeys[j].mTime;
+			float time = currentNode->mRotationKeys[j].mTime/sample.framesPerSecond_;
 			sample.rotations_[boneIndex].push_back({ time, rot });
 		}
 
@@ -175,7 +174,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		for (int j = 0; j < currentNode->mNumScalingKeys; j++)
 		{
 			float scale = currentNode->mScalingKeys[j].mValue.x;
-			float time = currentNode->mRotationKeys[j].mTime;
+			float time = currentNode->mRotationKeys[j].mTime/sample.framesPerSecond_;
 			sample.scale_[boneIndex].push_back({ time, scale });
 		}
 
@@ -207,6 +206,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		}
 		a.duration_ = animations[i]->mDuration;
 		a.framesPerSecond_ = animations[i]->mTicksPerSecond;
+		a.durationInSeconds_ = (1 / a.framesPerSecond_) * a.duration_;
 		if (!populateAnimationClip(a, animations[i]->mChannels, animations[i]->mNumChannels, bones))
 		{
 			std::cout << "ERROR: failed to populate animation clip" << std::endl;

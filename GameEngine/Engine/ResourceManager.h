@@ -70,6 +70,8 @@ struct ENGINE_API TextureReturnVals : ReturnVals
 		return Texture;
 	}
 
+	TextureReturnVals() {};
+
 	TextureReturnVals(
 		unsigned char* pixels,
 		int textureWidth,

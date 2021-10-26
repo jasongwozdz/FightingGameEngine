@@ -26,6 +26,7 @@ struct ExportedAttack
 	unsigned int recovery;
 	unsigned int blockStun;
 	unsigned int hitstun;
+	int type;
 	float pushMag;
 	unsigned int damage;
 	std::string animationName;
@@ -46,6 +47,10 @@ struct ExportData{
 	float upRotation; // in radians
 	AnimationData idleData;
 	AnimationData walkData;
+	AnimationData jumpData;
+	AnimationData hitData;
+	AnimationData crouchData;
+	AnimationData blockData;
 	std::vector<ExportedAttack> attacks;
 };
 
@@ -57,6 +62,8 @@ public:
 private:
 	void AddHitboxToFile(const std::vector<Hitbox>& hitbox);
 	void populateFile(const ExportData& exportData);
+	void addAnimationDataToFile(const std::string& AnimationName,  const AnimationData& animationData);
+private:
 	std::ofstream file_;//opened in constructor closed in destructor
 	const std::string& FOLDER_LOCATION = "../FighterFiles/";
 };

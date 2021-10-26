@@ -12,6 +12,11 @@ struct Attack
 		startupFrames(startup), activeFrames(active), recoveryFrames(recovery),hurtboxWidthHeight(hurtboxWidthHeightIn), hurtboxPos(hurtboxPosIn), animationIndex_(animationIndexIn), hurtbox_(hurtboxIn), blockstunFrames(blockstun), hitstunFrames(hitstun), hitPushMag(pushMag), damage(dam)
 	{}
 
+	int getTotalFrames()
+	{
+		return startupFrames + activeFrames + recoveryFrames;
+	}
+
 	int currentFrame = 0;
 
 	int startupFrames; //no hurtox active

@@ -20,6 +20,10 @@ public:
 		float upRotation; // in radians 
 		AnimationData idleData;
 		AnimationData walkingData;
+		AnimationData crouchData;
+		AnimationData jumpData;
+		AnimationData hitData;
+		AnimationData blockData;
 		std::vector<std::vector<InputKey>> inputData;
 		std::vector<Attack> attacks;
 		std::vector<AnimationData> attackData;
@@ -29,5 +33,6 @@ private:
 	void readFile();
 	std::vector<std::vector<Hitbox>> extractHitboxData(std::string hitboxData);
 	std::ifstream file_;//opened in constructor closed in destructor
+	bool flipHitboxes_ = false;
 };
 

@@ -43,7 +43,6 @@ std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::str
 						{
 							currNum.push_back(*character);
 						}
-
 						switch (currentField)
 						{
 							case 0:
@@ -64,6 +63,8 @@ std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::str
 							case 3:
 							{
 								h.pos_.y = std::stof(currNum);
+								if (flipHitboxes_)
+									h.pos_.y *= -1;
 								break;
 							}
 							case 4:
@@ -115,6 +116,12 @@ void FighterFileImporter::readFile()
 		exportData_.upRotation = std::stof(currentLine.substr(getSizeOfString("UpRotation : ")));
 	}
 
+	//get FlipHitboxes flag
+	if (std::getline(file_, currentLine))
+	{
+		flipHitboxes_ = std::stoi(currentLine.substr(getSizeOfString("FlipHitboxes : ")));
+	}
+
 	//get idleAnimation name
 	if (std::getline(file_, currentLine))
 	{
@@ -139,6 +146,50 @@ void FighterFileImporter::readFile()
 	{ 
 		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("WalkHitboxData : ")));
 		exportData_.walkingData.hitboxData = extractedHitboxData;
+	}
+
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.crouchData.animationName = currentLine.substr(getSizeOfString("CrouchAnimation : "));
+	}
+
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("CrouchHitboxData : ")));
+		exportData_.crouchData.hitboxData = extractedHitboxData;
+	}
+
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.jumpData.animationName = currentLine.substr(getSizeOfString("JumpAnimation : "));
+	}
+
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("JumpHitboxData : ")));
+		exportData_.jumpData.hitboxData = extractedHitboxData;
+	}
+
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.hitData.animationName = currentLine.substr(getSizeOfString("HitAnimation : "));
+	}
+
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("HitHitboxData : ")));
+		exportData_.hitData.hitboxData = extractedHitboxData;
+	}
+
+	if (std::getline(file_, currentLine))
+	{
+		exportData_.blockData.animationName = currentLine.substr(getSizeOfString("BlockAnimation : "));
+	}
+
+	if(std::getline(file_, currentLine))
+	{ 
+		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("BlockHitboxData : ")));
+		exportData_.blockData.hitboxData = extractedHitboxData;
 	}
 
 	while (std::getline(file_, currentLine))
@@ -231,6 +282,8 @@ void FighterFileImporter::readFile()
 										case 3:
 										{
 											h.pos_.y = std::stof(currNum);
+											if (flipHitboxes_)
+												h.pos_.y *= -1;
 											break;
 										}
 										case 4:

@@ -39,26 +39,33 @@ void FighterFileExporter::AddHitboxToFile(const std::vector<Hitbox>& hitboxes)
 	file_ << ']';//end of hitbox data for frame
 }
 
+void FighterFileExporter::addAnimationDataToFile(const std::string& AnimationName, const AnimationData& animationData)
+{
+	std::string animation = AnimationName + "Animation";
+	std::string hitboxData = AnimationName + "HitboxData";
+
+	ADD_TO_FILE(animation) << animationData.animationName.c_str() << std::endl;
+	ADD_TO_FILE(hitboxData);
+	for (const std::vector<Hitbox>& hitboxFrame : animationData.hitboxData)
+	{
+		AddHitboxToFile(hitboxFrame);
+	}
+	std::endl(file_);
+}
+
 void FighterFileExporter::populateFile(const ExportData& exportData)
 {
 	ADD_TO_FILE("ModelPath") << exportData.modelFilePath.c_str() << std::endl;
 	ADD_TO_FILE("TexturePath") << exportData.textureFilePath.c_str() << std::endl;
 	ADD_TO_FILE("RightSideRotation") << exportData.rightSideRotation << std::endl;
 	ADD_TO_FILE("UpRotation") << exportData.upRotation << std::endl;
-	ADD_TO_FILE("IdleAnimation") << exportData.idleData.animationName.c_str() << std::endl;
-	ADD_TO_FILE("IdleHitboxData"); 
-	for (const std::vector<Hitbox>& hitboxFrame : exportData.idleData.hitboxData)
-	{
-		AddHitboxToFile(hitboxFrame);
-	}
-	std::endl(file_);
-	ADD_TO_FILE("WalkAnimation") << exportData.walkData.animationName.c_str() << std::endl;
-	ADD_TO_FILE("WalkHitboxData");
-	for (const std::vector<Hitbox>& hitboxFrame : exportData.walkData.hitboxData)
-	{
-		AddHitboxToFile(hitboxFrame);
-	}
-	std::endl(file_);
+	ADD_TO_FILE("FlipHitboxes") << 0 << std::endl;
+	addAnimationDataToFile("Idle", exportData.idleData);
+	addAnimationDataToFile("Walk", exportData.walkData);
+	addAnimationDataToFile("Crouch", exportData.crouchData);
+	addAnimationDataToFile("Jump", exportData.jumpData);
+	addAnimationDataToFile("Hit", exportData.hitData);
+	addAnimationDataToFile("Block", exportData.blockData);
 	for (int i = 0; i < exportData.attacks.size(); i++)
 	{
 		ADD_TO_FILE("animationName") << exportData.attacks[i].animationName.c_str() << std::endl;
@@ -69,6 +76,7 @@ void FighterFileExporter::populateFile(const ExportData& exportData)
 		ADD_TO_FILE("hitstun") << exportData.attacks[i].hitstun << std::endl;
 		ADD_TO_FILE("pushMag") << exportData.attacks[i].pushMag << std::endl;
 		ADD_TO_FILE("damage") << exportData.attacks[i].damage << std::endl;
+		ADD_TO_FILE("type") << exportData.attacks[i].type << std::endl;
 		ADD_TO_FILE("input") << (int)exportData.attacks[i].input[0] << std::endl;
 		int numberOfFrames = exportData.attacks[i].startup + exportData.attacks[i].active + exportData.attacks[i].recovery;
 		ADD_TO_FILE("NumFrames") << numberOfFrames << std::endl;

@@ -187,6 +187,7 @@
     <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
     <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
     <ClInclude Include="Engine\NewRenderer\Renderable.h" />
+    <ClInclude Include="Engine\NewRenderer\RenderSubsystemInterface.h" />
     <ClInclude Include="Engine\NewRenderer\ShaderUtils.h" />
     <ClInclude Include="Engine\NewRenderer\Textured.h" />
     <ClInclude Include="Engine\NewRenderer\UIInterface.h" />
@@ -205,6 +206,7 @@
     <ClInclude Include="EntryPoint.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Engine\NewRenderer\SkyBoxRenderSubsystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -242,6 +244,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Engine\NewRenderer\SkyBoxRenderSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />

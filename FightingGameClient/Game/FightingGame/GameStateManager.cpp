@@ -3,17 +3,20 @@
 #include "EngineSettings.h"
 #include "NewRenderer/UIInterface.h"
 #include "Attack.h"
+#include "FighterStates/AttackingFighterState.h"
 
 #define NUM_FIGHTERS 2
 
 //return in milliseconds
 extern double getCurrentTime();
 
+Arena GameStateManager::arena_{};
+
 GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, Arena& arena) :
 	ui_(UI::UIInterface::getSingleton()),
-	debugManager_(debugDrawManager),
-	arena_(arena)
+	debugManager_(debugDrawManager)
 {
+	arena_ = arena;
 	fighterResources_.fighters_[0] = fighter1;
 	fighterResources_.fighters_[1] = fighter2;
 	fighterResources_.cancelAttackMap_[0].cancelAttackMap_ = fighter1->cancelAttackMap_;
@@ -22,19 +25,17 @@ GameStateManager::GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDr
 	timerResources_.startTime = getCurrentTime() * .001;//convert to seconds
 };
 
-void GameStateManager::update(float time)
+void GameStateManager::update(float deltaTime)
 {
+	deltaTime_ = deltaTime * 0.001;
 	clampFighterOutOfBounds();
 	fighterCollisionCheck();
 	updateAttacks();
 	checkFighterSide();
 	drawHealthBars();
-	updateTimer();
-
+	//updateTimer();
 	if(debug_)
-	{
 		drawDebug();
-	}
 }
 
 bool GameStateManager::checkAttackCollision(Fighter& attackingFighter, Fighter& recievingFighter)
@@ -53,7 +54,6 @@ bool GameStateManager::checkAttackCollision(Fighter& attackingFighter, Fighter& 
 				return true;
 			}
 		}
-
 	}
 	return false;
 }
@@ -69,25 +69,40 @@ bool GameStateManager::fighterCollisionCheck()
 	{
 		for (const Hitbox& fighter2Pushbox : fighter2->currentPushBoxes_)
 		{
-			if(areHitboxesColliding(fighter1Trans.pos_, fighter1Pushbox, fighter2Trans.pos_, fighter2Pushbox))
+			//if fighters collide determine how they should be pushed.  Only do this check when fighters have finshed flipping sides.  If we don't wait for side flipping then when a fighter crossing up the other fighter while jumping into them then the jumping fighters speed will be set to 0 and all momentum will be lost.  This caused a weird effect where if a fighter slightly clips the other fighter while jumping they will drop right in front of them
+			if (areHitboxesColliding(fighter1Trans.pos_, fighter1Pushbox, fighter2Trans.pos_, fighter2Pushbox) && !fighter1->flipSide_ && !fighter2->flipSide_)
 			{
-				//if fighters collide determine how they should be pushed
-				float speed1 = fighterResources_.fighters_[0]->speed_;
-				float speed2 = fighterResources_.fighters_[1]->speed_;
-				//flip the speed of whichever fighter is on the left
-				if (fighterResources_.fighters_[0]->side_ == left)				{
-					speed2 *= -1;
-				}
-				else
+				float speed1 = fighter1->getXSpeed();
+				float speed2 = fighter2->getXSpeed();
+
+				//make sure that speeds are always negative;
+				if (speed1 > 0)
 				{
 					speed1 *= -1;
+				}
+				else if (speed2 > 0)
+				{
+					speed2 *= -1;
 				}
 				//apply each fighters speed to eachother
 				//if both fighters are moving towards eachother they will move in place
 				//if only one fighter is moving towards the other then the non moving fighter will be pushed
-				fighter2Trans.pos_.y += speed1;
-				fighter1Trans.pos_.y += speed2;
-				return true;
+				const float PUSH_OFFSET = 0.01f;//add a slight offset to the speed so that both fighters are pushed until they aren't touching
+				
+				float extraOffset = 0;//calculate how close the fighters are to eachother.  Scale the offset amount based on their distance. The closer the fighters are the larger the offset will be
+				float fighter1PushboxGlobalPos = fighter1Trans.pos_.y + fighter1Pushbox.pos_.y;
+				float fighter2PushboxGlobalPos = fighter2Trans.pos_.y + fighter2Pushbox.pos_.y;
+
+				float dist = glm::distance(fighter1PushboxGlobalPos, fighter2PushboxGlobalPos);
+				const float MAX_DIST = (fighter1Pushbox.width_ / 2) + (fighter2Pushbox.width_ / 2);
+				extraOffset = (MAX_DIST - dist) * 10; 
+
+				fighter1->setXSpeed(-speed2 + PUSH_OFFSET + extraOffset);
+				fighter2->setXSpeed(-speed1 + PUSH_OFFSET + extraOffset);
+				fighter1->updateTransform();
+				fighter2->updateTransform();
+				fighter1->setXSpeed(0);
+				fighter2->setXSpeed(0);
 			}
 		}
 	}
@@ -108,25 +123,22 @@ void GameStateManager::clampFighterOutOfBounds()
 			if ((pushbox.width_ / 2 + fighterPos.y) > (arena_.pos.y + (arena_.width / 2)))
 			{
 				fighterTransform.pos_.y = (arena_.pos.y + (arena_.width / 2)) - (pushbox.width_ / 2);
+				fighter->handleWallCollision(false);//collided with right side
 			}
 
 			if ((fighterPos.y - pushbox.width_ / 2) < (-arena_.width / 2 + arena_.pos.y))
 			{
 				fighterTransform.pos_.y = (-arena_.width / 2 + arena_.pos.y) + (pushbox.width_ / 2);
+				fighter->handleWallCollision(true);//collided with left side
 			}
 
 			//check if fighter is colliding with the bottom of the arena if they are push them up
 			float fighterZ = fighterPos.z;
 			float pushBoxZ = pushbox.pos_.z - pushbox.height_ / 2;
-			if ((fighterZ - pushBoxZ) < (arena_.pos.z ))
+			if ((fighterZ + pushBoxZ) < (arena_.pos.z ))
 			{
-				fighterTransform.pos_.z = (arena_.pos.z + pushBoxZ);
-				fighter->currentYspeed_ = 0; //reset the current Y speed
-				if (fighter->state_ == jumping)
-				{
-					fighter->onHit(0, 30, 30);// add 30 frames of recovery to the fighter after landing from a jump
-
-				}
+				fighterTransform.pos_.z = (arena_.pos.z - pushBoxZ);
+				fighter->handleFloorCollision();
 			}
 		}
 	}
@@ -138,14 +150,14 @@ void GameStateManager::drawHealthBars()
 	float height = EngineSettings::getSingleton().windowHeight;
 	float width = EngineSettings::getSingleton().windowWidth;
 	float backHealthBarWidth =  width * 0.25;
-	float healthBarWidth = ((float)fighterResources_.healthBar[0]/(float)fighterResources_.fighters_[0]->maxHealth_) * width *0.25;
+	float healthBarWidth = ((float)fighterResources_.fighters_[0]->health_/(float)fighterResources_.fighters_[0]->maxHealth_) * width *0.25;
 	ui_.drawRect(healthBarWidth, 60, { -width*.8, -height*.1 }, { 0, 255, 0, 1 });
 	ui_.drawRect(backHealthBarWidth, 60, { -width*.8, -height*.1 }, { 255, 0, 0, 1 });
 
 	backHealthBarWidth =  width * 0.25;
-	healthBarWidth = ((float)fighterResources_.healthBar[1]/(float)fighterResources_.fighters_[1]->maxHealth_) * width *0.25;
-	ui_.drawRect(healthBarWidth, 50, { -width*.2, -height*.1 }, { 0, 255, 0, 1 });
-	ui_.drawRect(backHealthBarWidth, 50, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
+	healthBarWidth = ((float)fighterResources_.fighters_[1]->health_/(float)fighterResources_.fighters_[1]->maxHealth_) * width *0.25;
+	ui_.drawRect(healthBarWidth, 60, { -width*.2, -height*.1 }, { 0, 255, 0, 1 });
+	ui_.drawRect(backHealthBarWidth, 60, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
 }
 
 void GameStateManager::drawDebug()
@@ -231,52 +243,25 @@ void GameStateManager::updateTimer()
 
 void GameStateManager::updateAttacks()
 {
-	int attackIndex1 = fighterResources_.fighters_[0]->currentAttack_;
-	int attackIndex2 = fighterResources_.fighters_[1]->currentAttack_;
 	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
 	{
-		int attackIndex = fighterResources_.fighters_[fighterIndex]->currentAttack_;
-		if (attackIndex != -1)//current fighter is in the middle of an attack 
+		uint32_t opposingFighterIndex = fighterIndex ^ 1;
+		Fighter* attackingFighter = fighterResources_.fighters_[fighterIndex];
+		Fighter* recievingFighter = fighterResources_.fighters_[opposingFighterIndex];
+		if (checkAttackCollision(*attackingFighter, *recievingFighter))
 		{
-			uint32_t opposingFighterIndex = fighterIndex ^ 1;
-			Attack& attack = fighterResources_.fighters_[fighterIndex]->attacks_[attackIndex];
-			fighterResources_.fighters_[fighterIndex]->setCurrentHitboxes(attack.hitboxesPerFrame[attack.currentFrame]);
-			//Check if we are in active frames so that attack collision can be checked
-			if (attack.currentFrame >= attack.startupFrames && attack.currentFrame < (attack.startupFrames + attack.activeFrames))
+			Attack* currentAttack = attackingFighter->currentAttack_;
+			if (currentAttack )
 			{
-				if (!attack.handled_)
+				if (!currentAttack->handled_)
 				{
-					if (checkAttackCollision(*fighterResources_.fighters_[fighterIndex], *fighterResources_.fighters_[opposingFighterIndex]))
-					{
-						attack.handled_ = true;
-						if (fighterResources_.fighters_[opposingFighterIndex]->onHit(attack.hitPushMag, attack.hitstunFrames, attack.blockstunFrames))
-						{
-							fighterResources_.healthBar[opposingFighterIndex] -= attack.damage;							
-						}
-					}
-				}
-				else if(fighterResources_.fighters_[fighterIndex]->attackBuffer_.size() > 0)//check if next attack in buffer can cancel current attack 
-				{
-					int nextAttack = fighterResources_.fighters_[fighterIndex]->attackBuffer_.front();
-					if (fighterResources_.cancelAttackMap_->isAttackCancelable(fighterResources_.fighters_[fighterIndex]->currentAttack_, nextAttack))
-					{
-						attack.currentFrame = 0;
-						attack.handled_ = false;
-						fighterResources_.fighters_[fighterIndex]->currentAttack_ = nextAttack;
-						fighterResources_.fighters_[fighterIndex]->attackBuffer_.pop();
-					}
+					recievingFighter->onHit(*currentAttack);
+					currentAttack->handled_ = true;
 				}
 			}
-
-			attack.currentFrame++;
-			//attack is finished
-			if (attack.currentFrame >= (attack.startupFrames + attack.recoveryFrames + attack.activeFrames))
+			else
 			{
-				attack.currentFrame = 0;
-				attack.handled_ = false;
-				fighterResources_.fighters_[fighterIndex]->currentAttack_ = -1;
-				fighterResources_.fighters_[fighterIndex]->setCurrentHitboxes(fighterResources_.fighters_[fighterIndex]->defaultHitboxes_);
-				return;
+				printf("ERROR: collision detected but fighter is not currently attacking");
 			}
 		}
 	}

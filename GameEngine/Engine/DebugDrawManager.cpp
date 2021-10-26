@@ -200,6 +200,8 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		vkUpdateDescriptorSets(logicalDevice, 1, &storageBufferDescriptorWrite, 0, nullptr);
 	}
+
+	scene_ = Scene::getSingletonPtr();
 }
 
 DebugDrawManager::~DebugDrawManager()
@@ -300,6 +302,12 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 			vkCmdDrawIndexed(currentBuffer, static_cast<uint32_t>(pickerPipelineInfo.drawData_[i].numIndicies), 1, pickerPipelineInfo.indexOffsets_[i], pickerPipelineInfo.vertexOffsets_[i], 0);
 		}
 
+		//clear storage buffer every frame
+		vmaMapMemory(allocator_, pickerPipelineInfo.storageBufferMem_, &data);
+		unsigned int* depthArrayData = static_cast<unsigned int*>(data);
+		std::memset(depthArrayData, 0, sizeof(int) * DEPTH_ARRAY_SCALE);
+		vmaUnmapMemory(allocator_, pickerPipelineInfo.storageBufferMem_);
+
 		//clear data for next frame
 		pickerPipelineInfo.vertices_.clear();
 		pickerPipelineInfo.indicies_.clear();
@@ -332,9 +340,6 @@ bool DebugDrawManager::getSelectedObject(int& id)
 			found = true;
 		}
 	}
-
-	std::memset(depthArrayData, 0, sizeof(int)* DEPTH_ARRAY_SCALE);
-
 	vmaUnmapMemory(allocator_, pickerPipelineInfo.storageBufferMem_);
 	return found;
 }

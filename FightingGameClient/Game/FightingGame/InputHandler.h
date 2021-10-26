@@ -1,7 +1,7 @@
 #pragma once
-#include <map>
-#include "Events.h"
+#include <deque>
 #include <glm/glm.hpp>
+#include "Events.h"
 
 namespace Input
 {
@@ -24,6 +24,8 @@ namespace Input
 		strong = 64,// 1 << 6
 		ultra = 128, // 1 << 7
 	};
+
+	typedef std::pair<Input::Action, float> InputTime;//deque will store current input with a time.  When the element is first added to the deque time will be initalized to INPUT_TIME_IN_QUEUE.  Decrement the time by the frameTimeDelta and once that time is <= 0 remove from queue;
 }
 
 class InputHandler
@@ -32,16 +34,18 @@ public:
 	InputHandler() = default;
 
 	void handleInputPressed(Events::KeyPressedEvent& e);
-
 	void handleInputReleased(Events::KeyReleasedEvent& e);
-
-	bool isInputCurrentlyPressed(Input::Action input);
-	
+	void updateInputQueue(float deltaTime);
+	bool isSequenceInInputQueue(std::vector<uint8_t> inputs) const;
+	void clearInputQueue();
+public:
 	glm::vec2 currentMovementInput_;
 	uint8_t currentAttackInput_ = 0;
 
 	Input::Side side_ = Input::Side::leftSide;
 
+	std::deque<Input::InputTime> inputQueue_;//Using a deque since elements are only going to be removed from the front but still need to update every element's time every frame.  So its more efficient than a vector(constant insertion and deletion for first and last element) but more flexible than a queue(can iterate over each element)
+
 private:
-	std::map<Input::Action, unsigned int> actionKeyMap;
+	const float INPUT_TIME_IN_QUEUE = 0.5f;//seconds
 };

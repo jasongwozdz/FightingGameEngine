@@ -8,6 +8,7 @@ FighterFactory::FighterFactory(Scene& scene) :
 
 Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, InputHandler& inputHandler)
 {
+	int a = 1;
 	FighterFileImporter fighterFileImporter(fighterFilePath);
 	ResourceManager& resourceManager = ResourceManager::getSingleton();
 	AnimationReturnVals ret = resourceManager.loadAnimationFile(fighterFileImporter.exportData_.modelFilePath);
@@ -31,21 +32,48 @@ Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, Input
 	walkingStateData.animationName = fighterFileImporter.exportData_.walkingData.animationName;
 	walkingStateData.hitboxData = fighterFileImporter.exportData_.walkingData.hitboxData;
 
-	Fighter* fighter = new Fighter(entity, inputHandler, idleStateData, walkingStateData);
-	fighter->defaultHitboxes_ = fighterFileImporter.exportData_.idleData.hitboxData[0];
+	FighterStateData crouchStateData;
+	crouchStateData.animationName = fighterFileImporter.exportData_.crouchData.animationName;
+	crouchStateData.hitboxData = fighterFileImporter.exportData_.crouchData.hitboxData;
 
-	fighter->setCurrentHitboxes(fighter->defaultHitboxes_);
-	fighter->currentHitboxes_ = fighter->defaultHitboxes_;
-	fighter->attacks_ = fighterFileImporter.exportData_.attacks;
+	FighterStateData jumpStateData;
+	jumpStateData.animationName = fighterFileImporter.exportData_.jumpData.animationName;
+	jumpStateData.hitboxData = fighterFileImporter.exportData_.jumpData.hitboxData;
+
+	FighterStateData hitStateData;
+	hitStateData.animationName = fighterFileImporter.exportData_.hitData.animationName;
+	hitStateData.hitboxData = fighterFileImporter.exportData_.hitData.hitboxData;
+
+	FighterStateData blockStateData;
+	blockStateData.animationName = fighterFileImporter.exportData_.blockData.animationName;
+	blockStateData.hitboxData = fighterFileImporter.exportData_.blockData.hitboxData;
+
+	AttackResources standingAttacks{};
+	standingAttacks.attacks_ = fighterFileImporter.exportData_.attacks;
 	for (int i = 0; i < fighterFileImporter.exportData_.inputData.size(); i++)
 	{
 		AttackInput attackInput{};
 		attackInput.attackInput = fighterFileImporter.exportData_.inputData[i];
 		attackInput.attackIndex = i;
 		attackInput.numInputs = fighterFileImporter.exportData_.inputData[i].size();
-		fighter->attackInputs_.push_back(attackInput);
+		standingAttacks.inputs_.push_back(attackInput);
 	}
 
+	Fighter* fighter = new Fighter(entity, inputHandler, idleStateData, walkingStateData, crouchStateData, jumpStateData, hitStateData, blockStateData, standingAttacks);
+	fighter->defaultHitboxes_ = fighterFileImporter.exportData_.idleData.hitboxData[0];
+
+	fighter->setCurrentHitboxes(fighter->defaultHitboxes_);
+	fighter->currentHitboxes_ = fighter->defaultHitboxes_;
+	fighter->attacks_ = fighterFileImporter.exportData_.attacks;
+	for(const Attack& attack : fighter->attacks_)
+	{
+		AnimationClip* clip = animator.getAnimationClipByName(attack.animationName_);
+		if (clip)
+		{
+			//clip->playbackRate_ = 3;
+			clip->isLooping_ = false;//set all atacking clips to non looping
+		}
+	}
 
 	return fighter;
 }
@@ -258,9 +286,9 @@ Fighter* FighterFactory::createFighter(const std::string& modelPath, const std::
 	child = { 2.0f, 2.0f, {0.0f, -1.1f, 0.0f}, Hitbox::HitboxLayer::Hit};
 	hitbox.children_.push_back(child);
 
-	Fighter* fighter = new Fighter(entity, inputHandler, {}, {});
-	populateAttackInput("", fighter);
-	populateAttacks("", fighter);
+	//Fighter* fighter = new Fighter(entity, inputHandler, {}, {});
+	//populateAttackInput("", fighter);
+	//populateAttacks("", fighter);
 
-	return fighter;
+	return nullptr;
 }

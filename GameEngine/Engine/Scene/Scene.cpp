@@ -1,8 +1,30 @@
 #include "Scene.h"
+#include "../NewRenderer/SkyBoxRenderSubsystem.h"
+
+template<> Scene* Singleton<Scene>::msSingleton = 0;
+
+Scene* Scene::getSingletonPtr()
+{
+	if (msSingleton == 0)
+	{
+		msSingleton = new Scene();
+	}
+	return msSingleton;
+}
+
+Scene& Scene::getSingleton()
+{
+	if (msSingleton == 0)
+	{
+		msSingleton = new Scene();
+	}
+	assert(msSingleton); return (*msSingleton);
+}
 
 Scene::Scene()
 {
 	renderer_ = VkRenderer::getSingletonPtr();
+	skybox_ = renderer_->addRenderSubsystem<SkyBoxRenderSubsystem>();
 }
 
 Scene::~Scene()
@@ -88,3 +110,9 @@ void Scene::setCamera(int index)
 {
 	currentCamera_ = index;
 }
+
+bool Scene::setSkybox(const std::string& path)
+{
+	return(skybox_->setSkyboxTexture(path));
+}
+

@@ -15,7 +15,6 @@ UI::UIInterface* UI::UIInterface::getSingletonPtr()
 }
 
 UI::UIInterface& UI::UIInterface::getSingleton()
-
 {
 	assert(msSingleton); return (*msSingleton);
 }

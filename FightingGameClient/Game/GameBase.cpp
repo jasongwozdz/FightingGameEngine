@@ -30,12 +30,13 @@ GameBase::~GameBase()
 
 void GameBase::initScene()
 {
-	const glm::vec3 STARTING_POSITION_RIGHT = { 0.0f, 5.0f, 1.0f };
-	const glm::vec3 STARTING_POSITION_LEFT =  {0.0f, -5.0f, 1.0f};
+	const glm::vec3 STARTING_POSITION_RIGHT = { 0.0f, 5.0f, -1.75f };
+	const glm::vec3 STARTING_POSITION_LEFT =  {0.0f, -5.0f, -1.75f};
+	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 
 	//TODO: add UI interface to select files without having to hardcode it
-	const std::string fighterFilePath1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 1 here
-	const std::string fighterFilePath2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Attack.fgAnim"; //set path to fighter 2 here
+	const std::string fighterFilePath1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1.fgAnim"; //set path to fighter 1 here
+	const std::string fighterFilePath2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\fighter2.fgAnim"; //set path to fighter 2 here
 
 	fighter_ = fighterFactory_->createFighter(fighterFilePath1, *inputHandler_);
 	fighter_->setPosition(STARTING_POSITION_RIGHT);
@@ -165,7 +166,12 @@ void GameBase::onUpdate(float deltaTime)
 	if (camera_)
 		camera_->update(deltaTime);
 
-	gameStateManager_->update(0);
+	gameStateManager_->update(deltaTime);
+
+	if (fighter_)
+		fighter_->updateTransform();
+	if (fighter2_)
+		fighter2_->updateTransform();
 }
 
 Application* createApplication()

@@ -21,7 +21,7 @@ void FighterCreatorTool::onStartup()
 	baseCamera_ = new BaseCamera({ 0.0, cameraDistanceFromFighter_, 0.0 }, { 0.0, -10.0, 0.0 }, { 0.0f, 0.0f, 1.0f });
 	scene_->addCamera(baseCamera_);
 	std::string error;
-
+	loadMesh("C:\\Users\\jsngw\\Downloads\\RobotKyle2.gltf", error);
 	addEventCallback(std::bind(&FighterCreatorTool::onEvent, this, std::placeholders::_1));
 }
 
@@ -76,9 +76,9 @@ int FighterCreatorTool::createHitboxId()
 void FighterCreatorTool::onUpdate(float deltaTime)
 {
 	drawUI();
-	debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 }, 0, 0, 1.0f);
-	debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 }, 0, 0, 1.0f);
-	debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 }, 0, 0, 1.0f);
+	debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 });
+	debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 });
+	debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 });
 	glm::vec3 rot = { 0, 0, 0 };
 	if (currentEntity_ && currentAnimationData_.animation)
 	{
@@ -157,6 +157,7 @@ void FighterCreatorTool::handleMouseMovedEvent(Events::MouseMoveEvent& e)
 			hitbox->pos_ += moveBy;
 		}
 	}
+
 	lastMousePos_ = { e.mouseX, e.mouseY };
 	debugManager_->mouseInfo_ = lastMousePos_;
 }
@@ -364,6 +365,23 @@ void FighterCreatorTool::drawUI()
 				}
 				ui_->endPopup();
 			}
+			ui_->addText("Select attack type");
+			if (ui_->beginPopupContextItem("Attack type"))
+			{
+				if (ui_->addButton("Standing"))
+				{
+					currentAnimationData_.attackType = Standing;
+				}
+				if (ui_->addButton("Crouching"))
+				{
+					currentAnimationData_.attackType = Crouching;
+				}
+				if (ui_->addButton("Jumping"))
+				{
+					currentAnimationData_.attackType = Jumping;
+				}
+				ui_->endPopup();
+			}
 			char buff[100];
 			sprintf_s(buff, "Current Attack Input: %d", currentAnimationData_.input);
 			ui_->addText(buff);
@@ -488,13 +506,6 @@ void FighterCreatorTool::drawUI()
 					currentObjectSelectedId_ = -1;
 					selectingAnimationType = false;
 				}
-				//if (ui_->addButton("Walking Backward Animation"))
-				//{
-				//	walkBackwardAnimationData_ = currentAnimationData_;
-				//	currentAnimationData_ = {};
-				//	currentObjectSelectedId_ = -1;
-				//	selectingAnimationType = false;
-				//}
 				if (ui_->addButton("Idle Animation"))
 				{
 
@@ -503,9 +514,39 @@ void FighterCreatorTool::drawUI()
 					currentObjectSelectedId_ = -1;
 					selectingAnimationType = false;
 				}
-				if (ui_->addButton("Attack Animation"))
+				if (ui_->addButton("Jump Animation"))
 				{
 
+					jumpAnimationData_ = currentAnimationData_;
+					currentAnimationData_ = {};
+					currentObjectSelectedId_ = -1;
+					selectingAnimationType = false;
+				}
+				if (ui_->addButton("Hit Animation"))
+				{
+
+					hitAnimationData_ = currentAnimationData_;
+					currentAnimationData_ = {};
+					currentObjectSelectedId_ = -1;
+					selectingAnimationType = false;
+				}
+				if (ui_->addButton("Block Animation"))
+				{
+					blockAnimationData_ = currentAnimationData_;
+					currentAnimationData_ = {};
+					currentObjectSelectedId_ = -1;
+					selectingAnimationType = false;
+				}
+				if (ui_->addButton("Crouch Animation"))
+				{
+					crouchAnimationData_ = currentAnimationData_;
+					currentAnimationData_ = {};
+					currentObjectSelectedId_ = -1;
+					selectingAnimationType = false;
+				}
+
+				if (ui_->addButton("Attack Animation"))
+				{
 					attackAnimationData_.push_back(currentAnimationData_);
 					currentAnimationData_ = {};
 					currentObjectSelectedId_ = -1;
@@ -606,6 +647,7 @@ void FighterCreatorTool::exportCurrentAnimationData()
 		exportAttack.blockStun = 1.0f; 
 		exportAttack.hitstun = 1.0f;
 		exportAttack.damage = 1.0f;
+		exportAttack.type = animationData.attackType;
 		exportData.attacks.push_back(exportAttack);
 	}
 	exportData.modelFilePath = fileNames_[0];
@@ -613,6 +655,14 @@ void FighterCreatorTool::exportCurrentAnimationData()
 	exportData.idleData.hitboxData = idleAnimationData_.hitboxData;
 	exportData.walkData.animationName = walkForwardAnimationData_.animation->name_;
 	exportData.walkData.hitboxData = walkForwardAnimationData_.hitboxData;
+	exportData.jumpData.hitboxData = jumpAnimationData_.hitboxData;
+	exportData.jumpData.animationName = jumpAnimationData_.animation->name_;
+	exportData.crouchData.hitboxData = crouchAnimationData_.hitboxData;
+	exportData.crouchData.animationName = crouchAnimationData_.animation->name_;
+	exportData.hitData.hitboxData = hitAnimationData_.hitboxData;
+	exportData.hitData.animationName = hitAnimationData_.animation->name_;
+	exportData.blockData.hitboxData = exportData.hitData.hitboxData;
+	exportData.blockData.animationName = exportData.hitData.animationName;
 	exportData.rightSideRotation = rightSideRotation_;
 	exportData.textureFilePath = texturePath_;
 

@@ -9,6 +9,7 @@
 #include "../NewRenderer/Renderable.h"
 #include "../NewRenderer/VkRenderer.h"
 #include "../NewRenderer/Textured.h"
+#include "../NewRenderer/SkyBoxRenderSubsystem.h"
 
 #define MAX_DRAWN_OBJECTS 200
 
@@ -18,8 +19,7 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
-
-class ENGINE_API Scene
+class ENGINE_API Scene : Singleton<Scene>
 {
 public:
 	Scene();
@@ -30,7 +30,10 @@ public:
 	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
 	void setCamera(int index);
 	BaseCamera* getCurrentCamera() const;
+	bool setSkybox(const std::string& path);
 	void frameBufferResizedCallback(const Events::FrameBufferResizedEvent& e);
+	static Scene& getSingleton();
+	static Scene* getSingletonPtr();
 
 	//void each(std::function<void(entt::entity, entt::registry)>);
 	
@@ -66,5 +69,6 @@ private:
 	int numObjectsToDraw_ = 0;
 
 	VkRenderer* renderer_;
+	class SkyBoxRenderSubsystem* skybox_;
 };
 

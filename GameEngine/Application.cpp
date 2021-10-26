@@ -1,9 +1,21 @@
 #include <ctime>
+#include <chrono>
+#include <thread>
+
 #include "Application.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
+
+//return in milliseconds
+double getCurrentTime()
+{
+	std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
+	auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(currentTime);
+	auto nano = ms.time_since_epoch();
+	return nano.count();
+}
 
 Application::Application()
 {
@@ -14,9 +26,8 @@ Application::Application()
 	window_->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
 	renderer_ = new VkRenderer(*window_);
 	renderer_->init();
-	scene_ = new Scene();
+	scene_ = Scene::getSingletonPtr();
 	debugManager_ = renderer_->debugDrawManager_;
-	debugManager_->scene_ = scene_;
 }
 
 Application::~Application()
@@ -48,6 +59,7 @@ void Application::setCursor(bool showCursor)
 	window_->setCursor(showCursor);
 }
 
+
 void Application::cleanup()
 {
 	delete scene_;
@@ -59,18 +71,22 @@ void Application::cleanup()
 
 void Application::run()
 {
-	float endTime = 0;
-	float deltaTime = 0;
+	double endTime = getCurrentTime();
+	double deltaTime = 0;
 	onStartup();
+	double start = 0;
 	while (!glfwWindowShouldClose(window_->getGLFWWindow()))
 	{
-		float start = endTime;
-		window_->onUpdate();
-		renderer_->prepareFrame();
-		onUpdate(deltaTime);
-		scene_->update(deltaTime);
-		endTime = std::clock();
-		deltaTime = endTime - start;
+		endTime = getCurrentTime();
+		deltaTime = static_cast<float>(endTime - start);
+		if (deltaTime >= 1000 / 144)
+		{
+			start = endTime;
+			window_->onUpdate();
+			renderer_->prepareFrame();
+			onUpdate(deltaTime);
+			scene_->update(deltaTime);
+		}
 	}
 	vkDeviceWaitIdle(renderer_->logicalDevice_);
 }

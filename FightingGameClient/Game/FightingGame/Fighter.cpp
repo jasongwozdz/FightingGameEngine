@@ -1,6 +1,43 @@
 #include <chrono>
 #include "Fighter.h"
 #include "ResourceManager.h"
+#include "FighterStates/IdleFighterState.h"
+#include "FighterStates/AttackingFighterState.h"
+#include "FighterStates/WalkingFighterState.h"
+#include "FighterStates/HitFighterState.h"
+#include "FighterStates/JumpingFighterState.h"
+#include "FighterStates/CrouchingFighterState.h"
+#include "FighterStates/BlockingFighterState.h"
+#include "FighterStates/JumpingAttackFighterState.h"
+
+Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, FighterSide side) : entity_(entity), inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData), standingAttacks_(attacks)
+{
+	//enterState(idle);
+	//pastTime_ = getCurrentTime();
+	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.hitboxData, &standingAttacks_);
+	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.hitboxData, &standingAttacks_);
+	jumpingFighterState_ = new JumpingFighterState(jumpStateData.animationName, jumpStateData.hitboxData, &standingAttacks_);
+	jumpingAttackFighterState_ = new JumpingAttackFighterState(&standingAttacks_);
+	attackingFighterState_ = new AttackingFighterState(&standingAttacks_);
+	hitFighterState_ = new HitFighterState(hitStateData.animationName, hitStateData.hitboxData);
+	crouchingFighterState_ = new CrouchingFighterState(crouchStatedata.animationName, crouchStatedata.hitboxData, &standingAttacks_);
+	blockedFighterState_ = new BlockingFighterState(blockStateData.animationName, blockStateData.hitboxData);
+	newState_ = idleFighterState_;
+	newState_->enterState(this);
+}
+
+Fighter::~Fighter()
+{
+	delete idleFighterState_;
+	delete walkingFighterState_;
+	delete jumpingFighterState_;
+	delete jumpingAttackFighterState_;
+	delete attackingFighterState_;
+	delete crouchingFighterState_;
+	delete hitFighterState_;
+	delete blockedFighterState_;
+}
+
 
 //return in milliseconds
 double getCurrentTime()
@@ -17,6 +54,12 @@ glm::vec3 Fighter::getPosition() const
 	glm::vec3 pos = transform.pos_;
 	return pos;
 }
+
+void Fighter::setPosition(glm::vec3 pos)
+{
+entity_->getComponent<Transform>().pos_ = pos;
+}
+
 
 void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
 {
@@ -52,18 +95,6 @@ void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
 	}
 }
 
-Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterSide side) :
-	entity_(entity), inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData)
-{
-	enterState(idle);
-	pastTime_ = getCurrentTime();
-}
-
-void Fighter::setPosition(glm::vec3 pos)
-{
-	entity_->getComponent<Transform>().pos_ = pos;
-}
-
 void Fighter::flipSide()
 {
 	entity_->getComponent<Transform>().scale_.x *= -1;
@@ -83,7 +114,7 @@ void Fighter::flipSide()
 	{
 		hitbox.pos_.y *= -1;
 	}
-	for (Hitbox& hitbox : currentHitboxes_)
+	for (Hitbox& hitbox : currentPushBoxes_)
 	{
 		hitbox.pos_.y *= -1;
 	}
@@ -94,263 +125,76 @@ void Fighter::flipSide()
 void Fighter::updateTransform()
 {
 	Transform& transform = entity_->getComponent<Transform>();
-	transform.pos_.y += currentXspeed_ ;
-	currentYspeed_ += gravity_ * deltaTime_;
-	transform.pos_.z += currentYspeed_;
-	gamePos_ = transform.pos_;
+	transform.pos_.y += currentXSpeed_ * deltaTime_;
+	transform.pos_.z += currentYSpeed_ * deltaTime_;
 }
 
-void Fighter::handleState()
+void Fighter::handleStateTransition(BaseFighterState* transitionToState)
 {
-	switch (state_)
+	if (transitionToState)
 	{
-	case FighterState::idle:
-	case FighterState::walkingBackward:
-	case FighterState::walkingForward:
-	case FighterState::crouching:
-		if (flipSide_) flipSide();
-		handleMove();
-		if (attackBuffer_.size() > 0)
-		{
-			currentAttack_ = attackBuffer_.front();
-			attackBuffer_.pop();
-		}
-		break;
-	case FighterState::jumping:
-		break;
-	case FighterState::attacking:
-		handleMove();
-		break;
-	case FighterState::hitstun:
-		stunFrames_--;
-		if (stunFrames_ > 0)
-		{
-			glm::vec3 pos = entity_->getComponent<Transform>().pos_;
-			float pushMag = (bool)side_ ? pushMagnitude_ : pushMagnitude_ * -1 ;
-			pos.y += pushMag;
-			currentXspeed_ = 0;
-			entity_->getComponent<Transform>().pos_ = pos;
-		}
-		else
-		{
-			stunFrames_ = -1;
-			setOrKeepState(FighterState::idle);
-		}
-		break;
+		newState_ = transitionToState;
+		newState_->enterState(this);
 	}
-}
-
-void Fighter::handleMove()
-{
-
-	if (controllable_)
-	{
-		if (currentAttack_ != -1)
-		{
-			setOrKeepState(FighterState::attacking);
-		}
-		else if (currentMovement_.y < 0)
-		{
-			setOrKeepState(FighterState::crouching);
-		}
-		else if (currentMovement_.y == 0 && currentMovement_.x > 0)
-		{
-			if (side_ == left)
-			{
-				setOrKeepState(FighterState::walkingForward);
-			}
-			else
-			{
-				setOrKeepState(FighterState::walkingBackward);
-			}
-		}
-		else if (currentMovement_.y == 0 && currentMovement_.x < 0)
-		{
-			if (side_ == left)
-			{
-				setOrKeepState(FighterState::walkingBackward);
-			}
-			else
-			{
-				setOrKeepState(FighterState::walkingForward);
-			}
-		}
-		else if (currentMovement_.y > 0)
-		{
-			setOrKeepState(FighterState::jumping);
-		}
-		else
-		{
-			setOrKeepState(FighterState::idle);
-		}
-	}
-}
-
-void Fighter::setOrKeepState(FighterState state)
-{
-	if (state_ == state) return;
-	else
-	{
-		state_ = state;
-		enterState(state_);
-	}
-}
-
-void Fighter::enterState(FighterState state)
-{
-	switch (state)
-	{
-	case FighterState::idle:
-		entity_->getComponent<Animator>().setAnimation(idleStateData_.animationName);
-		setCurrentHitboxes(idleStateData_.hitboxData[0]);
-		break;
-	case FighterState::walkingForward:
-		entity_->getComponent<Animator>().setAnimation(walkingStateData_.animationName);
-		setCurrentHitboxes(walkingStateData_.hitboxData[0]);
-		break;
-	case FighterState::walkingBackward:
-		entity_->getComponent<Animator>().setAnimation(walkingStateData_.animationName);
-		setCurrentHitboxes(walkingStateData_.hitboxData[0]);
-		break;
-	case FighterState::crouching:
-		entity_->getComponent<Animator>().setAnimation(-1);
-		currentXspeed_ = 0.0f;
-		break;
-	case FighterState::attacking:
-		entity_->getComponent<Animator>().setAnimation(attacks_[currentAttack_].animationName_);
-		currentXspeed_ = 0;
-		break;
-	case FighterState::hitstun:
-		entity_->getComponent<Animator>().setAnimation(-1);
-		break;
-	case FighterState::jumping:
-		currentYspeed_ = terminalYSpeed_;
-		currentXspeed_ = 0;
-		if (currentMovement_.x < 0)
-		{
-			currentXspeed_ = -baseSpeed_* 2 * deltaTime_;
-		}
-		else if (currentMovement_.x > 0)
-		{
-			currentXspeed_ = baseSpeed_ * 2 * deltaTime_;
-		}
-		break;
-	}
-}
-
-bool Fighter::checkAttackInput(int currentAttackInput, int& attackIndex)
-{
-	if (currentAttackInput == 0) return false;
-	for (std::vector<AttackInput>::iterator attack = attackInputs_.begin(); attack != attackInputs_.end(); attack++)
-	{
-
-		uint8_t result = attack->attackInput[attack->currentInput] & currentAttackInput;
-
-		if (result == attack->attackInput[attack->currentInput])
-		{
-			double currentTime = getCurrentTime();
-
-			if (attack->lastCheckTime != 0)
-			{
-				double dt = currentTime - attack->lastCheckTime;
-				std::cout << "dt " << dt << std::endl;
-				if (dt > attack->dtBetweenAttacks)
-				{
-					attack->lastCheckTime = 0;
-					attack->currentInput = 0;
-					continue;
-				}
-				else if (dt < attackInputDelay_)
-				{
-					inputHandler_.currentAttackInput_ &= ~result;
-					std::cout << "too fast" << std::endl;
-					continue;
-				}
-			}
-			attack->currentInput++;
-			attack->lastCheckTime = currentTime;
-			if (attack->numInputs == attack->currentInput)
-			{
-				attackIndex = attack->attackIndex;
-				attack->currentInput = 0;
-				attack->lastCheckTime = 0;
-				return true;
-			}
-		}
-		else
-		{
-			if (attack->currentInput > 0)
-			{
-				uint8_t lastAttack = attack->attackInput[attack->currentInput - 1];
-				result = lastAttack & currentAttackInput;
-				if (result == lastAttack)
-				{
-					continue;
-				}
-			}
-			attack->lastCheckTime = 0;
-			attack->currentInput = 0;
-		}
-	}
-	return false;
-}
-
-void Fighter::processInput()
-{
-	currentMovement_ = inputHandler_.currentMovementInput_;
-	if (state_ == idle || state_ == walkingForward || state_ == walkingBackward)
-	{
-		currentXspeed_ = baseSpeed_ * currentMovement_.x * deltaTime_;
-	}
-	int attackIndex;
-	if (checkAttackInput(inputHandler_.currentAttackInput_, attackIndex))
-	{
-#define QUEUE_DEPTH 1
-		if (attackBuffer_.size() < QUEUE_DEPTH)
-		{
-			attackBuffer_.push(attackIndex);
-			clearAttackBufferTime_ = getCurrentTime() + timeToClearBuffer_;
-		}
-	}
-	inputHandler_.currentAttackInput_ = 0;
 }
 
 void Fighter::onUpdate(float delta)
 {
-	double currentTime = getCurrentTime();
-	deltaTime_ = (currentTime - pastTime_)/1000;
-	pastTime_ = currentTime;
-	if (controllable_)
-	{
-		processInput();
-	}
-	if (side_ == left)
-		std::cout << getPosition().y << std::endl;
-	handleState();
-	updateTransform();
-	speed_ = baseSpeed_ * deltaTime_;
+	deltaTime_ = delta * .001;//convert to seconds
+	handleStateTransition(newState_->handleMovementInput(this));
+	handleStateTransition(newState_->handleAttackInput(this));
+	handleStateTransition(newState_->update(this));
+
+	inputHandler_.updateInputQueue(deltaTime_);
 }
 
-bool Fighter::onHit(float pushMagnitude, int hitstunFrames, int blockStunFrames)
+bool Fighter::onHit(Attack& attack)
 {
-	if (side_ == left && inputHandler_.currentMovementInput_.x == -1)
-	{
-		stunFrames_ = blockStunFrames;
-		setOrKeepState(FighterState::hitstun);
-		return false;
-	}
-	else if (inputHandler_.currentMovementInput_.x == 1)
-	{
-		stunFrames_ = blockStunFrames;
-		setOrKeepState(FighterState::hitstun);
-		return false;
+	handleStateTransition(newState_->onHit(this, &attack));
+	return false;
+}
 
-	}
-	else
+void Fighter::setXSpeed(float speedX)
+{
+	currentXSpeed_ = speedX;
+	if (side_ == left)
 	{
-		stunFrames_ = hitstunFrames;
-		pushMagnitude_ = pushMagnitude;
-		setOrKeepState(FighterState::hitstun);
-		return true;
+		currentXSpeed_ *= -1;
 	}
+}
+
+void Fighter::setYSpeed(float speedY)
+{
+	currentYSpeed_ = speedY;
+}
+
+void Fighter::handleWallCollision(bool collidedWithLeftWall)
+{
+	handleStateTransition(newState_->handleWallCollision(this, collidedWithLeftWall));
+}
+
+void Fighter::handleFloorCollision()
+{
+	handleStateTransition(newState_->handleFloorCollision(this));
+}
+
+void Fighter::displaceFighter(float y, float z)
+{
+	Transform& transform = entity_->getComponent<Transform>();
+	transform.pos_.y += y;
+	transform.pos_.z += z;
+}
+
+float Fighter::getXSpeed()
+{
+	float speedX = currentXSpeed_;
+	if (side_ == left)
+		speedX *= -1;
+	return speedX;
+}
+
+void Fighter::takeDamage(int damage)
+{
+	//made this a function since this is where individual fighter damage percentages should be calculated
+	health_ -= damage;
 }

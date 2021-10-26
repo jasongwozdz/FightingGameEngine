@@ -52,10 +52,12 @@ public:
 
 	~GameStateManager() = default;
 
-	void update(float time);
+	void update(float deltaTime);
 
 public:
 	bool debug_ = true; //should debug be drawn
+
+	static Arena arena_;//make static so states can access the arena
 
 private:
 	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2);
@@ -85,11 +87,10 @@ private:
 
 	//Helper method that just checks if 2 hitboxes are colliding
 	bool areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2);
-
 private:
-	Arena arena_;
 	UI::UIInterface& ui_;
 	DebugDrawManager* debugManager_;
+	float deltaTime_;
 	struct {
 		Fighter* fighters_[2];
 		CancelAttackMap cancelAttackMap_[2];

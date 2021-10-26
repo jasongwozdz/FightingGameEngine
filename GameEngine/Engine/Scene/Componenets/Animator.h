@@ -45,13 +45,13 @@ struct AnimationClip
 	float framesPerSecond_;
 	float playbackRate_ = 2;
 	float duration_;
+	float durationInSeconds_;
 	int frameCount_;
 	bool isLooping_ = true;
 	std::vector<std::vector<KeyPosition>> positions_;
 	std::vector<std::vector<KeyRotation>> rotations_;
 	std::vector<std::vector<KeyScale>> scale_;
 };
-
 
 class ENGINE_API Animator
 {
@@ -70,9 +70,10 @@ public:
 
 	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable);
 
-	void update(float currentTime, Renderable& renderable);
+	void update(float deltaTime, Renderable& renderable);
 
 	int findAnimationIndexByName(const std::string& animationName);
+	AnimationClip* getAnimationClipByName(const std::string& animationName);
 
 	Animator& operator=(Animator&& other)
 	{
@@ -100,19 +101,15 @@ public:
 
 public:
 	glm::mat4 globalInverseTransform_;
-
-	std::vector<glm::mat4> globalTransforms;
-
+	std::vector<glm::mat4> globalTransforms_;
 	ResourceManager& resourceManager_;
-
 	std::vector<AnimationClip> animations_;
+	uint32_t currentFrameIndex_ = 0;
 
 private:
 	//TEST CONSTRUCTOR 
 	Animator(std::vector<AnimationClip> animations);
-
 	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
-
 	glm::mat4 interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex);
 
 private:

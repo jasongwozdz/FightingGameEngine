@@ -32,13 +32,6 @@ enum PipelineTypes
 	NUM_PIPELINE_TYPES = 5
 };
 
-struct TextureResources
-{
-	VulkanImage image_;
-	VkImageView view_;
-	VkSampler sampler_;
-};
-
 class ENGINE_API Renderable
 {
 public:

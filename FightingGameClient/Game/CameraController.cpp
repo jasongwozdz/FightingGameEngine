@@ -1,5 +1,6 @@
 #include "CameraController.h"
 #include <iostream>
+#include "GLFW/glfw3.h"
 
 CameraController::CameraController(BaseCamera& camera) :
 	camera_(camera)
@@ -9,19 +10,19 @@ void CameraController::handleKeyPressed(Events::KeyPressedEvent& e)
 {
 	if (controllable_)
 	{
-		if (e.KeyCode == 87)
+		if (e.KeyCode == GLFW_KEY_I)
 		{
 			forwardHeld_ = true;
 		}
-		else if (e.KeyCode == 83)
+		else if (e.KeyCode == GLFW_KEY_K)
 		{
 			backwardHeld_ = true;
 		}
-		else if (e.KeyCode == 65)//a
+		else if (e.KeyCode == GLFW_KEY_J)//a
 		{
 			strafeLeftHeld_ = true;
 		}
-		else if (e.KeyCode == 68)
+		else if (e.KeyCode == GLFW_KEY_L)
 		{
 			strafeRightHeld_ = true;
 		}
@@ -32,19 +33,19 @@ void CameraController::handleKeyReleased(Events::KeyReleasedEvent& e)
 {
 	if (controllable_)
 	{
-		if (e.KeyCode == 87)
+		if (e.KeyCode == GLFW_KEY_I)
 		{
 			forwardHeld_ = false;
 		}
-		else if (e.KeyCode == 83)
+		else if (e.KeyCode == GLFW_KEY_K)
 		{
 			backwardHeld_ = false;
 		}
-		else if (e.KeyCode == 65)//a
+		else if (e.KeyCode == GLFW_KEY_J)//a
 		{
 			strafeLeftHeld_ = false;
 		}
-		else if (e.KeyCode == 68)
+		else if (e.KeyCode == GLFW_KEY_L)
 		{
 			strafeRightHeld_ = false;
 		}

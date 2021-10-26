@@ -8,6 +8,7 @@
 #include "../NewRenderer/PipelineBuilder.h"
 #include "../NewRenderer/UIInterface.h"
 #include "Renderable.h"
+#include "RenderSubsystemInterface.h"
 
 class DebugDrawManager;
 
@@ -27,6 +28,14 @@ public:
 	void updateUniformBuffer(Renderable& mesh);
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	std::vector<char> readShaderFile(const std::string& filename);
+	void createTextureResources();
+	
+	template<class T> T* addRenderSubsystem()
+	{
+		T* renderSubsystem = new T(logicalDevice_, renderPass_, allocator_, descriptorPool_);
+		renderSubsystems_.push_back(renderSubsystem);
+		return renderSubsystem;
+	}
 
 public:
 	Window& window_;
@@ -61,6 +70,7 @@ public:
 		VkFormat imageFormat_;
 		int imageCount_;
 	}swapChainResources_;
+
 	VkExtent2D windowExtent_;
 	VkDevice logicalDevice_;
 	VkRenderPass renderPass_;
@@ -81,6 +91,7 @@ public:
 	std::vector<PipelineBuilder::PipelineResources*> pipelines_;
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
+	std::vector<RenderSubsystemInterface*> renderSubsystems_;
 	
 private:
 
@@ -101,7 +112,6 @@ private:
 	void createDescriptorSet(Renderable* object);
 
 	void createTextureResources(Renderable& o, Textured& texture);
-
 
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 

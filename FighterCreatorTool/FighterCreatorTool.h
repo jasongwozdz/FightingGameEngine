@@ -5,6 +5,13 @@
 #include "Hitbox.h"
 #include "FighterFileExporter.h"
 
+enum AttackTypes
+{
+	Standing,
+	Crouching,
+	Jumping
+};
+
 class FighterCreatorTool : public Application
 {
 public:
@@ -104,10 +111,15 @@ private:
 		float blockStun = 1.0f;
 		float hitstun = 1.0f;
 		float damage = 1.0f;
+		AttackTypes attackType = Standing;
 	} currentAnimationData_;
 
 	std::vector<AnimationData> attackAnimationData_;
 	AnimationData walkForwardAnimationData_;
 	AnimationData walkBackwardAnimationData_;
 	AnimationData idleAnimationData_;
+	AnimationData jumpAnimationData_;
+	AnimationData hitAnimationData_;
+	AnimationData blockAnimationData_;
+	AnimationData crouchAnimationData_;
 };
