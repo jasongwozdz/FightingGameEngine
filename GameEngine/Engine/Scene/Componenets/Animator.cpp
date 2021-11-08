@@ -79,8 +79,10 @@ void Animator::setAnimation(std::string name)
 			startTime_ = 0;
 			localTime_ = 0;
 			currentFrameIndex_ = 0;
+			return;
 		}
 	}
+	std::cout << "Error: animation not found" << std::endl;
 }
 
 void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable)

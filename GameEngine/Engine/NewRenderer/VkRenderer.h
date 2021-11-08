@@ -115,6 +115,8 @@ private:
 
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 
+	TextureResources createTextureResources(uint32_t textureHeight, uint32_t textureWidth, uint32_t textureChannels, std::vector<unsigned char> pixels);
+
 	void recreateSwapchain();
 
 	void cleanupSwapchain();

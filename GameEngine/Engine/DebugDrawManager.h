@@ -55,6 +55,7 @@ class ENGINE_API DebugDrawManager
 public:
 	DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool);
 	~DebugDrawManager();
+	void recreateDebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VkDescriptorPool& descriptorPool);
 	//Debug pipeline Methods
 	void addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color);
 	void drawRect(glm::vec3 pos, glm::vec3 color, float minX, float maxX, float minY, float maxY);

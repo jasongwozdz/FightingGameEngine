@@ -22,7 +22,8 @@
 	} while(0)
 
 DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
-	allocator_(allocator)
+	allocator_(allocator),
+	scene_(Scene::getSingletonPtr())
 {
 	//initalize vulkan pipelines
 	//create normal debug pipeline
@@ -200,8 +201,6 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 
 		vkUpdateDescriptorSets(logicalDevice, 1, &storageBufferDescriptorWrite, 0, nullptr);
 	}
-
-	scene_ = Scene::getSingletonPtr();
 }
 
 DebugDrawManager::~DebugDrawManager()
@@ -211,6 +210,98 @@ DebugDrawManager::~DebugDrawManager()
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.vertexBuffer_, pickerPipelineInfo.vertexBufferMem_);
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.indexBuffer_, pickerPipelineInfo.indexBufferMem_);
 	vmaDestroyBuffer(allocator_, pickerPipelineInfo.storageBuffer_, pickerPipelineInfo.storageBufferMem_);
+}
+
+void DebugDrawManager::recreateDebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VkDescriptorPool& descriptorPool)
+{
+	{
+		std::vector<char> vertexShaderCode = ShaderUtils::readShaderFile("./shaders/debug.vert.spv");
+		std::vector<char> fragmentShaderCode = ShaderUtils::readShaderFile("./shaders/debug.frag.spv");
+
+		VkShaderModule vertexShader = ShaderUtils::createShaderModule(vertexShaderCode, logicalDevice);
+		VkShaderModule fragmentShader = ShaderUtils::createShaderModule(fragmentShaderCode, logicalDevice);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
+
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+		std::vector<VkPushConstantRange> ranges;
+		VkPushConstantRange range;
+		range.offset = 0;
+		range.size = sizeof(PushConstantInfo);
+		range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		ranges.push_back(range);
+
+		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
+		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
+
+		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
+		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
+	}
+	{
+		VkDescriptorSetLayoutBinding storageBufferLayoutBinding{};
+		storageBufferLayoutBinding.binding = 0;
+		storageBufferLayoutBinding.descriptorCount = 1; 
+		storageBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+		storageBufferLayoutBinding.pImmutableSamplers = nullptr;
+		storageBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo{};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &storageBufferLayoutBinding;
+
+		vkCreateDescriptorSetLayout(logicalDevice, &layoutInfo, nullptr, &pickerPipelineInfo.storageBufferDescriptorLayout_);
+
+		std::vector<char> vertexShaderCode = ShaderUtils::readShaderFile("./shaders/debugPicker.vert.spv");
+		std::vector<char> fragmentShaderCode = ShaderUtils::readShaderFile("./shaders/debugPicker.frag.spv");
+
+		VkShaderModule vertexShader = ShaderUtils::createShaderModule(vertexShaderCode, logicalDevice);
+		VkShaderModule fragmentShader = ShaderUtils::createShaderModule(fragmentShaderCode, logicalDevice);
+
+		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		vertShaderStageInfo.module = vertexShader;
+		vertShaderStageInfo.pName = "main";
+
+		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+		fragShaderStageInfo.module = fragmentShader;
+		fragShaderStageInfo.pName = "main";
+
+		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
+
+		std::vector<VkPushConstantRange> ranges;
+		VkPushConstantRange range;
+		range.offset = 0;
+		range.size = sizeof(PushConstantPickerVertexInfo);
+		range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		ranges.push_back(range);
+
+		range.offset = sizeof(PushConstantPickerVertexInfo);
+		range.size = sizeof(PushConstantPickerFragmentInfo);
+		range.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		ranges.push_back(range);
+
+		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
+		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
+
+		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
+		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
+
+	}
 }
 
 void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const int currentImageIndex)

@@ -1,6 +1,8 @@
 #include "InputHandler.h"
 #include <iostream>
 
+InputHandler::InputHandler(Input::Side side) : side_(side){}
+
 void InputHandler::handleInputPressed(Events::KeyPressedEvent& e)
 {
 
@@ -60,16 +62,16 @@ void InputHandler::handleInputPressed(Events::KeyPressedEvent& e)
 			currentMovementInput_.x += 1;
 			currentAttackInput_ |= inputToQueue = Input::Action::right;
 			break;
-		case 53: //1
+		case 53: //5
 			currentAttackInput_ |= inputToQueue = Input::Action::light;
 			break;
-		case 54: //2
+		case 54: //6
 			currentAttackInput_ |= inputToQueue = Input::Action::medium;
 			break;
-		case 55: //3
+		case 55: //7
 			currentAttackInput_ |= inputToQueue = Input::Action::strong;
 			break;
-		case 56: //4
+		case 56: //56
 			currentAttackInput_ |= inputToQueue = Input::Action::ultra;
 			break;
 		}
@@ -85,7 +87,6 @@ void InputHandler::handleInputPressed(Events::KeyPressedEvent& e)
 
 void InputHandler::handleInputReleased(Events::KeyReleasedEvent& e)
 {
-
 	if (side_ == Input::Side::leftSide)
 	{
 		switch (e.KeyCode)
@@ -174,7 +175,6 @@ void InputHandler::updateInputQueue(float deltaTime)
 
 bool InputHandler::isSequenceInInputQueue(std::vector<uint8_t> neededInputs) const
 {
-	int	DEBUGCOUNT = 0;
 	auto inputQueueIter = inputQueue_.begin();
 	if (inputQueueIter != inputQueue_.end())
 	{
@@ -185,7 +185,6 @@ bool InputHandler::isSequenceInInputQueue(std::vector<uint8_t> neededInputs) con
 			uint8_t returnVal = inputQueueIter->first & *needInput;
 			if (returnVal)
 			{
-				DEBUGCOUNT++;
 				inputQueueIter++;
 			}
 			else

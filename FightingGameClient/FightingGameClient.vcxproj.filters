@@ -66,6 +66,12 @@
     <ClCompile Include="Game\FightingGame\FighterStates\JumpingAttackFighterState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Game\FightingGame\AppStates\CharacterSelectAppState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\AppStates\FightingAppState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\FightingGame\Fighter.h">
@@ -90,9 +96,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\CameraController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\FightingGame\Attack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\GameBase.h">
@@ -123,6 +126,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\FighterStates\JumpingAttackFighterState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\AppStates\AppState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\AppStates\CharacterSelectAppState.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\Attack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\AppStates\FightingAppState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

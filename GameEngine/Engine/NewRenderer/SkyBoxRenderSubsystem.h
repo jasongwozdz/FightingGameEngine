@@ -25,6 +25,8 @@ class SkyBoxRenderSubsystem : public RenderSubsystemInterface
 public:
 	SkyBoxRenderSubsystem(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool);
 
+	~SkyBoxRenderSubsystem();
+
 	void renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex) override;
 
 	bool setSkyboxTexture(const std::string& path);//true if file exists and skybox loading is succesful

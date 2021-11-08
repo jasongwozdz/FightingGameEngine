@@ -359,10 +359,18 @@ void UI::UIInterface::endMenu()
 }
 
 
-void UI::UIInterface::beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen )
+void UI::UIInterface::beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen, bool istransparent)
 {
+	ImGuiWindowFlags flags = 0;
+	if (istransparent)
+	{
+		flags |= ImGuiWindowFlags_NoBackground;
+		flags |= ImGuiWindowFlags_NoTitleBar;
+		flags |= ImGuiWindowFlags_NoResize;
+		flags |= ImGuiWindowFlags_NoInputs;
+	}
 	ImGui::SetNextWindowSize({ width, height }, ImGuiCond_FirstUseEver);
-	ImGui::Begin(windowTitle.c_str(), isOpen, NULL);
+	ImGui::Begin(windowTitle.c_str(), isOpen, flags);
 }
 
 void UI::UIInterface::EndWindow()
@@ -434,6 +442,11 @@ bool UI::UIInterface::addSelectable(const std::string& label, bool selected)
 	return(ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns));
 }
 
+bool UI::UIInterface::addSelectable(const std::string& label, bool selected, float sizeX, float sizeY)
+{
+	return(ImGui::Selectable(label.c_str(), selected, ImGuiSelectableFlags_SpanAllColumns, { sizeX, sizeY }));
+}
+
 bool UI::UIInterface::beginPopupContextItem(const std::string& name)
 {
 	return(ImGui::BeginPopupContextItem(name.c_str()));//need to close this with endPopup
@@ -499,4 +512,60 @@ glm::vec2 UI::UIInterface::getCursorPos()
 	ImVec2 screenPos = ImGui::GetCursorScreenPos();
 	glm::vec2 output = { screenPos.x, screenPos.y };
 	return(output);
+}
+
+
+void UI::UIInterface::sameLine(float offset, float spacing)
+{
+	ImGui::SameLine(offset, spacing);
+}
+
+//void UI::UIInterface::drawGrid(std::vector<std::pair<std::string,glm::vec4>> elements, std::vector<bool> selected, int rows, int cols)
+//{
+//	int x = 0, y = 0;
+//	for (auto element : elements)
+//	{
+//		ImVec2 alignment = ImVec2((float)x / 2.0f, (float)y / 2.0f);
+//		ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, alignment);
+//		ImVec4 color = { elements[y*rows + x].second.r, elements[y*rows + x].second.g, elements[y*rows + x].second.b, elements[y*rows + x].second.a };
+//		ImGui::PushStyleColor(ImGuiCol_FrameBg, color);
+//		if (x < cols)
+//		{
+//			ImGui::SameLine();
+//		}
+//		else
+//		{
+//			x = 0;
+//			y++;
+//		}
+//		ImGui::Selectable(elements[y*rows + x].first.c_str(), false, ImGuiSelectableFlags_None, ImVec2(80, 80));
+//		ImGui::PopStyleColor();
+//		ImGui::PopStyleVar();
+//		x++;
+//	}
+//}
+
+void UI::UIInterface::drawGrid(std::vector<std::pair<std::string,glm::vec4>> elements, std::vector<bool> selected, int rows, int cols)
+{
+	int x = 0, y = 0;
+	ImGuiIO& io = ImGui::GetIO();
+	ImTextureID sampleImg = io.Fonts->TexID;//just using sample img font from imgui_demo
+	float imgWidth = (float)io.Fonts->TexWidth;
+	float imgHeight = (float)io.Fonts->TexHeight;
+	for (auto element : elements)
+	{
+		ImVec4 color = { elements[y*cols + x].second.r, elements[y*cols + x].second.g, elements[y*cols + x].second.b, elements[y*cols + x].second.a };
+		if (x < cols)
+		{
+			ImGui::SameLine();
+		}
+		else
+		{
+			x = 0;
+			y++;
+		}
+
+		ImGui::ImageButton(sampleImg, { 32.0f, 32.0f }, { 0, 0 }, { 32.0f / imgWidth, 32.0f / imgHeight }, -1, color, color);
+		x++;
+	}
 }

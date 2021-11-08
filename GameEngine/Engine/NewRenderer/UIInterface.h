@@ -111,7 +111,7 @@ namespace UI
 		bool beginMenu(const std::string& menuName);
 		bool addMenuItem(const std::string& menuItem, bool* clickedOn);
 		void endMenu();
-		void beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen = NULL);
+		void beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen = NULL, bool isTransparent = false);
 		void EndWindow();
 		void addText(const std::string& text);
 		bool addInput(const std::string& defaulText, std::string* input);
@@ -123,7 +123,9 @@ namespace UI
 		void makeColumns(const std::string& tableName, int numCols);
 		void addSeperator();
 		void nextColumn();
+		void sameLine(float offset, float spacing);
 		bool addSelectable(const std::string& label, bool selected);
+		bool addSelectable(const std::string& label, bool selected, float sizeX, float sizeY);
 		bool beginPopupContextItem(const std::string& name);
 		bool beginMainMenuBar();
 		void endMainMenuBar();
@@ -131,6 +133,7 @@ namespace UI
 		bool addInputInt(std::string text, int& output, int step);
 		bool addSlider(const std::string& text, int& input, int start, int end);
 		void addTextToTransparentBackground(const std::string& text, glm::vec2 pos, const glm::vec4& color, float scale);
+		void drawGrid(std::vector<std::pair<std::string, glm::vec4>> elements, std::vector<bool> selected, int rows, int cols);
 		bool isMouseOverUI();
 		glm::vec2 getCursorPos();//Get cursor position using Imgui api
 

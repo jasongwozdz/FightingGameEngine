@@ -12,6 +12,8 @@ public:
 		descriptorPool_(descriptorPool)
 	{}//In derived classes initalize pipelines, descriptorSets, textures, etc...
 
+	virtual ~RenderSubsystemInterface() = default;
+
 	virtual void renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex) = 0; //called by main renderer every frame
 protected:
 	VkDevice& logicalDevice_;

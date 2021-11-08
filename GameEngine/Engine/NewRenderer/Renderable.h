@@ -35,7 +35,7 @@ enum PipelineTypes
 class ENGINE_API Renderable
 {
 public:
-	Renderable(std::vector<Vertex> vertex, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName);
+	Renderable(std::vector<Vertex> vertex, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName, bool render = false);
 
 	Renderable(Renderable&& other);
 
@@ -55,6 +55,7 @@ public:
 		delete_ = other.delete_;
 		isLine_ = other.isLine_;
 		ubo_ = other.ubo_;
+		render_ = other.render_;
 		vertexBuffer_ = other.vertexBuffer_;
 		other.vertexBuffer_ = VK_NULL_HANDLE;
 		vertexMem_ = other.vertexMem_;
@@ -87,6 +88,7 @@ public:
 
 	Renderable& operator=(Renderable const& other)
 	{
+		render_ = other.render_;
 		depthEnabled_ = other.depthEnabled_;
 		uploaded_ = other.uploaded_;
 		delete_ = other.delete_;
@@ -128,7 +130,7 @@ public:
 	bool uploaded_;
 	bool delete_;
 	bool isLine_ = false;
-	bool render_ = true;
+	bool render_ = false;
 
 	VkDevice logicalDevice_;
 	VmaAllocator allocator_;

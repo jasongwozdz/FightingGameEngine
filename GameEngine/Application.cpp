@@ -78,7 +78,7 @@ void Application::run()
 	while (!glfwWindowShouldClose(window_->getGLFWWindow()))
 	{
 		endTime = getCurrentTime();
-		deltaTime = static_cast<float>(endTime - start);
+		deltaTime = static_cast<float>(endTime - start);//get time in milliseconds
 		if (deltaTime >= 1000 / 144)
 		{
 			start = endTime;

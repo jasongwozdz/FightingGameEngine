@@ -7,7 +7,9 @@
 #include "FightingGame/FighterFactory.h"
 #include "FightingGame/FighterCamera.h"
 #include "FightingGame/GameStateManager.h"
+#include "FightingGame/AppStates/AppState.h"
 
+class CharacterSelectAppState;
 
 class GameBase : public Application
 {
@@ -17,13 +19,13 @@ public:
 	virtual void onUpdate(float deltaTime);
 	virtual void onStartup();
 private:
-	void initScene();
 	void onEvent(Events::Event& e);
-	void handleMouseClick(Events::MousePressedEvent& e);
 	void handleKeyButtonDown(Events::KeyPressedEvent& e);
-	void generateArenaBackground();
 
 	const std::string& FOLDER_LOCATION = "../FighterFiles/";//where .fganim files are saved by fighterCreatorTool
+
+	AppState* currentAppState_;
+	CharacterSelectAppState* characterSelectAppState_;
 
 	BaseCamera* camera_;
 	CameraController* cameraController_;

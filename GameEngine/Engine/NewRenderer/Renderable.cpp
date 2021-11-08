@@ -1,7 +1,11 @@
 #include "Renderable.h"
 
-Renderable::Renderable(std::vector<Vertex> vertices, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName) :
-	vertices_(vertices), indices_(indices), depthEnabled_(depthEnabled), entityName_(entityName)
+Renderable::Renderable(std::vector<Vertex> vertices, std::vector<uint32_t> indices, bool depthEnabled, std::string entityName, bool render) :
+	vertices_(vertices),
+	indices_(indices),
+	depthEnabled_(depthEnabled),
+	entityName_(entityName),
+	render_(render)
 {
 	uploaded_ = false;
 	delete_ = false;
@@ -29,7 +33,6 @@ Renderable::Renderable(Renderable&& other) :
 	logicalDevice_(other.logicalDevice_),
 	isLine_(other.isLine_)
 {
-	std::cout << "JASON: moved" << std::endl;
 	other.vertexBuffer_ = nullptr;
 	other.vertexMem_ = nullptr;
 	other.indexBuffer_ = nullptr;

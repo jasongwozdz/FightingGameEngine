@@ -31,7 +31,7 @@ namespace Input
 class InputHandler
 {
 public:
-	InputHandler() = default;
+	InputHandler(Input::Side side = Input::Side::leftSide);
 
 	void handleInputPressed(Events::KeyPressedEvent& e);
 	void handleInputReleased(Events::KeyReleasedEvent& e);

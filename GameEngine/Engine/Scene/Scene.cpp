@@ -71,7 +71,7 @@ void Scene::update(float deltaTime)
 		}
 
 		auto animator = registry_.try_get<Animator>(entity); 
-		if (animator)
+		if (animator && mesh.render_)
 		{
 			animator->update(deltaTime, mesh);
 		}
@@ -103,7 +103,9 @@ Entity* Scene::addEntity(std::string name)
 int Scene::addCamera(BaseCamera* camera)
 {
 	cameras_.push_back(camera);
-	return cameras_.size() - 1;
+	int cameraIndex = cameras_.size() - 1;
+	camera->cameraIndex_ = cameraIndex;
+	return cameraIndex;
 }
 
 void Scene::setCamera(int index)
