@@ -200,16 +200,28 @@ void Animator::update(float deltaTime, Renderable& renderable)
 		//std::cout << "DeltaTime " << deltaTime << std::endl;
 
 		if (clip.isLooping_)
+		{
 			localTime_ = fmod(((localTime_)), clip.durationInSeconds_);
+		}
 		else
+		{
 			localTime_ = std::clamp(((localTime_)), 0.0f, clip.durationInSeconds_);
+		}
+
+
+		//int index = currentFrameIndex_;
+		//while (clip.positions_[2][index + 1].time_ < localTime_)
+		//{
+		//	index++;
+		//	index %= (clip.frameCount_-1);
+		//}
+		//currentFrameIndex_ = index;
 
 		for (unsigned int i = 0; i < clip.frameCount_-1; i++)
 		{
-			if (clip.positions_[2][i + 1].time_ > localTime_)
+			if (clip.positions_[2][i + 1].time_ >= localTime_)
 			{
 				currentFrameIndex_ = i;
-				//lastIndex_ = (frameIndex) % (clip.positions_[2].size()-3);
 				break;
 			}
 		}

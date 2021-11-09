@@ -19,6 +19,7 @@ enum SkyboxFaces
 	NUMFACES
 };
 
+struct TextureReturnVals;
 
 class SkyBoxRenderSubsystem : public RenderSubsystemInterface
 {
@@ -35,6 +36,7 @@ private:
 	void createDescriptors();
 	void createPipeline();
 	void createBuffers();
+	void createTextureResource(TextureReturnVals* textureVals);
 	int getStringIndex(const std::string& filename);
 
 private:
@@ -55,6 +57,6 @@ private:
 	const std::string VERT_SHADER_ = "";
 	const std::string FRAG_SHADER_ = "";
 	std::string skyboxTexturePath_ = "";
-	struct TextureReturnVals* textureFaces;
+	std::vector<struct TextureReturnVals> textureFaces;
 };
 

@@ -28,7 +28,7 @@ BaseFighterState* AttackingFighterState::handleMovementInput(Fighter* fighter)
 {
 	glm::vec2 currentMovementInput = fighter->inputHandler_.currentMovementInput_;
 	//once the atack is finished set the new state
-	if (currentAttack_->currentFrame == currentAttack_->getTotalFrames())
+	if (currentAttack_->currentFrame >= currentAttack_->getTotalFrames())
 	{
 		currentAttack_->handled_ = false;
 		if (currentMovementInput.x > 0 && currentMovementInput.y == 0)

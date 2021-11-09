@@ -6,9 +6,12 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	inputHandlerLeft_(inputLeft),
 	inputHandlerRight_(inputRight)
 {
+	inputHandlerLeft_->clearInputQueue();
+	inputHandlerRight_->clearInputQueue();
 	fighterFactory_ = new FighterFactory(*scene_);
 	initScene(fighter1, fighter2);
 	gameStateManager_ = new GameStateManager(fighter_, fighter2_, debugDrawManager, arena_);
+	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 }
 
 FightingAppState::~FightingAppState()
@@ -25,13 +28,13 @@ FightingAppState::~FightingAppState()
 
 void FightingAppState::enterState()
 {
+	//update(0);
 }
 
 void FightingAppState::initScene(std::string fighterFilePath1, std::string fighterFilePath2)
 {
 	const glm::vec3 STARTING_POSITION_RIGHT = { 0.0f, 5.0f, -1.75f };
 	const glm::vec3 STARTING_POSITION_LEFT =  {0.0f, -5.0f, -1.75f};
-	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 
 	fighter_ = fighterFactory_->createFighter(fighterFilePath1, *inputHandlerLeft_);
 	fighter_->setPosition(STARTING_POSITION_RIGHT);
@@ -108,6 +111,7 @@ AppState* FightingAppState::update(float deltaTime)
 {
 	Transform& t = fighter_->entity_->getComponent<Transform>();
 	Transform& t2 = fighter2_->entity_->getComponent<Transform>();
+
 	
 	if (fighter_)
 		fighter_->onUpdate(deltaTime);

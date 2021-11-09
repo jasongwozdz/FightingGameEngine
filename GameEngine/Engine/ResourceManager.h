@@ -1,5 +1,5 @@
 #pragma once
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -144,7 +144,7 @@ public:
 
 	static glm::mat4 aiMatToGlmMat(aiMatrix4x4& a);
 	
-	std::map<std::string, uintptr_t> m_resourceRegistry;
+	std::unordered_map<std::string, uintptr_t> m_resourceRegistry;
 
 	ModelReturnVals& loadObjFile(const std::string& filePath);
 

@@ -18,11 +18,12 @@ namespace ShaderUtils
 SkyBoxRenderSubsystem::SkyBoxRenderSubsystem(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
 	RenderSubsystemInterface(logicalDevice, renderPass, allocator, descriptorPool)
 {
-	textureFaces = new TextureReturnVals[6];
+	textureFaces = std::vector<TextureReturnVals>(6);
 	//createTextureResources(skyboxTexturePath_);
 	//createDescriptors();
 	//createPipeline();
 	//createBuffers();
+	//createImageResources();
 
 	//VkDescriptorSetLayoutBinding storageBufferLayoutBinding{};
 	//storageBufferLayoutBinding.binding = 0;
@@ -34,7 +35,6 @@ SkyBoxRenderSubsystem::SkyBoxRenderSubsystem(VkDevice& logicalDevice, VkRenderPa
 
 SkyBoxRenderSubsystem::~SkyBoxRenderSubsystem()
 {
-	delete[] textureFaces;
 }
 
 void SkyBoxRenderSubsystem::renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex)
@@ -100,11 +100,15 @@ void SkyBoxRenderSubsystem::createBuffers()
 
 bool SkyBoxRenderSubsystem::createTextureResources()
 {
-
 	return true;
 }
 
 void SkyBoxRenderSubsystem::createDescriptors()
+{
+
+}
+
+void SkyBoxRenderSubsystem::createTextureResource(TextureReturnVals* textureVals)
 {
 
 }
@@ -133,14 +137,20 @@ int SkyBoxRenderSubsystem::getStringIndex(const std::string& filename)
 	}
 }
 
+
+
 bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)//path to folder that includes skybox all sides of sky box
 {
 	//https://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
 	ResourceManager& resourceManager = ResourceManager::getSingleton();
 
+	int count = 0;
 	for (const auto & entry : std::filesystem::directory_iterator(path))
 	{
-		textureFaces[getStringIndex(getFileName(entry.path().string()))] = resourceManager.loadTextureFile(entry.path().string());
+		TextureReturnVals vals = resourceManager.loadTextureFile(entry.path().string());
+		createTextureResource(&vals);
+		//if (count == 2) return true;
+		//textureFaces[getStringIndex(getFileName(entry.path().string()))] = resourceManager.loadTextureFile(entry.path().string());
 	}
 	
 	createTextureResources();
