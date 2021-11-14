@@ -139,6 +139,22 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 	sample.positions_.resize(bones.boneInfo_.size());
 	sample.rotations_.resize(bones.boneInfo_.size());
 	sample.scale_.resize(bones.boneInfo_.size());
+
+	//find first channel that has keyframes and extract the timing for each keyframe
+	for (int i = 0; i < numChannels; i++)
+	{
+		aiNodeAnim* currentNode = animationNodes[i];
+		if (currentNode->mNumPositionKeys > 0)
+		{
+			for (int j = 0; j < currentNode->mNumPositionKeys; j++)
+			{
+				float time = currentNode->mPositionKeys[j].mTime/sample.framesPerSecond_;
+				sample.times_.push_back(time);
+			}
+			break;
+		}
+	}
+
 	for (int i = 0; i < numChannels; i++)
 	{
 		aiNodeAnim* currentNode = animationNodes[i];
@@ -154,8 +170,7 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 		for (int j = 0; j < currentNode->mNumPositionKeys; j++)
 		{
 			glm::vec3 pos = glm::make_vec3(&currentNode->mPositionKeys[j].mValue.x);
-			float time = currentNode->mPositionKeys[j].mTime/sample.framesPerSecond_;
-			sample.positions_[boneIndex].push_back({ time, pos });
+			sample.positions_[boneIndex].push_back(pos);
 		}
 
 		//populate rotations 
@@ -166,21 +181,19 @@ bool ResourceManager::populateAnimationClip(AnimationClip& sample, aiNodeAnim** 
 			rot.y = currentNode->mRotationKeys[j].mValue.y;
 			rot.z = currentNode->mRotationKeys[j].mValue.z;
 			rot.w = currentNode->mRotationKeys[j].mValue.w;
-			float time = currentNode->mRotationKeys[j].mTime/sample.framesPerSecond_;
-			sample.rotations_[boneIndex].push_back({ time, rot });
+			sample.rotations_[boneIndex].push_back(rot);
 		}
 
 		//populate scale 
 		for (int j = 0; j < currentNode->mNumScalingKeys; j++)
 		{
 			float scale = currentNode->mScalingKeys[j].mValue.x;
-			float time = currentNode->mRotationKeys[j].mTime/sample.framesPerSecond_;
-			sample.scale_[boneIndex].push_back({ time, scale });
+			sample.scale_[boneIndex].push_back(scale);
 		}
 
 	}
 
-	for (std::vector<KeyPosition> positions : sample.positions_)
+	for (auto positions : sample.positions_)
 	{
 		if(positions.size() > 0)
 		{

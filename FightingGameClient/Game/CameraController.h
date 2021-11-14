@@ -5,18 +5,20 @@
 class CameraController
 {
 public:
-	CameraController(BaseCamera& camera);
+	CameraController();
+	CameraController(BaseCamera* camera);
 
 	void handleKeyReleased(Events::KeyReleasedEvent& e);
 	void handleKeyPressed(Events::KeyPressedEvent& e);
 	void handleMouseMoved(Events::MouseMoveEvent& e);
-	
+
+	void setCurrentCamera(BaseCamera* camera);
 	void onUpdate(float deltaTime);
 
 	bool controllable_ = true;
 
 private:
-	BaseCamera& camera_;
+	BaseCamera* camera_;
 
 	bool forwardHeld_ = false;
 	bool backwardHeld_ = false;

@@ -16,7 +16,7 @@ struct Hitbox
 		width_(width), height_(height), pos_(pos), layer_(layer)	{}
 	float width_;
 	float height_;
-	glm::vec3 pos_; //BASED ON IF FIGHTER IS ON RIGHT SIDE.  POS IS FLIPPED IF THE FIGHTER IS ON THE LEFT.  Always assign this value assuming the right side
+	glm::vec3 pos_; 	
 	std::vector<Hitbox> children_;
 	HitboxLayer layer_ = Push;
 };

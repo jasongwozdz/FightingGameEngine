@@ -30,6 +30,7 @@ private:
 	FighterFactory* fighterFactory_;
 	GameStateManager* gameStateManager_;
 	ResourceManager* resourceManager_;
+	DebugDrawManager* debugDrawManager_;
 
 	Arena arena_;
 	Fighter* fighter_;

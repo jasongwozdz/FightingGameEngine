@@ -4,14 +4,15 @@
 FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, DebugDrawManager* debugDrawManager, InputHandler* inputLeft, InputHandler* inputRight) : 
 	scene_(Scene::getSingletonPtr()),
 	inputHandlerLeft_(inputLeft),
-	inputHandlerRight_(inputRight)
+	inputHandlerRight_(inputRight),
+	debugDrawManager_(debugDrawManager)
 {
 	inputHandlerLeft_->clearInputQueue();
 	inputHandlerRight_->clearInputQueue();
 	fighterFactory_ = new FighterFactory(*scene_);
 	initScene(fighter1, fighter2);
 	gameStateManager_ = new GameStateManager(fighter_, fighter2_, debugDrawManager, arena_);
-	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 }
 
 FightingAppState::~FightingAppState()
@@ -27,9 +28,7 @@ FightingAppState::~FightingAppState()
 }
 
 void FightingAppState::enterState()
-{
-	//update(0);
-}
+{}
 
 void FightingAppState::initScene(std::string fighterFilePath1, std::string fighterFilePath2)
 {
@@ -47,7 +46,7 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	fighterCamera_ = new FighterCamera(camera_, fighter_, fighter2_);
 
 	BaseCamera* debugCamera = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
-	cameraController_ = new CameraController(*debugCamera);
+	cameraController_ = new CameraController(debugCamera);
 
 	scene_->addCamera(camera_);
 	scene_->addCamera(debugCamera);
@@ -111,12 +110,11 @@ AppState* FightingAppState::update(float deltaTime)
 {
 	Transform& t = fighter_->entity_->getComponent<Transform>();
 	Transform& t2 = fighter2_->entity_->getComponent<Transform>();
-
 	
 	if (fighter_)
-		fighter_->onUpdate(deltaTime);
+		fighter_->onUpdate(deltaTime, debugDrawManager_);
 	if (fighter2_)
-		fighter2_->onUpdate(deltaTime);
+		fighter2_->onUpdate(deltaTime, debugDrawManager_);
 	if (fighterCamera_ && !drawDebug_)
 		fighterCamera_->onUpdate(deltaTime);
 	if (cameraController_)

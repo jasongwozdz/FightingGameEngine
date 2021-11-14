@@ -73,8 +73,8 @@ void Application::run()
 {
 	double endTime = getCurrentTime();
 	double deltaTime = 0;
-	onStartup();
 	double start = 0;
+	onStartup();
 	while (!glfwWindowShouldClose(window_->getGLFWWindow()))
 	{
 		endTime = getCurrentTime();

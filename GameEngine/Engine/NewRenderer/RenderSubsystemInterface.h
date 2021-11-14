@@ -2,14 +2,17 @@
 #include <vulkan/vulkan.h>
 #include "../libs/VulkanMemoryAllocator/vk_mem_alloc.h"
 
+class VkRenderer;
+
 class RenderSubsystemInterface
 {
 public:
-	RenderSubsystemInterface(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
+	RenderSubsystemInterface(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool, VkRenderer& renderer) :
 		logicalDevice_(logicalDevice),
 		renderPass_(renderPass),
 		allocator_(allocator),
-		descriptorPool_(descriptorPool)
+		descriptorPool_(descriptorPool),
+		renderer_(renderer)
 	{}//In derived classes initalize pipelines, descriptorSets, textures, etc...
 
 	virtual ~RenderSubsystemInterface() = default;
@@ -20,4 +23,5 @@ protected:
 	VkRenderPass& renderPass_;
 	VmaAllocator& allocator_;
 	VkDescriptorPool& descriptorPool_;
+	VkRenderer& renderer_;
 };

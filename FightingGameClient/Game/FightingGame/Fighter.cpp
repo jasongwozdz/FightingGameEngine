@@ -9,6 +9,7 @@
 #include "FighterStates/CrouchingFighterState.h"
 #include "FighterStates/BlockingFighterState.h"
 #include "FighterStates/JumpingAttackFighterState.h"
+#include "DebugDrawManager.h"
 
 Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, FighterSide side) : entity_(entity), inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData), standingAttacks_(attacks)
 {
@@ -138,7 +139,7 @@ void Fighter::handleStateTransition(BaseFighterState* transitionToState)
 	}
 }
 
-void Fighter::onUpdate(float delta)
+void Fighter::onUpdate(float delta, DebugDrawManager* debugDrawManager)
 {
 	deltaTime_ = delta * .001;//convert to seconds
 	handleStateTransition(newState_->handleMovementInput(this));
@@ -146,6 +147,17 @@ void Fighter::onUpdate(float delta)
 	handleStateTransition(newState_->update(this));
 
 	inputHandler_.updateInputQueue(deltaTime_);
+
+	Transform& transform = entity_->getComponent<Transform>();
+	glm::vec3 upPos = transform.pos_ + transform.up();
+	glm::vec3 rightPos = transform.pos_ + transform.right();
+	glm::vec3 forwardPos = transform.pos_ + transform.forward();
+
+	glm::vec3 lineStart = transform.pos_;
+	debugDrawManager->addLine(lineStart, upPos, { 255, 0, 0 });
+	debugDrawManager->addLine(lineStart, rightPos, { 0, 255, 0 });
+	debugDrawManager->addLine(lineStart, forwardPos, { 0, 0, 255 });
+
 }
 
 bool Fighter::onHit(Attack& attack)

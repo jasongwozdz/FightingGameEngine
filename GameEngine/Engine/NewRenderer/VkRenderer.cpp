@@ -754,10 +754,7 @@ void VkRenderer::initPipelines()
 		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
 		layoutInfo.pBindings = bindings.data();
 
-		VkDescriptorSetLayout descriptorLayout;
-		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayout));
-
-		descriptorLayouts_[PipelineTypes::BASIC_PIPELINE] = descriptorLayout;
+		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::BASIC_PIPELINE]));
 
 		std::vector<char> vertexShaderCode = readShaderFile("./shaders/texturedMeshVert.spv");
 		std::vector<char> fragmentShaderCode = readShaderFile("./shaders/texturedMeshFrag.spv");
@@ -779,7 +776,7 @@ void VkRenderer::initPipelines()
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
-		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayout, std::vector<VkPushConstantRange>(), true, true);
+		PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::BASIC_PIPELINE], std::vector<VkPushConstantRange>(), true, true);
 
 		pipelines_[PipelineTypes::BASIC_PIPELINE] = r;
 	}
@@ -1159,6 +1156,98 @@ void VkRenderer::createTextureResources(Renderable& mesh, Textured& texture)
 	VK_CHECK(vkCreateSampler(logicalDevice_, &samplerInfo, nullptr, &mesh.textureResources_.sampler_));
 
 	vmaDestroyBuffer(allocator_, stagingBuffer.buffer_, stagingBuffer.mem_);
+}
+
+TextureResources VkRenderer::createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixels, VkImageCreateInfo& textureInfo)
+{
+	TextureResources ret{};
+
+	VmaAllocationCreateInfo allocInfo = {};
+	allocInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+	vmaCreateImage(allocator_, &textureInfo, &allocInfo, &ret.image_.image_, &ret.image_.mem_, nullptr);
+
+	VmaAllocationCreateInfo vmaInfo{};
+	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	int bytesPerPixel = 4;
+	VkDeviceSize imageSize = textureWidth * textureHeight * bytesPerPixel * 6;
+
+	VkBufferCreateInfo bufferInfo{};
+	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferInfo.pNext = nullptr;
+	bufferInfo.size = imageSize;
+	bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+	VulkanBuffer stagingBuffer;
+
+	vmaCreateBuffer(allocator_, &bufferInfo, &vmaInfo, &stagingBuffer.buffer_, &stagingBuffer.mem_, nullptr);
+
+	void* data;
+	vmaMapMemory(allocator_, stagingBuffer.mem_, &data);
+	memcpy(data, pixels.data(), imageSize);
+	vmaUnmapMemory(allocator_, stagingBuffer.mem_);
+
+	//transition image layout
+	uploadGraphicsCommand([&](VkCommandBuffer cmd) {
+		VkImageSubresourceRange range;
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseMipLevel = 0;
+		range.levelCount = 1;
+		range.baseArrayLayer = 0;
+		range.layerCount = textureInfo.arrayLayers;
+
+		VkImageMemoryBarrier imageBarrier_toTransfer = {};
+		imageBarrier_toTransfer.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+		imageBarrier_toTransfer.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageBarrier_toTransfer.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		imageBarrier_toTransfer.image = ret.image_.image_;
+		imageBarrier_toTransfer.subresourceRange = range;
+
+		imageBarrier_toTransfer.srcAccessMask = 0;
+		imageBarrier_toTransfer.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		//barrier the image into the transfer-receive layout
+		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier_toTransfer);
+
+		std::vector<VkBufferImageCopy> bufferCopyRegions;
+		//now copy buffer image data into the VkImage
+		for (int face = 0; face < textureInfo.arrayLayers; face++)
+		{
+			VkBufferImageCopy copyRegion = {};
+			copyRegion.bufferOffset = offset * face;
+			copyRegion.bufferRowLength = 0;
+			copyRegion.bufferImageHeight = 0;
+			copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			copyRegion.imageSubresource.mipLevel = 0;
+			copyRegion.imageSubresource.baseArrayLayer = face;
+			copyRegion.imageSubresource.layerCount = 1;
+			copyRegion.imageExtent = textureInfo.extent;
+			bufferCopyRegions.push_back(copyRegion);
+		}
+
+		vkCmdCopyBufferToImage(cmd, stagingBuffer.buffer_, ret.image_.image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(bufferCopyRegions.size()), bufferCopyRegions.data());
+
+		//transition the image back into shader readable
+		VkImageMemoryBarrier toReadable = imageBarrier_toTransfer;
+		toReadable.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+		toReadable.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		toReadable.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		toReadable.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		//barrier the image into the shader readable layout
+		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
+	});
+
+	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, ret.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
+	imageView.subresourceRange.layerCount = textureInfo.arrayLayers;
+	imageView.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+
+	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &ret.view_)); //needs to be deleted
+
+	return ret;
 }
 
 void VkRenderer::uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func)

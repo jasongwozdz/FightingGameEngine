@@ -67,3 +67,36 @@ glm::mat4 Transform::calculateTransform()
 	}
 	return finalTransform_;
 }
+
+glm::vec3 Transform::right()
+{
+	glm::vec3 rightVec{};
+	for (int i = 0; i < 3; i++)
+	{
+		rightVec[i] = finalTransform_[0][i];
+	}
+	rightVec = glm::normalize(rightVec);
+	return rightVec;
+}
+
+glm::vec3 Transform::up()
+{
+	glm::vec3 upVec{};
+	for (int i = 0; i < 3; i++)
+	{
+		upVec[i] = finalTransform_[1][i];
+	}
+	upVec = glm::normalize(upVec);
+	return upVec;
+}
+
+glm::vec3 Transform::forward()
+{
+	glm::vec3 forwardVec{};
+	for (int i = 0; i < 3; i++)
+	{
+		forwardVec[i] = finalTransform_[2][i];
+	}
+	forwardVec = glm::normalize(forwardVec);
+	return forwardVec;
+}

@@ -8,8 +8,7 @@
 #include "FighterStates/BaseFighterState.h"
 
 
-//Hitbox structure used for all differrent types of hitboxs(hurtboxes, collisions, etc..) 
-//Gamestate manager should be handling all collision detection.
+class DebugDrawManager;
 
 typedef uint8_t InputKey;
 
@@ -63,7 +62,7 @@ public:
 
 	~Fighter();
 
-	void onUpdate(float delta);
+	void onUpdate(float delta, DebugDrawManager* debugManager_);
 
 	void setPosition(glm::vec3 pos);
 

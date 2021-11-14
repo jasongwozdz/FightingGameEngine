@@ -12,22 +12,13 @@
 
 void GameBase::onStartup()
 {
-	//menuState = new MenueState();
-	//CharacterSelect = new CharacterSelect();
-	//loadingState = new LoadingState();
-	
-	//currentGameState = menuState;
 
 	inputHandler_ = new InputHandler();
 	inputHandlerRight_ = new InputHandler(Input::Side::rightSide);
+	cameraController_ = new CameraController();
 	
 	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1.fgAnim", "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\fighter2.fgAnim"}, inputHandler_, inputHandlerRight_, debugManager_);
 	currentAppState_ = AppState::transitionAppState(characterSelectAppState_);
-
-	//fighterFactory_ = new FighterFactory(*scene_);
-	//initScene();
-	//gameStateManager_ = new GameStateManager(fighter_, fighter2_, debugManager_, arena_);
-
 	addEventCallback(std::bind(&GameBase::onEvent, this, std::placeholders::_1));
 }
 
@@ -36,6 +27,7 @@ GameBase::~GameBase()
 	delete inputHandler_;
 	delete inputHandlerRight_;
 	delete characterSelectAppState_;
+	delete cameraController_;
 }
 
 
@@ -47,6 +39,9 @@ void GameBase::handleKeyButtonDown(Events::KeyPressedEvent& e)
 		cursor_ = !cursor_;
 		setCursor(cursor_);
 		//cameraController_->controllable_ = !cursor_;
+		break;
+	case 256:
+		cameraController_->setCurrentCamera(scene_->getCurrentCamera());
 		break;
 	}
 }
@@ -75,6 +70,10 @@ void GameBase::onUpdate(float deltaTime)
 	if ((newAppState = currentAppState_->update(deltaTime)) != nullptr)
 	{
 		currentAppState_ = AppState::transitionAppState(newAppState);
+	}
+	if (cameraController_)
+	{
+		cameraController_->onUpdate(deltaTime);
 	}
 	
 

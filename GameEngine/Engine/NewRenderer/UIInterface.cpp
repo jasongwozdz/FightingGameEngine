@@ -545,11 +545,11 @@ void UI::UIInterface::sameLine(float offset, float spacing)
 //	}
 //}
 
-void UI::UIInterface::drawGrid(std::vector<std::pair<std::string,glm::vec4>> elements, std::vector<bool> selected, int rows, int cols)
+void UI::UIInterface::drawGrid(std::vector<std::pair<std::string,glm::vec4>> elements, std::vector<bool> selected, int rows, int cols, int width, int height)
 {
 	int x = 0, y = 0;
 	ImGuiIO& io = ImGui::GetIO();
-	ImTextureID sampleImg = io.Fonts->TexID;//just using sample img font from imgui_demo
+	ImTextureID sampleImg = io.Fonts->TexID;//just using sample img font from imgui_demo need to implement actual fighter images
 	float imgWidth = (float)io.Fonts->TexWidth;
 	float imgHeight = (float)io.Fonts->TexHeight;
 	for (auto element : elements)
@@ -568,4 +568,10 @@ void UI::UIInterface::drawGrid(std::vector<std::pair<std::string,glm::vec4>> ele
 		ImGui::ImageButton(sampleImg, { 32.0f, 32.0f }, { 0, 0 }, { 32.0f / imgWidth, 32.0f / imgHeight }, -1, color, color);
 		x++;
 	}
+}
+
+void UI::UIInterface::centerNextWindow()
+{
+	ImVec2 center(ImGui::GetIO().DisplaySize.x * 0.5f, ImGui::GetIO().DisplaySize.y * 0.5f);
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 }

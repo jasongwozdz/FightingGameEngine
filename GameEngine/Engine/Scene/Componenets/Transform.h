@@ -19,6 +19,12 @@ public:
 
 	void setScale(float scale);
 
+	glm::vec3 right();
+
+	glm::vec3 up();
+
+	glm::vec3 forward();
+
 	void drawDebugGui();
 
 	glm::mat4 calculateTransform();
@@ -36,8 +42,6 @@ public:
 
 	glm::quat rot_ = { 0.0f, 0.0f, 0.0f, 1.0f };
 	glm::quat oldRot_ = { 0.0f, 0.0f, 0.0f, 0.0f };
-
-	glm::vec3 forwardDirection_ = { 0.0f, 0.0f, 0.0f };
 
 	Entity* parent_ = nullptr;
 

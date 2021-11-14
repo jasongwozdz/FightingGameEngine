@@ -83,10 +83,12 @@ private:
 
 	void drawHitboxDebug();
 	
-	void drawHitbox(const glm::vec3& fighterPos, FighterSide side, const Hitbox& hitbox, const glm::vec3& color);//helper method for drawHitboxDebug
+	void drawHitbox(const glm::vec3& fighterPos, const Hitbox& hitbox, const glm::vec3& color);//helper method for drawHitboxDebug
 
 	//Helper method that just checks if 2 hitboxes are colliding
 	bool areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2);
+
+	bool areHitboxesColliding(const Transform& transform1, const Hitbox& hitbox1, const Transform& transform2, const Hitbox& hitbox2);
 private:
 	UI::UIInterface& ui_;
 	DebugDrawManager* debugManager_;

@@ -267,7 +267,7 @@ void GameStateManager::updateAttacks()
 	}
 }
 
-void GameStateManager::drawHitbox(const glm::vec3& fighterPos, FighterSide side, const Hitbox& hitbox, const glm::vec3& color)
+void GameStateManager::drawHitbox(const glm::vec3& fighterPos, const Hitbox& hitbox, const glm::vec3& color)
 {
 	glm::vec3 newPos = hitbox.pos_;
 	glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
@@ -282,15 +282,15 @@ void GameStateManager::drawHitboxDebug()
 		glm::vec3 fighterPos = currentFighter->getPosition();
 		for (const Hitbox& pushbox : currentFighter->currentPushBoxes_)
 		{
-			drawHitbox(fighterPos, currentFighter->side_, pushbox, { 0, 255, 0 });
+			drawHitbox(fighterPos, pushbox, { 0, 255, 0 });
 		}
 		for (const Hitbox& pushbox : currentFighter->currentHurtboxes_)
 		{
-			drawHitbox(fighterPos, currentFighter->side_, pushbox, { 255, 0, 0 });
+			drawHitbox(fighterPos, pushbox, { 255, 0, 0 });
 		}
 		for (const Hitbox& pushbox : currentFighter->currentHitboxes_)
 		{
-			drawHitbox(fighterPos, currentFighter->side_, pushbox, {  255, 255, 0 });
+			drawHitbox(fighterPos, pushbox, {  255, 255, 0 });
 		}
 	}
 }

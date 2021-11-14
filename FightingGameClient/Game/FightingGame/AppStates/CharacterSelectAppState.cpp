@@ -17,6 +17,7 @@ CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighte
 	ui_(UI::UIInterface::getSingletonPtr()),
 	debugManager_(debugDrawManager)
 {
+	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 	inputs_[LEFT_SIDE] = leftSideInputs;
 	inputs_[RIGHT_SIDE] = rightSideInputs;
 	selectedFighters_[LEFT_SIDE] = fighterFiles_[0];
@@ -79,6 +80,7 @@ void CharacterSelectAppState::drawFighterSelectGrid()
 	int currPos = 1;
 	float width = EngineSettings::getSingletonPtr()->windowWidth;
 	float height = EngineSettings::getSingletonPtr()->windowHeight;
+	ui_->centerNextWindow();
 	ui_->beginWindow("A", width, height, NULL, true);
 	std::vector<std::pair<std::string, glm::vec4>> gridVals;
 	for (int i = 0; i < fighterFiles_.size();i++)
@@ -94,7 +96,9 @@ void CharacterSelectAppState::drawFighterSelectGrid()
 		}
 		gridVals.push_back({ fighterFiles_[i], color });
 	}
-	ui_->drawGrid(gridVals, {false, false, true}, 2, MAX_GRID_COLS);
+	const int GRID_WIDTH = 50;
+	const int GRID_HEIGHT = 50;
+	ui_->drawGrid(gridVals, {false, false, true}, 2, MAX_GRID_COLS, GRID_WIDTH, GRID_HEIGHT);
 	ui_->EndWindow();
 }
 

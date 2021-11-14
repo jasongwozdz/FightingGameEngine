@@ -133,8 +133,9 @@ namespace UI
 		bool addInputInt(std::string text, int& output, int step);
 		bool addSlider(const std::string& text, int& input, int start, int end);
 		void addTextToTransparentBackground(const std::string& text, glm::vec2 pos, const glm::vec4& color, float scale);
-		void drawGrid(std::vector<std::pair<std::string, glm::vec4>> elements, std::vector<bool> selected, int rows, int cols);
+		void drawGrid(std::vector<std::pair<std::string, glm::vec4>> elements, std::vector<bool> selected, int rows, int cols, int width, int height);
 		bool isMouseOverUI();
+		void centerNextWindow();
 		glm::vec2 getCursorPos();//Get cursor position using Imgui api
 
 	private:

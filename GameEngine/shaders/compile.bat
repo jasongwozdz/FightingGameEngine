@@ -10,4 +10,6 @@ C:/VulkanSDK/Bin32/glslc.exe gui2d.vert -o gui2d.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe gui2d.frag -o gui2d.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe debug.vert -o debug.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe debug.frag -o debug.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe skybox.vert -o skybox.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe skybox.frag -o skybox.frag.spv
 pause

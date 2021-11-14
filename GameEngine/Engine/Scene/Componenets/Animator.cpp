@@ -104,9 +104,9 @@ void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int f
 	if (boneStructure.boneInfo_[0].animated_)
 	{
 		globalTransform = 
-			glm::translate(glm::mat4(1.0f), clip.positions_[1][frameNumber].pos_) *
-			glm::toMat4(clip.rotations_[1][frameNumber].quat_) * 
-			glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber].scale_));
+			glm::translate(glm::mat4(1.0f), clip.positions_[1][frameNumber]) *
+			glm::toMat4(clip.rotations_[1][frameNumber]) * 
+			glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber]));
 	}
 
 	globalTransforms_.push_back(globalTransform);
@@ -118,9 +118,9 @@ void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int f
 		if (boneStructure.boneInfo_[i].animated_)
 		{
 			transform =
-				glm::translate(glm::mat4(1.0f), clip.positions_[i][frameNumber].pos_) *
-				glm::toMat4(clip.rotations_[i][frameNumber].quat_) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[i][frameNumber].scale_));
+				glm::translate(glm::mat4(1.0f), clip.positions_[i][frameNumber]) *
+				glm::toMat4(clip.rotations_[i][frameNumber]) *
+				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[i][frameNumber]));
 		}
 
 		glm::mat4 parent(1.0f);
@@ -208,18 +208,9 @@ void Animator::update(float deltaTime, Renderable& renderable)
 			localTime_ = std::clamp(((localTime_)), 0.0f, clip.durationInSeconds_);
 		}
 
-
-		//int index = currentFrameIndex_;
-		//while (clip.positions_[2][index + 1].time_ < localTime_)
-		//{
-		//	index++;
-		//	index %= (clip.frameCount_-1);
-		//}
-		//currentFrameIndex_ = index;
-
 		for (unsigned int i = 0; i < clip.frameCount_-1; i++)
 		{
-			if (clip.positions_[2][i + 1].time_ >= localTime_)
+			if (clip.times_[i] >= localTime_)
 			{
 				currentFrameIndex_ = i;
 				break;
@@ -285,28 +276,28 @@ glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& c
 	glm::mat4 rotation;
 	glm::mat4 scale;
 
-	KeyPosition startPos = clip.positions_[jointIndex][frameIndex];
-	KeyPosition endPos = clip.positions_[jointIndex][frameIndex + 1];
+	glm::vec3 startPos = clip.positions_[jointIndex][frameIndex];
+	glm::vec3 endPos = clip.positions_[jointIndex][frameIndex + 1];
 
-	KeyScale startScale = clip.scale_[jointIndex][frameIndex];
-	KeyScale endScale = clip.scale_[jointIndex][frameIndex+1];
+	float startScale = clip.scale_[jointIndex][frameIndex];
+	float endScale = clip.scale_[jointIndex][frameIndex+1];
 
-	KeyRotation startRot = clip.rotations_[jointIndex][frameIndex];
-	KeyRotation endRot = clip.rotations_[jointIndex][frameIndex+1];
+	glm::quat startRot = clip.rotations_[jointIndex][frameIndex];
+	glm::quat endRot = clip.rotations_[jointIndex][frameIndex+1];
 	
-	float normalizedTime = (localTime_ - startPos.time_) / (endPos.time_ - startPos.time_);
+	float normalizedTime = (localTime_ - clip.times_[frameIndex]) / (clip.times_[frameIndex] - clip.times_[frameIndex+1]);
 
-	float x = startPos.pos_.x + normalizedTime*(endPos.pos_.x - startPos.pos_.x);
-	float y = startPos.pos_.y + normalizedTime*(endPos.pos_.y - startPos.pos_.y);
-	float z = startPos.pos_.z + normalizedTime*(endPos.pos_.z - startPos.pos_.z);
+	float x = startPos.x + normalizedTime*(endPos.x - startPos.x);
+	float y = startPos.y + normalizedTime*(endPos.y - startPos.y);
+	float z = startPos.z + normalizedTime*(endPos.z - startPos.z);
 	pos = glm::translate(glm::mat4(1.0f),{x, y, z});
 
-	normalizedTime = (localTime_ - startScale.time_) / (endScale.time_ - startScale.time_);
-	float s = startScale.scale_ + normalizedTime*(endScale.scale_ - startScale.scale_);
+	//normalizedTime = (localTime_ - startScale.time_) / (endScale.time_ - startScale.time_);
+	float s = startScale + normalizedTime*(endScale - startScale);
 	scale = glm::scale(glm::mat4(1.0f), { s, s, s });
 
-	normalizedTime = (localTime_ - startRot.time_) / (endRot.time_ - startRot.time_);
-	glm::quat rotationQuat = glm::normalize(glm::slerp(startRot.quat_, endRot.quat_, normalizedTime));
+	//normalizedTime = (localTime_ - startRot.time_) / (endRot.time_ - startRot.time_);
+	glm::quat rotationQuat = glm::normalize(glm::slerp(startRot, endRot, normalizedTime));
 	rotation = glm::toMat4(rotationQuat);
 
 	glm::mat4 output = pos * rotation * scale;

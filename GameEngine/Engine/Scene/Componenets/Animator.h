@@ -13,32 +13,6 @@
 
 class ResourceManager;
 
-struct JointPose
-{
-	glm::quat quat_;
-	glm::vec3 pos_;
-	float scale_;
-	float time_;
-};
-
-struct KeyPosition
-{
-	float time_;
-	glm::vec3 pos_;
-};
-
-struct KeyRotation
-{
-	float time_;
-	glm::quat quat_;
-};
-
-struct KeyScale
-{
-	float time_;
-	float scale_;
-};
-
 struct AnimationClip
 {
 	std::string name_;
@@ -48,9 +22,10 @@ struct AnimationClip
 	float durationInSeconds_;
 	int frameCount_;
 	bool isLooping_ = true;
-	std::vector<std::vector<KeyPosition>> positions_;
-	std::vector<std::vector<KeyRotation>> rotations_;
-	std::vector<std::vector<KeyScale>> scale_;
+	std::vector<float> times_;
+	std::vector<std::vector<glm::vec3>> positions_;
+	std::vector<std::vector<glm::quat>> rotations_;
+	std::vector<std::vector<float>> scale_;
 };
 
 class ENGINE_API Animator

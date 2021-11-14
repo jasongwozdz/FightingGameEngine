@@ -9,6 +9,7 @@
 #include "../NewRenderer/UIInterface.h"
 #include "Renderable.h"
 #include "RenderSubsystemInterface.h"
+#include "VkTypes.h"
 
 class DebugDrawManager;
 
@@ -28,11 +29,11 @@ public:
 	void updateUniformBuffer(Renderable& mesh);
 	VkShaderModule createShaderModule(const std::vector<char>& code);
 	std::vector<char> readShaderFile(const std::string& filename);
-	void createTextureResources();
+	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
 	
 	template<class T> T* addRenderSubsystem()
 	{
-		T* renderSubsystem = new T(logicalDevice_, renderPass_, allocator_, descriptorPool_);
+		T* renderSubsystem = new T(logicalDevice_, renderPass_, allocator_, descriptorPool_, *this);
 		renderSubsystems_.push_back(renderSubsystem);
 		return renderSubsystem;
 	}

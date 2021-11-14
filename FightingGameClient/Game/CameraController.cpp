@@ -2,13 +2,17 @@
 #include <iostream>
 #include "GLFW/glfw3.h"
 
-CameraController::CameraController(BaseCamera& camera) :
+CameraController::CameraController():
+	camera_(nullptr)
+{}
+
+CameraController::CameraController(BaseCamera* camera) :
 	camera_(camera)
 {}
 
 void CameraController::handleKeyPressed(Events::KeyPressedEvent& e)
 {
-	if (controllable_)
+	if (controllable_ && camera_)
 	{
 		if (e.KeyCode == GLFW_KEY_I)
 		{
@@ -31,7 +35,7 @@ void CameraController::handleKeyPressed(Events::KeyPressedEvent& e)
 
 void CameraController::handleKeyReleased(Events::KeyReleasedEvent& e)
 {
-	if (controllable_)
+	if (controllable_ && camera_)
 	{
 		if (e.KeyCode == GLFW_KEY_I)
 		{
@@ -54,20 +58,25 @@ void CameraController::handleKeyReleased(Events::KeyReleasedEvent& e)
 
 void CameraController::handleMouseMoved(Events::MouseMoveEvent& e)
 {
-	if (controllable_)
+	if (controllable_ && camera_)
 	{
-		camera_.updateMouse({ e.mouseX, e.mouseY });
+		camera_->updateMouse({ e.mouseX, e.mouseY });
 	}
 }
 
 void CameraController::onUpdate(float deltaTime)
 {
 	if (forwardHeld_) 
-		camera_.moveForward(deltaTime);
+		camera_->moveForward(deltaTime);
 	if (backwardHeld_) 
-		camera_.moveBackward(deltaTime);
+		camera_->moveBackward(deltaTime);
 	if (strafeLeftHeld_) 
-		camera_.strafeLeft(deltaTime);
+		camera_->strafeLeft(deltaTime);
 	if (strafeRightHeld_) 
-		camera_.strafeRight(deltaTime);
+		camera_->strafeRight(deltaTime);
+}
+
+void CameraController::setCurrentCamera(BaseCamera* camera)
+{
+	camera_ = camera;
 }

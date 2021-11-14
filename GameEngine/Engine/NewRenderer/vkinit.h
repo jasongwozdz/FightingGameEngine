@@ -35,7 +35,7 @@ namespace vkinit
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info();
 
-	VkImageCreateInfo image_create_info(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent);
+	VkImageCreateInfo image_create_info(VkFormat format, VkImageUsageFlags usageFlags, VkExtent3D extent, int arrayLayers = 1, VkImageCreateFlags flags = 0);
 
 	VkImageViewCreateInfo imageview_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags);
 
