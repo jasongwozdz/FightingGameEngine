@@ -4,9 +4,9 @@
 #include <map>
 #include "../Singleton.h"
 #include "../Window.h"
-#include "../NewRenderer/Textured.h"
-#include "../NewRenderer/PipelineBuilder.h"
-#include "../NewRenderer/UIInterface.h"
+#include "../Renderer/Textured.h"
+#include "../Renderer/PipelineBuilder.h"
+#include "../Renderer/UIInterface.h"
 #include "Renderable.h"
 #include "RenderSubsystemInterface.h"
 #include "VkTypes.h"

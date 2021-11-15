@@ -1,5 +1,5 @@
 #include "Scene.h"
-#include "../NewRenderer/SkyBoxRenderSubsystem.h"
+#include "../Renderer/SkyBoxRenderSubsystem.h"
 
 template<> Scene* Singleton<Scene>::msSingleton = 0;
 

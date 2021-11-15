@@ -2,7 +2,7 @@
 #include <vector>
 #include <ctime>
 #include "glm/gtc/quaternion.hpp"
-#include "../../NewRenderer/UIInterface.h"
+#include "../../Renderer/UIInterface.h"
 #include "BoneStructure.h"
 
 #ifdef ENGINE_EXPORTS

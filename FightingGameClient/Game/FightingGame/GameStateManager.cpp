@@ -1,7 +1,7 @@
 #include <chrono>
 #include "GameStateManager.h"
 #include "EngineSettings.h"
-#include "NewRenderer/UIInterface.h"
+#include "Renderer/UIInterface.h"
 #include "Attack.h"
 #include "FighterStates/AttackingFighterState.h"
 

@@ -1,6 +1,6 @@
 #include "FighterCamera.h"
 #include <ctime>
-#include "NewRenderer/UIInterface.h"
+#include "Renderer/UIInterface.h"
 
 #define CURR_TIME std::clock()/CLOCKS_PER_SEC
 

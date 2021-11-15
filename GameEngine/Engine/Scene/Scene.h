@@ -6,10 +6,10 @@
 #include "Componenets/Transform.h"
 #include "Componenets/BoneStructure.h"
 #include "Componenets/Animator.h"
-#include "../NewRenderer/Renderable.h"
-#include "../NewRenderer/VkRenderer.h"
-#include "../NewRenderer/Textured.h"
-#include "../NewRenderer/SkyBoxRenderSubsystem.h"
+#include "../Renderer/Renderable.h"
+#include "../Renderer/VkRenderer.h"
+#include "../Renderer/Textured.h"
+#include "../Renderer/SkyBoxRenderSubsystem.h"
 
 #define MAX_DRAWN_OBJECTS 200
 

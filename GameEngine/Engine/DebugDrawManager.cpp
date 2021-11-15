@@ -1,8 +1,8 @@
 #include <math.h>
 #include <vector>
 #include <fstream>
-#include "NewRenderer/PipelineBuilder.h"
-#include "NewRenderer/ShaderUtils.h"
+#include "Renderer/PipelineBuilder.h"
+#include "Renderer/ShaderUtils.h"
 #include "DebugDrawManager.h"
 #include "ResourceManager.h"
 #include "EngineSettings.h"

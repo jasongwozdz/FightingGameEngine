@@ -1,6 +1,6 @@
 #include "CharacterSelectAppState.h"
 #include "../InputHandler.h"
-#include "NewRenderer/UIInterface.h"
+#include "Renderer/UIInterface.h"
 #include "ResourceManager.h"
 #include "Scene/Scene.h"
 #include "EngineSettings.h"

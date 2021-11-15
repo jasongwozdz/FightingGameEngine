@@ -1,6 +1,6 @@
 #pragma once
 #include "glm/glm.hpp"
-#include "../../NewRenderer/Renderable.h"
+#include "../../Renderer/Renderable.h"
 
 #include <map>
 #include <vector>

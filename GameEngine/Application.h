@@ -1,5 +1,5 @@
 #pragma once
-#include "Engine/NewRenderer/VkRenderer.h"
+#include "Engine/Renderer/VkRenderer.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/ResourceManager.h"
 #include "Engine/EngineSettings.h"

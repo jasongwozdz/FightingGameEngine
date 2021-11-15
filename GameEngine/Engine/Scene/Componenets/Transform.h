@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include "../../NewRenderer/Renderable.h"
+#include "../../Renderer/Renderable.h"
 #include "../Entity.h"
 
 #ifdef ENGINE_EXPORTS

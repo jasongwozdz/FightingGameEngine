@@ -185,15 +185,15 @@
     <ClInclude Include="Engine\libs\imgui\imstb_truetype.h" />
     <ClInclude Include="Engine\libs\vk-bootstrap\VkBootstrap.h" />
     <ClInclude Include="Engine\libs\VulkanMemoryAllocator\vk_mem_alloc.h" />
-    <ClInclude Include="Engine\NewRenderer\PipelineBuilder.h" />
-    <ClInclude Include="Engine\NewRenderer\Renderable.h" />
-    <ClInclude Include="Engine\NewRenderer\RenderSubsystemInterface.h" />
-    <ClInclude Include="Engine\NewRenderer\ShaderUtils.h" />
-    <ClInclude Include="Engine\NewRenderer\Textured.h" />
-    <ClInclude Include="Engine\NewRenderer\UIInterface.h" />
-    <ClInclude Include="Engine\NewRenderer\vkinit.h" />
-    <ClInclude Include="Engine\NewRenderer\VkRenderer.h" />
-    <ClInclude Include="Engine\NewRenderer\VkTypes.h" />
+    <ClInclude Include="Engine\Renderer\PipelineBuilder.h" />
+    <ClInclude Include="Engine\Renderer\Renderable.h" />
+    <ClInclude Include="Engine\Renderer\RenderSubsystemInterface.h" />
+    <ClInclude Include="Engine\Renderer\ShaderUtils.h" />
+    <ClInclude Include="Engine\Renderer\Textured.h" />
+    <ClInclude Include="Engine\Renderer\UIInterface.h" />
+    <ClInclude Include="Engine\Renderer\vkinit.h" />
+    <ClInclude Include="Engine\Renderer\VkRenderer.h" />
+    <ClInclude Include="Engine\Renderer\VkTypes.h" />
     <ClInclude Include="Engine\ResourceManager.h" />
     <ClInclude Include="Engine\Scene\Componenets\Animator.h" />
     <ClInclude Include="Engine\Scene\Componenets\BoneStructure.h" />
@@ -206,7 +206,7 @@
     <ClInclude Include="EntryPoint.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="Engine\NewRenderer\SkyBoxRenderSubsystem.h" />
+    <ClInclude Include="Engine\Renderer\SkyBoxRenderSubsystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
@@ -225,11 +225,11 @@
     <ClCompile Include="Engine\libs\imgui\implot\implot_demo.cpp" />
     <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
     <ClCompile Include="Engine\libs\vk-bootstrap\VkBootstrap.cpp" />
-    <ClCompile Include="Engine\NewRenderer\Renderable.cpp" />
-    <ClCompile Include="Engine\NewRenderer\Textured.cpp" />
-    <ClCompile Include="Engine\NewRenderer\UIInterface.cpp" />
-    <ClCompile Include="Engine\NewRenderer\vkinit.cpp" />
-    <ClCompile Include="Engine\NewRenderer\VkRenderer.cpp" />
+    <ClCompile Include="Engine\Renderer\Renderable.cpp" />
+    <ClCompile Include="Engine\Renderer\Textured.cpp" />
+    <ClCompile Include="Engine\Renderer\UIInterface.cpp" />
+    <ClCompile Include="Engine\Renderer\vkinit.cpp" />
+    <ClCompile Include="Engine\Renderer\VkRenderer.cpp" />
     <ClCompile Include="Engine\ResourceManager.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\Animator.cpp" />
     <ClCompile Include="Engine\Scene\Componenets\BoneStructure.cpp" />
@@ -244,7 +244,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Engine\NewRenderer\SkyBoxRenderSubsystem.cpp" />
+    <ClCompile Include="Engine\Renderer\SkyBoxRenderSubsystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />

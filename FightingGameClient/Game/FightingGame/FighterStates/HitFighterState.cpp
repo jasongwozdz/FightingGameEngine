@@ -3,7 +3,7 @@
 #include "../Attack.h"
 #include "../Fighter.h"
 #include "../GameStateManager.h"
-#include "NewRenderer/UIInterface.h"
+#include "Renderer/UIInterface.h"
 
 HitFighterState::HitFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData) :
 	BaseFighterState(animationName, hitboxData)
