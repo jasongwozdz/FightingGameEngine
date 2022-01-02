@@ -7,7 +7,6 @@
 #include "../../CameraController.h"
 #include "../InputHandler.h"
 #include "../FighterFactory.h"
-#include "../FighterCamera.h"
 #include "../GameStateManager.h"
 
 class FightingAppState :
@@ -22,9 +21,9 @@ public:
 	void generateArenaBackground();
 	void handleKeyButtonDown(Events::KeyPressedEvent& e);
 private:
-	BaseCamera* camera_;
-	CameraController* cameraController_;
-	FighterCamera* fighterCamera_;
+	//BaseCamera* camera_;
+	//CameraController* cameraController_;
+	Entity* fighterCamera_;
 	InputHandler* inputHandlerLeft_;
 	InputHandler* inputHandlerRight_;
 	FighterFactory* fighterFactory_;

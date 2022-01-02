@@ -50,15 +50,19 @@ struct RenderInfo
 	unsigned int numIndicies;
 };
 
-class ENGINE_API DebugDrawManager
+class ENGINE_API DebugDrawManager : Singleton<DebugDrawManager>
 {
 public:
 	DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool);
 	~DebugDrawManager();
+	static DebugDrawManager& getSingleton();
+	static DebugDrawManager* getSingletonPtr();
+
 	void recreateDebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VkDescriptorPool& descriptorPool);
 	//Debug pipeline Methods
-	void addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color);
+	void drawLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color);
 	void drawRect(glm::vec3 pos, glm::vec3 color, float minX, float maxX, float minY, float maxY);
+	void drawCube(glm::vec3 pos, glm::vec3 size /*L x W x H*/, glm::vec3 color);
 	void drawGrid(const glm::vec3& position, const glm::vec3& axisOfRotation, const float rotationAngle, const int width, const int height, const glm::vec3& color);
 
 	//PickerPipelipeline Methods

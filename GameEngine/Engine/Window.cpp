@@ -12,7 +12,7 @@ Window::Window()
 	windowInfo_.height = EngineSettings::getSingleton().windowHeight;
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Engine", nullptr, nullptr);
-	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetWindowUserPointer(window_, &windowInfo_);
 
 	glfwSetScrollCallback(window_, ImGui_ImplGlfw_ScrollCallback);

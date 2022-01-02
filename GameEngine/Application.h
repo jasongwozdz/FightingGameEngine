@@ -4,6 +4,7 @@
 #include "Engine/ResourceManager.h"
 #include "Engine/EngineSettings.h"
 #include "Engine/DebugDrawManager.h"
+#include "Engine/BoxCollisionManager.h"
 #include "GLFW/glfw3.h"
 
 #ifdef ENGINE_EXPORTS
@@ -12,6 +13,7 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
+#define ENGINE_EVENT_CALLBACK(Function) std::bind(&Function, this, std::placeholders::_1)
 
 class ENGINE_API Application{
 public:
@@ -30,6 +32,8 @@ public:
 	Window* window_;
 	Scene* scene_;
 	DebugDrawManager* debugManager_;
+	BoxCollisionManager* boxCollisionManager_;
+	class Input* input_;
 
 private:
 	std::vector<std::function<void(Events::Event&)>> callbacks_;

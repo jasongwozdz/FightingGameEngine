@@ -18,9 +18,6 @@
     <ClCompile Include="Game\FightingGame\Fighter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game\FightingGame\FighterCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Game\FightingGame\FighterFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -72,12 +69,18 @@
     <ClCompile Include="Game\FightingGame\AppStates\FightingAppState.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Game\FightingGame\FighterSandbox\AttackBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\FighterCameraBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\ControllableCameraBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\FightingGame\Fighter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\FightingGame\FighterCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\FighterFactory.h">
@@ -140,6 +143,15 @@
     <ClInclude Include="Game\FightingGame\AppStates\FightingAppState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Game\FightingGame\FighterSandbox\AttackBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\FighterCameraBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\ControllableCameraBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />
@@ -151,5 +163,6 @@
     <None Include="shaders\shader.vert" />
     <None Include="shaders\texturedMeshShader.frag" />
     <None Include="shaders\texturedMeshShader.vert" />
+    <None Include="Engine\Settings\KeyMap.ini" />
   </ItemGroup>
 </Project>

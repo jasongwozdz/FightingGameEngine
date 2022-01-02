@@ -21,13 +21,28 @@
 		} 	\
 	} while(0)
 
+template<> DebugDrawManager* Singleton<DebugDrawManager>::msSingleton = 0;
+
+DebugDrawManager& DebugDrawManager::getSingleton()
+{
+	assert(msSingleton); return (*msSingleton);
+}
+
+DebugDrawManager* DebugDrawManager::getSingletonPtr()
+{
+	assert(msSingleton); return msSingleton;
+
+}
+
 DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool) :
 	allocator_(allocator),
 	scene_(Scene::getSingletonPtr())
 {
+	msSingleton = this;
 	//initalize vulkan pipelines
 	//create normal debug pipeline
 	{
+
 		std::vector<char> vertexShaderCode = ShaderUtils::readShaderFile("./shaders/debug.vert.spv");
 		std::vector<char> fragmentShaderCode = ShaderUtils::readShaderFile("./shaders/debug.frag.spv");
 
@@ -335,7 +350,9 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 		for (int i = 0; i < debugPipelineInfo.drawData_.size(); i++)
 		{
 			// calculate the model view projection matrix using the  camera being used in the current scene_
-			glm::mat4 mvp = (scene_->getCurrentCamera()->projectionMatrix) * (scene_->getCurrentCamera()->getView()) * debugPipelineInfo.drawData_[i].pushConstantInfo.modelMatrix;
+			glm::mat4 view, proj;
+			scene_->calculateViewProjection(view, proj);
+			glm::mat4 mvp = proj * view * debugPipelineInfo.drawData_[i].pushConstantInfo.modelMatrix;
 
 			vkCmdPushConstants(currentBuffer, debugPipelineInfo.pipeline_->pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantInfo), &mvp);
 
@@ -378,7 +395,9 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 		for (int i = 0; i < pickerPipelineInfo.drawData_.size(); i++)
 		{
 			// calculate the model view projection matrix using the  camera being used in the current scene_
-			glm::mat4 mvp = (scene_->getCurrentCamera()->projectionMatrix) * (scene_->getCurrentCamera()->getView()) * pickerPipelineInfo.drawData_[i].pushConstantVertexInfo.modelMatrix;
+			glm::mat4 view, proj;
+			scene_->calculateViewProjection(view, proj);
+			glm::mat4 mvp = proj * view * pickerPipelineInfo.drawData_[i].pushConstantVertexInfo.modelMatrix;
 
 			//this pipeline needs to push info to both the vertex and fragment shader
 			vkCmdPushConstants(currentBuffer, pickerPipelineInfo.pipeline_->pipelineLayout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstantPickerVertexInfo), &mvp);
@@ -484,6 +503,78 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
 	pickerPipelineInfo.globalVertexOffset_ += NUM_VERTICIES;
 	pickerPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
 }
+
+void DebugDrawManager::drawCube(glm::vec3 pos, glm::vec3 size /*L x W x H*/, glm::vec3 color)
+{
+	const unsigned int NUM_INDICIES = 24;
+	const unsigned int NUM_VERTICIES = 8;
+	RenderInfo mesh;
+	mesh.numIndicies = NUM_INDICIES;
+	mesh.numVerticies = NUM_VERTICIES;
+
+	glm::vec3 p0 = {size.x/2, size.y/2, size.z/2};
+	glm::vec3 p1 = {size.x/2, size.y/2, -size.z/2};
+	glm::vec3 p2 = {size.x/2, -size.y/2, -size.z/2};
+	glm::vec3 p3 = {size.x/2, -size.y/2, size.z/2};
+
+	glm::vec3 p4 = {-size.x/2, size.y/2, size.z/2};
+	glm::vec3 p5 = {-size.x/2, size.y/2, -size.z/2};
+	glm::vec3 p6 = {-size.x/2, -size.y/2, -size.z/2};
+	glm::vec3 p7 = {-size.x/2, -size.y/2, size.z/2};
+
+	debugPipelineInfo.vertices_.push_back({ p0, color });
+	debugPipelineInfo.vertices_.push_back({ p1, color });
+	debugPipelineInfo.vertices_.push_back({ p2, color });
+	debugPipelineInfo.vertices_.push_back({ p3, color });
+	debugPipelineInfo.vertices_.push_back({ p4, color });
+	debugPipelineInfo.vertices_.push_back({ p5, color });
+	debugPipelineInfo.vertices_.push_back({ p6, color });
+	debugPipelineInfo.vertices_.push_back({ p7, color });
+
+	debugPipelineInfo.indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(4);
+	debugPipelineInfo.indicies_.push_back(0);
+	debugPipelineInfo.indicies_.push_back(3);
+
+	debugPipelineInfo.indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(5);
+	debugPipelineInfo.indicies_.push_back(1);
+	debugPipelineInfo.indicies_.push_back(2);
+
+	debugPipelineInfo.indicies_.push_back(2);
+	debugPipelineInfo.indicies_.push_back(6);
+	debugPipelineInfo.indicies_.push_back(2);
+	debugPipelineInfo.indicies_.push_back(3);
+
+	debugPipelineInfo.indicies_.push_back(3);
+	debugPipelineInfo.indicies_.push_back(7);
+
+	debugPipelineInfo.indicies_.push_back(4);
+	debugPipelineInfo.indicies_.push_back(7);
+	debugPipelineInfo.indicies_.push_back(4);
+	debugPipelineInfo.indicies_.push_back(5);
+
+	debugPipelineInfo.indicies_.push_back(5);
+	debugPipelineInfo.indicies_.push_back(6);
+
+	debugPipelineInfo.indicies_.push_back(6);
+	debugPipelineInfo.indicies_.push_back(7);
+
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, pos);
+
+	mesh.pushConstantInfo.modelMatrix = model;
+
+	debugPipelineInfo.drawData_.push_back(mesh);
+	debugPipelineInfo.vertexOffsets_.push_back(debugPipelineInfo.globalVertexOffset_);
+	debugPipelineInfo.indexOffsets_.push_back(debugPipelineInfo.globalIndexOffset_);
+
+	debugPipelineInfo.globalVertexOffset_ += NUM_VERTICIES;
+	debugPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
+}
+
 /*
  p1-------------p2
  |				 |
@@ -543,7 +634,7 @@ void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float minX, floa
 /*
 p1 --------------- p2
 */
-void DebugDrawManager::addLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color)
+void DebugDrawManager::drawLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 color)
 {
 	unsigned int NUM_INDICIES = 2;
 	unsigned int NUM_VERTICIES = NUM_INDICIES;

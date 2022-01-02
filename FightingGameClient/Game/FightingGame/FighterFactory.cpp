@@ -2,6 +2,8 @@
 #include "ResourceManager.h"
 #include "FighterFileImporter.h"
 
+#include "Scene/Components/Collider.h"
+
 FighterFactory::FighterFactory(Scene& scene) :
 	scene_(scene)
 {}
@@ -16,9 +18,14 @@ Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, Input
 	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Fighter");
 	entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter", true);
 	Transform& transform = entity->addComponent<Transform>( 1.0f, 1.0f, 1.0f );
-	transform.rot_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
-	transform.rot_ = glm::rotate(transform.rot_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
+	//transform.rotation_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
+	//transform.rotation_ = glm::rotate(transform.rotation_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
 	transform.setScale(0.019f);
+	Collider& collider = entity->addComponent<Collider>(entity);
+	BoxCollider boxCollider(2, 2, 2, {0, 0, 0}, 0);
+	collider.colliders_.push_back(boxCollider);
+	boxCollider = { 1, 1, 5, {0, 2, 3}, 0};
+	collider.colliders_.push_back(boxCollider);
 
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation("Idle");
@@ -80,19 +87,19 @@ Fighter* FighterFactory::createFighter(const std::string& fighterFilePath, Input
 bool FighterFactory::populateAttackInput(std::string inputFile, Fighter* fighter)
 {
 	AttackInput input{};
-	input.attackInput.push_back(Input::light);
+	input.attackInput.push_back(FightingGameInput::light);
 	input.attackIndex = 0;
 	fighter->attackInputs_.push_back(input);
 
-	input.attackInput[0] = Input::medium;
+	input.attackInput[0] = FightingGameInput::medium;
 	input.attackIndex = 1;
 	fighter->attackInputs_.push_back(input);
 
-	input.attackInput[0] = Input::strong;
+	input.attackInput[0] = FightingGameInput::strong;
 	input.attackIndex = 2;
 	fighter->attackInputs_.push_back(input);
 
-	input.attackInput[0] = Input::ultra;
+	input.attackInput[0] = FightingGameInput::ultra;
 	input.attackIndex = 3;
 	fighter->attackInputs_.push_back(input);
 

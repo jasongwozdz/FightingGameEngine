@@ -8,7 +8,7 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
-class GLFWwindow;
+struct GLFWwindow;
 
 struct WindowInfo
 {

@@ -8,7 +8,7 @@
 #include "../ResourceManager.h"
 #include "VkRenderer.h"
 #include "../Scene/Scene.h"
-
+#include "../Scene/Components/Camera.h"
 
 namespace ShaderUtils
 {
@@ -20,6 +20,7 @@ namespace ShaderUtils
 SkyBoxRenderSubsystem::SkyBoxRenderSubsystem(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool, VkRenderer& renderer) :
 	RenderSubsystemInterface(logicalDevice, renderPass, allocator, descriptorPool, renderer)
 {
+	scene_ = Scene::getSingletonPtr();
 	textureFaces = std::vector<TextureReturnVals>(6);
 };
 
@@ -48,16 +49,19 @@ void SkyBoxRenderSubsystem::renderFrame(VkCommandBuffer commandBuffer, uint32_t 
 
 void SkyBoxRenderSubsystem::updateUniformBuffer()
 {
-	BaseCamera* camera = Scene::getSingletonPtr()->getCurrentCamera();
-	skyboxBufferObject_.model = glm::mat4(1.0f);
-	skyboxBufferObject_.proj = camera->projectionMatrix;
-	skyboxBufferObject_.view = camera->getView();
+	Camera& camera = scene_->getCurrentCamera();
+	Transform& transform = camera.entity_->getComponent<Transform>();
+	glm::mat4 view, projection;
+	scene_->calculateViewProjection(view, projection);
+	skyboxBufferObject_.model = glm::translate(glm::mat4(1.0f), transform.position_);
+	skyboxBufferObject_.model = glm::scale(skyboxBufferObject_.model, { 5.0f, 5.0f, 5.0f });
+	skyboxBufferObject_.proj = projection;
+	skyboxBufferObject_.view = view;
 	void *data;
 	size_t y = sizeof(Ubo);
 	vmaMapMemory(allocator_, uniformBuffer_.mem_, &data);
 	memcpy(data, &skyboxBufferObject_, sizeof(Ubo));
 	vmaUnmapMemory(allocator_, uniformBuffer_.mem_);
-
 }
 
 void SkyBoxRenderSubsystem::createPipeline()
@@ -104,7 +108,7 @@ void SkyBoxRenderSubsystem::createPipeline()
 	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	skyboxPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, true, false, true);
+	skyboxPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, true, false, false);
 
 	vkDestroyShaderModule(logicalDevice_, vertexShader, VK_NULL_HANDLE);
 	vkDestroyShaderModule(logicalDevice_, fragmentShader, VK_NULL_HANDLE);
@@ -252,25 +256,36 @@ bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)//path to f
 	int baseWidth = 0;
 	int baseHeight = 0;
 	int numChannels = 0;
-	for (const auto & entry : std::filesystem::directory_iterator(path))
+
+	for (int i = 0; i < 6; i++)
 	{
-		TextureReturnVals vals = resourceManager.loadTextureFile(entry.path().string());
-		offset = vals.pixels.size();
-		baseWidth = vals.textureWidth;
-		baseHeight = vals.textureHeight;
-		totalPixels.insert(totalPixels.end(),vals.pixels.begin(), vals.pixels.end());
+		for (auto& entry : std::filesystem::directory_iterator(path))
+		{
+			std::string fullPath = entry.path().string();
+			size_t cutoff = fullPath.find_last_of("\\") + 1;
+			std::string fileName = fullPath.substr(cutoff);
+			cutoff = fileName.find_last_of(".");
+			fileName = fileName.substr(0, cutoff);
+			if (fileName == skyboxFaceFileNames_[i])
+			{
+				TextureReturnVals vals = resourceManager.loadTextureFile(entry.path().string());
+				offset = vals.pixels.size();
+				baseWidth = vals.textureWidth;
+				baseHeight = vals.textureHeight;
+				totalPixels.insert(totalPixels.end(),vals.pixels.begin(), vals.pixels.end());
+			}
+		}
+
+	}
+	if (totalPixels.size() <= 0)
+	{
+		assert(totalPixels.size() <= 0);
+		std::cout << "ERROR couldn't load skybox" << std::endl;
 	}
 	
 	createTextureResources(baseHeight, baseWidth, numChannels, totalPixels);
-	//ModelReturnVals modelVals = resourceManager.loadObjFile(CUBE_MODEL_PATH_);
-	//numSkyboxModelIndicies_ = modelVals.indices.size();
-	ModelReturnVals modelVals;
-	modelVals.indices = { 0, 1, 2 };
-	modelVals.vertices = {
-		{{1, 1, 0}, {255, 255, 255}, {1, 1}, {1,1,1}},
-		{{1, 0, 0}, {255, 255, 255}, {1, 0}, {1,1,1}},
-		{{0, 0, 0}, {255, 255, 255}, {0, 0}, {1,1,1}}
-	};
+	ModelReturnVals modelVals = resourceManager.loadObjFile(CUBE_MODEL_PATH_);
+	numSkyboxModelIndicies_ = modelVals.indices.size();
 	loadCube(&modelVals);
 	createUniformBuffers();
 	createPipeline();

@@ -1,7 +1,11 @@
 #pragma once
 #include "AppState.h"
+
 #include <vector>
 #include <glm/glm.hpp>
+#include <GLFW/glfw3.h>
+
+#include "Events.h"
 
 class InputHandler;
 class Entity;
@@ -19,7 +23,7 @@ class CharacterSelectAppState :
 	public AppState
 {
 public:
-	CharacterSelectAppState(std::vector<std::string> fighterFiles, InputHandler* leftSideInputs, InputHandler* rightSideInputs, DebugDrawManager* debugDrawManager);
+	CharacterSelectAppState(std::vector<std::string> fighterFiles, InputHandler* leftSideInputs, InputHandler* rightSideInputs, DebugDrawManager* debugDrawManager, class GameBase* gameBase);
 	virtual void enterState();
 	virtual AppState* update(float deltaTime);
 private:
@@ -44,6 +48,7 @@ private:
 	void setFinalFighterPos(int fighterIndex);
 
 private:
+	void initalizeCamera(GameBase* gameBas);
 #define NUM_FIGHTERS 2
 #define LEFT_SIDE 0
 #define RIGHT_SIDE 1
@@ -59,9 +64,10 @@ private:
 	Scene* scene_;
 	ResourceManager* resourceManager_;
 	UI::UIInterface* ui_;
-	BaseCamera* camera_;
+	//BaseCamera* camera_;
 	DebugDrawManager* debugManager_;
-	int cameraIndex_;
+	//int cameraIndex_;
+	Entity* camera_;
 
 	SelectionState fighterState_[NUM_FIGHTERS];
 
@@ -69,12 +75,12 @@ private:
 	{
 		float currTime = 0;
 		std::vector<std::pair<glm::vec3, float>> leftFighterPickedTranslation = {
-			{{-3.0f, 6.0f, -2.0f}, 0.0f},
-			{{-5.0f, 2.0f, -2.0f}, 750.0f}
+			{{-3.0f, -2.0f, 6.0f}, 0.0f},
+			{{-5.0f, -2.0f, 2.0f}, 750.0f}
 		};
 		std::vector<std::pair<glm::vec3, float>> rightFighterPickedTranslation = 
 		{
-			{{-3.0f, -6.0f, -2.0f}, 0.0f},
+			{{-3.0f, -2.0f, -6.0f}, 0.0f},
 			{{-5.0f, -2.0f, -2.0f}, 1000.0f}
 		};
 	};
@@ -86,6 +92,7 @@ private:
 	
 	EnteringStateData enteringStateData_[NUM_FIGHTERS];
 	SelectedStateData selectedStateData_[NUM_FIGHTERS];
+
 };
 
 

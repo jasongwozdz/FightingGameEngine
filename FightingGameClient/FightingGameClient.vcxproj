@@ -161,6 +161,8 @@
   <ItemGroup>
     <ClCompile Include="Game\FightingGame\AppStates\FightingAppState.cpp" />
     <ClCompile Include="Game\FightingGame\AppStates\CharacterSelectAppState.cpp" />
+    <ClCompile Include="Game\FightingGame\ControllableCameraBehavior.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterSandbox\AttackBase.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\BlockingFighterState.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\CrouchingFighterState.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\AttackingFighterState.cpp" />
@@ -168,7 +170,7 @@
     <ClCompile Include="Game\FightingGame\FighterFileImporter.cpp" />
     <ClCompile Include="Game\CameraController.cpp" />
     <ClCompile Include="Game\FightingGame\Fighter.cpp" />
-    <ClCompile Include="Game\FightingGame\FighterCamera.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterCameraBehavior.cpp" />
     <ClCompile Include="Game\FightingGame\FighterFactory.cpp" />
     <ClCompile Include="Game\FightingGame\GameStateManager.cpp" />
     <ClCompile Include="Game\FightingGame\InputHandler.cpp" />
@@ -183,6 +185,8 @@
     <ClInclude Include="Game\FightingGame\AppStates\FightingAppState.h" />
     <ClInclude Include="Game\FightingGame\AppStates\CharacterSelectAppState.h" />
     <ClInclude Include="Game\FightingGame\AppStates\AppState.h" />
+    <ClInclude Include="Game\FightingGame\ControllableCameraBehavior.h" />
+    <ClInclude Include="Game\FightingGame\FighterSandbox\AttackBase.h" />
     <ClInclude Include="Game\FightingGame\FighterStates\BlockingFighterState.h" />
     <ClInclude Include="Game\FightingGame\FighterStates\CrouchingFighterState.h" />
     <ClInclude Include="Game\FightingGame\FighterStates\AttackingFighterState.h" />
@@ -191,7 +195,7 @@
     <ClInclude Include="Game\FightingGame\FighterFileImporter.h" />
     <ClInclude Include="Game\CameraController.h" />
     <ClInclude Include="Game\FightingGame\Fighter.h" />
-    <ClInclude Include="Game\FightingGame\FighterCamera.h" />
+    <ClInclude Include="Game\FightingGame\FighterCameraBehavior.h" />
     <ClInclude Include="Game\FightingGame\FighterFactory.h" />
     <ClInclude Include="Game\FightingGame\GameStateManager.h" />
     <ClInclude Include="Game\FightingGame\Hitbox.h" />
@@ -205,6 +209,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Engine\Settings\EngineSettings.ini" />
+    <None Include="Engine\Settings\KeyMap.ini" />
     <None Include="shaders\animatedMesh.frag" />
     <None Include="shaders\animatedMesh.vert" />
     <None Include="shaders\imgui.frag" />

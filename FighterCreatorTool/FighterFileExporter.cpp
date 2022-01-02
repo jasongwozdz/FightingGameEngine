@@ -34,7 +34,7 @@ void FighterFileExporter::AddHitboxToFile(const std::vector<Hitbox>& hitboxes)
 	file_ << '[';//start of hitbox data for frame
 	for (const Hitbox& hitbox : hitboxes)
 	{
-		file_ << "{" << hitbox.width_ << "," << hitbox.height_ << "," << hitbox.pos_.x << "," << hitbox.pos_.y << "," << hitbox.pos_.z << "," << hitbox.layer_ << "}";
+		file_ << "{" << hitbox.width_ << "," << hitbox.height_ << "," << hitbox.position_.x << "," << hitbox.position_.y << "," << hitbox.position_.z << "," << hitbox.layer_ << "}";
 	}
 	file_ << ']';//end of hitbox data for frame
 }

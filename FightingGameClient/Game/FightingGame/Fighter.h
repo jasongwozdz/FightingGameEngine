@@ -6,12 +6,12 @@
 #include "Hitbox.h"
 #include "Attack.h"
 #include "FighterStates/BaseFighterState.h"
+#include "Scene/Components/Behavior.h"
 
 
 class DebugDrawManager;
 
 typedef uint8_t InputKey;
-
 
 struct AttackInput
 {
@@ -54,6 +54,7 @@ struct AttackResources
 	std::vector<Attack> attacks_;
 	std::vector<AttackInput> inputs_;
 };
+
 
 class Fighter
 {
@@ -175,20 +176,50 @@ public:
 	InputHandler& inputHandler_;
 
 	int health_ = 100;
+
 private:
 
-	void enterState(FighterState state);
+	//void enterState(FighterState state);
 
-	void processInput();
+	//void processInput();
 
-	void handleState();
+	//void handleState();
 
-	void handleMove();
+	//void handleMove();
 
 	void handleStateTransition(BaseFighterState* transitionToState);
 
 	//returns true if attack input is complete and populates attackIndex with correspoding attack
-	bool checkAttackInput(int currentAttackInput, int& attackIndex);
+	//bool checkAttackInput(int currentAttackInput, int& attackIndex);
+
+	class FighterBehavior : public BehaviorImplementationBase
+	{
+	public:
+		FighterBehavior(Entity* entity) :
+			BehaviorImplementationBase(entity)
+		{}
+
+		~FighterBehavior()
+		{
+			std::cout << "Deleting fighter behavior" << std::endl;
+		}
+
+	private:
+		virtual void onCollision(Entity* otherEnt, BoxCollider* otherCollider) 
+		{
+			std::cout << "Fighter collided" << std::endl;
+		}
+
+		virtual void onExitCollision(Entity* otherEnt, BoxCollider* otherCollider) 
+		{
+			std::cout << "Fighter no longer colliding" << std::endl;
+		}
+
+		virtual void update() 
+		{
+			
+		};//called every frame
+	};
 
 private:
 

@@ -13,10 +13,10 @@ struct Hitbox
 	Hitbox() = default;
 
 	Hitbox(float width, float height, glm::vec3 pos, HitboxLayer layer) :
-		width_(width), height_(height), pos_(pos), layer_(layer)	{}
+		width_(width), height_(height), position_(pos), layer_(layer)	{}
 	float width_;
 	float height_;
-	glm::vec3 pos_; 	
+	glm::vec3 position_; 	
 	std::vector<Hitbox> children_;
 	HitboxLayer layer_ = Push;
 };

@@ -76,27 +76,13 @@ BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, Attack* attack)
 void WalkingFighterState::setXSpeedBasedOnSide(Fighter* fighter)
 {
 	glm::vec2 currentMovementInput = fighter->inputHandler_.currentMovementInput_;
-	if (fighter->side_ == left)
+	if (currentMovementInput.x < 0)
 	{
-		if (currentMovementInput.x < 0)
-		{
-			fighter->setXSpeed(-fighter->baseSpeed_);
-		}
-		else
-		{
-			fighter->setXSpeed(fighter->baseSpeed_);
-		}
+		fighter->setXSpeed(-fighter->baseSpeed_);
 	}
-	else//Right side
+	else
 	{
-		if (currentMovementInput.x < 0)
-		{
-			fighter->setXSpeed(fighter->baseSpeed_);
-		}
-		else
-		{
-			fighter->setXSpeed(-fighter->baseSpeed_);
-		}
+		fighter->setXSpeed(fighter->baseSpeed_);
 	}
 }
 

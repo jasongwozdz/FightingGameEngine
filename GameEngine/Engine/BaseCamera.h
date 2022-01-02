@@ -20,7 +20,7 @@ struct ENGINE_API ScrollingBuffer
 class ENGINE_API BaseCamera
 {
 public:
-	BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDirection);
+	BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDirection, float fov);
 	
 	~BaseCamera();
 
@@ -33,6 +33,8 @@ public:
 	void strafeLeft(float time);
 
 	void strafeRight(float time);
+
+	void setFov(float newFovInDegrees);
 
 	void setOldMousePosition(glm::vec2 oldMouse);
 
@@ -65,5 +67,7 @@ public:
 	float cameraSpeed = 0.005f;
 
 	int cameraIndex_ = -1;//set when the camera is added to the scene
+private:
+	float fovInDegrees;
 };
 

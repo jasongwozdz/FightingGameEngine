@@ -8,16 +8,18 @@
 #include "BaseCamera.h"
 #include "DebugDrawManager.h"
 #include "FightingAppState.h"
+#include "../ControllableCameraBehavior.h"
+#include "Scene/Components/Camera.h"
 
 
-CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighterFiles, InputHandler* leftSideInputs, InputHandler* rightSideInputs, DebugDrawManager* debugDrawManager) :
+CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighterFiles, InputHandler* leftSideInputs, InputHandler* rightSideInputs, DebugDrawManager* debugDrawManager, GameBase* gameBase) :
 	fighterFiles_(fighterFiles),
 	scene_(Scene::getSingletonPtr()),
 	resourceManager_(ResourceManager::getSingletonPtr()),
 	ui_(UI::UIInterface::getSingletonPtr()),
 	debugManager_(debugDrawManager)
 {
-	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 	inputs_[LEFT_SIDE] = leftSideInputs;
 	inputs_[RIGHT_SIDE] = rightSideInputs;
 	selectedFighters_[LEFT_SIDE] = fighterFiles_[0];
@@ -25,9 +27,8 @@ CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighte
 	memset(cursorPos_, 0, sizeof(int) * NUM_FIGHTERS);
 	memset(prevCursorPos_, 0, sizeof(int) * NUM_FIGHTERS);
 	memset(fighterState_, 0, sizeof(SelectionState) * NUM_FIGHTERS);
-	camera_ = new BaseCamera({ -10, 0, 0, }, { 1, 0, 0 }, { 0, 0, 1 });
-	cameraIndex_ = scene_->addCamera(camera_);
-	scene_->setCamera(cameraIndex_);
+
+	initalizeCamera(gameBase);
 }
 
 void CharacterSelectAppState::enterState()
@@ -52,13 +53,14 @@ void CharacterSelectAppState::enterState()
 		for (Entity* fighter : fighters_[i])
 		{
 			fighter->getComponent<Renderable>().render_ = false;
-			if (i == RIGHT_SIDE)
+			if (i == LEFT_SIDE)
 			{
 				flipFighter(fighter);
 			}
 		}
 	}
 }
+
 
 AppState* CharacterSelectAppState::update(float deltaTime)
 {
@@ -70,6 +72,7 @@ AppState* CharacterSelectAppState::update(float deltaTime)
 	drawFighterSelectGrid();
 	if (bothFighterSelected_)
 	{
+		scene_->clearScene();
 		return new FightingAppState(fighterFiles_[cursorPos_[LEFT_SIDE]], fighterFiles_[cursorPos_[RIGHT_SIDE]], debugManager_, inputs_[LEFT_SIDE], inputs_[RIGHT_SIDE]);
 	}
 	return nullptr;
@@ -112,8 +115,8 @@ Entity* CharacterSelectAppState::loadFighter(const std::string& fighterFile)
 	Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter");
 	mesh.render_ = false;
 	Transform& transform = entity->addComponent<Transform>( -50, 0, 0 );
-	transform.rot_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
-	transform.rot_ = glm::rotate(transform.rot_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
+	//transform.rotation_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
+	//transform.rotation_ = glm::rotate(transform.rotation_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
 	transform.setScale(0.019f);
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation("Idle");
@@ -213,7 +216,7 @@ void CharacterSelectAppState::fighterEntering(int fighterIndex, float deltaTime)
 	glm::vec3 newPos = (pos2 * normalizedTime) + (pos1 * (1.0f - normalizedTime));
 	Entity* selectedFighter = fighters_[fighterIndex][cursorPos_[fighterIndex]];
 	Transform& transform = selectedFighter->getComponent<Transform>();
-	transform.pos_ = newPos;
+	transform.position_ = newPos;
 	stateData.currTime += deltaTime;
 }
 
@@ -237,13 +240,14 @@ void CharacterSelectAppState::fighterSelected(int fighterIndex, float deltaTime)
 
 void CharacterSelectAppState::flipFighter(Entity* entity)
 {
-	entity->getComponent<Transform>().scale_.x *= -1;
-	entity->getComponent<Transform>().scale_.y *= -1;
-	entity->getComponent<Transform>().scale_.z *= -1;
+	//entity->getComponent<Transform>().scale_.x *= -1;
+	//entity->getComponent<Transform>().scale_.y *= -1;
+	//entity->getComponent<Transform>().scale_.z *= -1;
 
-	glm::quat rot = entity->getComponent<Transform>().rot_;
-	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
-	entity->getComponent<Transform>().rot_ = flipRot * rot;
+	Transform& transform = entity->getComponent<Transform>();
+	transform.rotateAround(180, { 0.0f, 1.0f, 0.0f });
+	//glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
+	//entity->getComponent<Transform>().rotation_ = flipRot * rot;
 }
 
 void CharacterSelectAppState::transitionState(int fighterIndex, SelectionState state)
@@ -285,7 +289,7 @@ void CharacterSelectAppState::checkIfFighterCursorMoved(int fighterIndex)
 
 bool CharacterSelectAppState::checkFighterSelected(int fighterIndex)
 {
-	if ((inputs_[fighterIndex]->currentAttackInput_ & Input::Action::light) > 0)
+	if ((inputs_[fighterIndex]->currentAttackInput_ & FightingGameInput::Action::light) > 0)
 	{
 		transitionState(fighterIndex, SelectionState::selected);
 		return true;
@@ -305,10 +309,25 @@ void CharacterSelectAppState::setFinalFighterPos(int fighterIndex)
 	Transform& transform = selectedFighter->getComponent<Transform>();
 	if (fighterIndex == LEFT_SIDE)
 	{
-		transform.pos_ = enteringStateData_->leftFighterPickedTranslation[enteringStateData_->leftFighterPickedTranslation.size() - 1].first;
+		transform.position_ = enteringStateData_->leftFighterPickedTranslation[enteringStateData_->leftFighterPickedTranslation.size() - 1].first;
 	}
 	else
 	{
-		transform.pos_ = enteringStateData_->rightFighterPickedTranslation[enteringStateData_->leftFighterPickedTranslation.size() - 1].first;
+		transform.position_ = enteringStateData_->rightFighterPickedTranslation[enteringStateData_->leftFighterPickedTranslation.size() - 1].first;
 	}
+}
+
+void CharacterSelectAppState::initalizeCamera(GameBase* gameBase)
+{
+	camera_ = scene_->addEntity("CharacterSelectCamera");
+	camera_->addComponent<Transform>(0, 0, 0);
+	camera_->addComponent<Camera>(camera_);
+	camera_->addComponent<Behavior>(new ControllableCameraBehavior(camera_, gameBase));
+	scene_->setActiveCamera(camera_);
+}
+
+void onEvent(Events::Event& keyEvent)
+{
+	Events::EventDispatcher dispatcher(keyEvent);
+	
 }

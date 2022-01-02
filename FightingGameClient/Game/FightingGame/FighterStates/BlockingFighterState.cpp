@@ -34,11 +34,7 @@ void BlockingFighterState::enterState(Fighter* fighter)
 	currentBlockstunFrame_ = 0;//reset hitstun frame
 
 	fighter->entity_->getComponent<Animator>().setAnimation(animationName_);
-	if (!hitByAttack_)
-	{
-		std::cout << "ERROR: Fighter in Hit enterstate but no hitByAttack was set" << std::endl;
-		return;
-	}
+	assert(hitByAttack_);
 	distanceToMove_ = hitByAttack_->blockPushMag;
 	movePerFrame_ = (distanceToMove_ / hitByAttack_->blockstunFrames);
 	//check if fighter is currently in the air

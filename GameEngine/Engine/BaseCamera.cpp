@@ -8,12 +8,13 @@
 #include <glm/gtx/transform.hpp>
 #include "EngineSettings.h"
 
-BaseCamera::BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDir)
+BaseCamera::BaseCamera(glm::vec3 pos, glm::vec3 direction, glm::vec3 upDir, float fov) : 
+	position(pos),
+	viewDirection(direction),
+	upDirection(upDir),
+	fovInDegrees(fov)
 {
-	position = pos;
-	viewDirection = direction;
-	upDirection = upDir;
-	projectionMatrix = glm::perspective(glm::radians(45.0f), EngineSettings::getSingleton().windowWidth / (float)EngineSettings::getSingleton().windowHeight, 0.1f, 100.0f);
+	projectionMatrix = glm::perspective(glm::radians(fovInDegrees), EngineSettings::getSingleton().windowWidth / (float)EngineSettings::getSingleton().windowHeight, 0.1f, 100.0f);
 	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
 }
 
@@ -45,7 +46,7 @@ void BaseCamera::resetProjectionMatrix(const float width, const float height)
 	{
 		return;
 	}
-	projectionMatrix = glm::perspective(glm::radians(45.0f), width / height, 0.1f, 100.0f);
+	projectionMatrix = glm::perspective(glm::radians(fovInDegrees), width / height, 0.1f, 100.0f);
 	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
 }
 
@@ -136,3 +137,9 @@ void BaseCamera::update(float deltaTime)
 	}
 }
 
+void BaseCamera::setFov(float newFovInDegrees)
+{
+	fovInDegrees = newFovInDegrees;
+	projectionMatrix = glm::perspective(glm::radians(newFovInDegrees), EngineSettings::getSingleton().windowWidth / (float)EngineSettings::getSingleton().windowHeight, 0.1f, 100.0f);
+	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
+}

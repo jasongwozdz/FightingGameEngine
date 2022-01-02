@@ -86,13 +86,13 @@ Renderable::~Renderable()
 
 void Renderable::deleteResources(VmaAllocator& allocator, VkDevice& logicalDevice)
 {
-	vmaDestroyBuffer(allocator, vertexBuffer_, vertexMem_);
-	vmaDestroyBuffer(allocator, indexBuffer_, indexMem_);
-	for (int i = 0; i < uniformBuffer_.size(); i++)
-	{
-		vmaDestroyBuffer(allocator, uniformBuffer_[i], uniformMem_[i]);
-	}
-	vkDestroyDescriptorSetLayout(logicalDevice, descriptorLayout_, nullptr);
+	//vmaDestroyBuffer(allocator, vertexBuffer_, vertexMem_);
+	//vmaDestroyBuffer(allocator, indexBuffer_, indexMem_);
+	//for (int i = 0; i < uniformBuffer_.size(); i++)
+	//{
+	//	vmaDestroyBuffer(allocator, uniformBuffer_[i], uniformMem_[i]);
+	//}
+	//vkDestroyDescriptorSetLayout(logicalDevice, descriptorLayout_, nullptr);
 }
 
 void Renderable::setVertAndIndicies(std::vector<Vertex>& vertices, std::vector<uint32_t>& indices)

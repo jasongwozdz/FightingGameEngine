@@ -12,14 +12,13 @@
 
 void GameBase::onStartup()
 {
-
 	inputHandler_ = new InputHandler();
-	inputHandlerRight_ = new InputHandler(Input::Side::rightSide);
+	inputHandlerRight_ = new InputHandler(FightingGameInput::Side::rightSide);
 	cameraController_ = new CameraController();
 	
-	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1.fgAnim", "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\fighter2.fgAnim"}, inputHandler_, inputHandlerRight_, debugManager_);
+	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1.fgAnim", "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\fighter2.fgAnim"}, inputHandler_, inputHandlerRight_, debugManager_, this);
 	currentAppState_ = AppState::transitionAppState(characterSelectAppState_);
-	addEventCallback(std::bind(&GameBase::onEvent, this, std::placeholders::_1));
+	addEventCallback(ENGINE_EVENT_CALLBACK(GameBase::onEvent));
 }
 
 GameBase::~GameBase()
@@ -41,7 +40,7 @@ void GameBase::handleKeyButtonDown(Events::KeyPressedEvent& e)
 		//cameraController_->controllable_ = !cursor_;
 		break;
 	case 256:
-		cameraController_->setCurrentCamera(scene_->getCurrentCamera());
+		//cameraController_->setCurrentCamera(scene_->getCurrentCamera());
 		break;
 	}
 }

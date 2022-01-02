@@ -38,11 +38,7 @@ void HitFighterState::enterState(Fighter* fighter)
 	comboCount_ = 1;
 
 	fighter->entity_->getComponent<Animator>().setAnimation(animationName_);
-	if (!hitByAttack_)
-	{
-		std::cout << "ERROR: Fighter in Hit enterstate but no hitByAttack was set" << std::endl;
-		return;
-	}
+	assert(hitByAttack_);
 
 	distanceToMove_ = hitByAttack_->hitPushMag;
 	movePerFrame_ = (distanceToMove_ / hitByAttack_->hitstunFrames);

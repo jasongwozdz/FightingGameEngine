@@ -57,19 +57,19 @@ std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::str
 							}
 							case 2:
 							{
-								h.pos_.x = std::stof(currNum);
+								h.position_.x = std::stof(currNum);
 								break;
 							}
 							case 3:
 							{
-								h.pos_.y = std::stof(currNum);
+								h.position_.y = std::stof(currNum);
 								if (flipHitboxes_)
-									h.pos_.y *= -1;
+									h.position_.y *= -1;
 								break;
 							}
 							case 4:
 							{
-								h.pos_.z = std::stof(currNum);
+								h.position_.z = std::stof(currNum);
 								break;
 							}
 							case 5:
@@ -276,19 +276,19 @@ void FighterFileImporter::readFile()
 										}
 										case 2:
 										{
-											h.pos_.x = std::stof(currNum);
+											h.position_.x = std::stof(currNum);
 											break;
 										}
 										case 3:
 										{
-											h.pos_.y = std::stof(currNum);
+											h.position_.y = std::stof(currNum);
 											if (flipHitboxes_)
-												h.pos_.y *= -1;
+												h.position_.y *= -1;
 											break;
 										}
 										case 4:
 										{
-											h.pos_.z = std::stof(currNum);
+											h.position_.z = std::stof(currNum);
 											break;
 										}
 										case 5:

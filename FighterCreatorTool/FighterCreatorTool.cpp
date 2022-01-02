@@ -4,7 +4,7 @@
 #include <math.h>
 #include "FighterCreatorTool.h"
 #include "../EntryPoint.h"
-#include "NewRenderer/UIInterface.h"
+#include "Renderer/UIInterface.h"
 
 FighterCreatorTool::FighterCreatorTool()
 {
@@ -50,7 +50,7 @@ void FighterCreatorTool::drawHitboxes()
 			color = { 255, 255, 255 };
 		}
 			
-		debugManager_->drawFilledRect(currentHitboxes[i].pos_, color, angleOfRotation, 0, -currentHitboxes[i].width_ / 2, currentHitboxes[i].width_ / 2, -currentHitboxes[i].height_ / 2, currentHitboxes[i].height_ / 2, currentHitboxes[i].uniqueId_);
+		debugManager_->drawFilledRect(currentHitboxes[i].position_, color, angleOfRotation, 0, -currentHitboxes[i].width_ / 2, currentHitboxes[i].width_ / 2, -currentHitboxes[i].height_ / 2, currentHitboxes[i].height_ / 2, currentHitboxes[i].uniqueId_);
 	}
 }
 
@@ -76,9 +76,9 @@ int FighterCreatorTool::createHitboxId()
 void FighterCreatorTool::onUpdate(float deltaTime)
 {
 	drawUI();
-	debugManager_->addLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 });
-	debugManager_->addLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 });
-	debugManager_->addLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 });
+	debugManager_->drawLine({ 0,0,0 }, { 1,0,0 }, { 255, 0, 0 });
+	debugManager_->drawLine({ 0,0,0 }, { 0,1,0 }, { 0, 255, 0 });
+	debugManager_->drawLine({ 0,0,0 }, { 0,0,1 }, { 0, 0, 255 });
 	glm::vec3 rot = { 0, 0, 0 };
 	if (currentEntity_ && currentAnimationData_.animation)
 	{
@@ -154,7 +154,7 @@ void FighterCreatorTool::handleMouseMovedEvent(Events::MouseMoveEvent& e)
 		if (hitbox)
 		{
 			glm::vec3 moveBy = { 0.0f, delta.x, delta.y };//camera is always facing in Y direction so only update x and y
-			hitbox->pos_ += moveBy;
+			hitbox->position_ += moveBy;
 		}
 	}
 
@@ -413,17 +413,17 @@ void FighterCreatorTool::drawUI()
 			if (ui_->addButton("Push"))
 			{
 				tempHitbox.layer_ = Hitbox::HitboxLayer::Push;
-				tempHitbox.pos_ = { 0, 0, 0 }; //show up below other layers when looking down y axis
+				tempHitbox.position_ = { 0, 0, 0 }; //show up below other layers when looking down y axis
 			}
 			if (ui_->addButton("Hit") )
 			{
 				tempHitbox.layer_ = Hitbox::HitboxLayer::Hit;
-				tempHitbox.pos_ = { -0.01f, 0, 0 }; //show up between push and hurt when looking down y axis
+				tempHitbox.position_ = { -0.01f, 0, 0 }; //show up between push and hurt when looking down y axis
 			}
 			if (currentAnimationData_.currentFrame >= currentAnimationData_.startup && currentAnimationData_.currentFrame < (currentAnimationData_.startup + currentAnimationData_.active) && ui_->addButton("Hurt") )  //only add hitbot during active frames
 			{
 				tempHitbox.layer_ = Hitbox::HitboxLayer::Hurt;
-				tempHitbox.pos_ = { -0.02f, 0, 0 }; //show up on top of all other layers when looking down y axis
+				tempHitbox.position_ = { -0.02f, 0, 0 }; //show up on top of all other layers when looking down y axis
 			}
 			ui_->endPopup();
 		}
@@ -598,7 +598,7 @@ Entity* FighterCreatorTool::loadEntity(const std::string& filePath)
 	entity->addComponent<Animator>(vals.animations, vals.boneStructIndex);
 	Transform& transform = entity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
 	transform.setScale(0.001f);
-	transform.pos_ = { 0.0f, 0.0f, 0.0f };
+	transform.position_ = { 0.0f, 0.0f, 0.0f };
 
 	return entity;
 }
@@ -617,18 +617,18 @@ bool FighterCreatorTool::lookAtCurrentEntity()
 	}
 
 	Transform& transform = currentEntity_->getComponent<Transform>();
-	glm::vec3 currPos = transform.pos_;
+	glm::vec3 currPos = transform.position_;
 
-	baseCamera_->viewDirection = transform.pos_ - baseCamera_->position;
+	baseCamera_->viewDirection = transform.position_ - baseCamera_->position;
 	return true;
 }
 
 void FighterCreatorTool::rotateMeshRight()
 {
 	Transform& transform = currentEntity_->getComponent<Transform>();
-	transform.rot_ = {0, 0, 0, 1};
-	transform.rot_ = glm::rotate(transform.rot_, rightSideRotation_, { 0, 0, 1.0f });
-	transform.rot_ = glm::rotate(transform.rot_, upRotation_, { 1.0f, 0.0, 0.0 });
+	transform.rotation_ = {0, 0, 0, 1};
+	transform.rotation_ = glm::rotate(transform.rotation_, rightSideRotation_, { 0, 0, 1.0f });
+	transform.rotation_ = glm::rotate(transform.rotation_, upRotation_, { 1.0f, 0.0, 0.0 });
 }
 
 void FighterCreatorTool::exportCurrentAnimationData()

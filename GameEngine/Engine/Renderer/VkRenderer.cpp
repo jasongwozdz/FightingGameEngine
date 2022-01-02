@@ -695,10 +695,12 @@ void VkRenderer::createDescriptorSet(Renderable* o)
 	}
 }
 
-std::vector<char> VkRenderer::readShaderFile(const std::string& filename) {
+std::vector<char> VkRenderer::readShaderFile(const std::string& filename) 
+{
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
-	if (!file.is_open()) {
+	if (!file.is_open() || !file.good()) {
+		std::cout << "ERROR: could not find shader file" << std::endl;
 		throw std::runtime_error("failed to open file!");
 	}
 
@@ -954,7 +956,6 @@ void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageInde
 
 void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 {
-
 	if (recreateSwapchain_)
 	{
 		recreateSwapchain_ = false;
@@ -993,14 +994,12 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 	
 	vkCmdBeginRenderPass(cmdBuffer_, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	for (RenderSubsystemInterface* renderSubsystem : renderSubsystems_)
+		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
 
 	drawObjects(cmdBuffer_, 0, objectsToDraw);
 	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);
 	ui_->renderFrame(cmdBuffer_);//draw UI last
-	
-	for (RenderSubsystemInterface* renderSubsystem : renderSubsystems_)
-		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
-
 
 	//finalize the render pass
 	vkCmdEndRenderPass(cmdBuffer_);
@@ -1241,9 +1240,8 @@ TextureResources VkRenderer::createTextureResources(int textureWidth, int textur
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	});
 
-	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, ret.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT);
+	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, ret.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT, textureInfo.flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D);
 	imageView.subresourceRange.layerCount = textureInfo.arrayLayers;
-	imageView.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
 
 	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &ret.view_)); //needs to be deleted
 

@@ -167,11 +167,12 @@ void outputMatrixToFile(std::vector<aiMatrix4x4> boneTransforms)
 
 void Animator::setPose(std::vector<glm::mat4> pose, Renderable& renderable)
 {
-	for (int i = 0; i < pose.size(); ++i)
+	uint32_t bonesToSet;
+	for (bonesToSet = 0; bonesToSet < pose.size(); bonesToSet++)
 	{
-		renderable.ubo_.bones[i] =  pose[i];
+		renderable.ubo_.bones[bonesToSet] =  pose[bonesToSet];
 	}
-	for (size_t i = MAX_BONES - (MAX_BONES - pose.size()); i < MAX_BONES; i++)
+	for (size_t i = bonesToSet; i < MAX_BONES; i++)
 	{
 		renderable.ubo_.bones[i] = glm::mat4(1.0f);
 	}

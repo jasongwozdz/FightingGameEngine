@@ -20,7 +20,7 @@ Attack* BaseFighterState::checkAttackInputs(Fighter* fighter, AttackResources& a
 {
 	Attack* currentAttack = nullptr;
 	InputHandler& inputHandler = fighter->inputHandler_;
-	std::queue<std::deque<Input::InputTime>::iterator> toBeDeleted;
+	std::queue<std::deque<FightingGameInput::InputTime>::iterator> toBeDeleted;
 	int attackIndex = 0;
 	for (AttackInput attack : attacks.inputs_)//loop through each attack in AttackResources
 	{
@@ -30,7 +30,7 @@ Attack* BaseFighterState::checkAttackInputs(Fighter* fighter, AttackResources& a
 			uint8_t currentAttackInput = attack.attackInput[currentAttackInputIndex];
 			if (input->first & currentAttackInput)
 			{
-				if (input->first >= Input::Action::light)//remove any inputs in queue that are attacks if we use them
+				if (input->first >= FightingGameInput::Action::light)//remove any inputs in queue that are attacks if we use them
 				{
 					toBeDeleted.push(input);
 				}

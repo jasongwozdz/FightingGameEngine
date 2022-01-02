@@ -29,7 +29,7 @@ public:
 
 	~SkyBoxRenderSubsystem();
 
-	void renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex) override;
+	void renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex);
 
 	bool setSkyboxTexture(const std::string& path);//true if file exists and skybox loading is succesful
 private:
@@ -53,14 +53,15 @@ private:
 
 	std::string skyboxFaceFileNames_[6] =
 	{
-		"front",
-		"bottom",
-		"left",
 		"right",
-		"back",
-		"top"
+		"left",
+		"top",
+		"bottom",
+		"front",
+		"back"
 	};
 
+	class Scene* scene_;
 	int numSkyboxModelIndicies_;
 	TextureResources skyboxTexture_;
 	VkDescriptorSetLayout skyboxDescriptorSetLayout_;

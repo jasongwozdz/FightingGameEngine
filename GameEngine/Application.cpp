@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "Application.h"
+#include "Engine/Input.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -28,6 +29,8 @@ Application::Application()
 	renderer_->init();
 	scene_ = Scene::getSingletonPtr();
 	debugManager_ = renderer_->debugDrawManager_;
+	boxCollisionManager_ = new BoxCollisionManager();
+	input_ = new Input(this);
 }
 
 Application::~Application()
@@ -45,7 +48,6 @@ void Application::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher dispatcher(e);
 	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&VkRenderer::frameBufferResizeCallback, renderer_, std::placeholders::_1));
-	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&Scene::frameBufferResizedCallback, scene_, std::placeholders::_1));
 
 	//callbacks defined in client
 	for (auto fn : callbacks_)
@@ -67,6 +69,7 @@ void Application::cleanup()
 	delete engineSettings_;
 	delete window_;
 	delete renderer_;
+	delete boxCollisionManager_;
 }
 
 void Application::run()
@@ -79,13 +82,14 @@ void Application::run()
 	{
 		endTime = getCurrentTime();
 		deltaTime = static_cast<float>(endTime - start);//get time in milliseconds
-		if (deltaTime >= 1000 / 144)
+		if (deltaTime >= 1000 / engineSettings_->framesPerSecond)
 		{
 			start = endTime;
 			window_->onUpdate();
 			renderer_->prepareFrame();
 			onUpdate(deltaTime);
 			scene_->update(deltaTime);
+			boxCollisionManager_->update(scene_);
 		}
 	}
 	vkDeviceWaitIdle(renderer_->logicalDevice_);

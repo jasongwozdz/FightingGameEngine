@@ -9,7 +9,7 @@
 #include <assimp/scene.h>     
 #include <assimp/postprocess.h>
 #include <assimp/cimport.h>
-#include "Scene/Componenets/Animator.h"
+#include "Scene/Components/Animator.h"
 #include "Singleton.h"
 #include "Vertex.h"
 

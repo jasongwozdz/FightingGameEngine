@@ -64,7 +64,7 @@ namespace Events
 	//*************MouseClickEvents***************
 	struct MousePressedEvent : Event
 	{
-		float mouseCode;
+		int mouseCode;
 
 		MousePressedEvent(float keyCode) :
 			mouseCode(keyCode){}

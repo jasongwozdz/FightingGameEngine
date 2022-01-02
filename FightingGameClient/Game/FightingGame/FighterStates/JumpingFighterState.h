@@ -20,8 +20,8 @@ public:
 private:
 	const float JUMP_SPEED = 30.0f;
 	float gravity_ = 0;
-	const std::vector<uint8_t> airDashInputLeft = {Input::left, Input::left};
-	const std::vector<uint8_t> airDashInputRight = {Input::right, Input::right};
+	const std::vector<uint8_t> airDashInputLeft = {FightingGameInput::left, FightingGameInput::left};
+	const std::vector<uint8_t> airDashInputRight = {FightingGameInput::right, FightingGameInput::right};
 	struct
 	{
 		uint32_t dashFrames = 30;

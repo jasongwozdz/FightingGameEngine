@@ -85,6 +85,8 @@ private:
 	
 	void drawHitbox(const glm::vec3& fighterPos, const Hitbox& hitbox, const glm::vec3& color);//helper method for drawHitboxDebug
 
+	void drawHitbox(const Transform& transform, const Hitbox& hitbox, const glm::vec3& color);
+
 	//Helper method that just checks if 2 hitboxes are colliding
 	bool areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2);
 

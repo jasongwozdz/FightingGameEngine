@@ -9,9 +9,8 @@
 
 class ENGINE_API Entity
 {
+	friend class Scene;
 public:
-	Entity(entt::registry& registry, std::string& name);
-	~Entity();
 
 	Entity& operator=(const Entity& other)
 	{
@@ -34,12 +33,21 @@ public:
 	}
 
 	template<typename T>
+	T* tryGetComponent()
+	{
+		return registry_.try_get<T>(enttId_);
+	}
+
+	template<typename T>
 	void removeComponent()
 	{
 		registry_.remove<T>(enttId_);
 	}
-	
+
 private:
+	Entity(entt::registry& registry, std::string& name);//only created through scene object
+	~Entity();
+
 	entt::entity enttId_;
 	entt::registry& registry_;
 	std::string name_;

@@ -1,5 +1,7 @@
 #include "FightingAppState.h"
 #include "ResourceManager.h"
+#include "../FighterCameraBehavior.h"
+#include "Scene/Components/Camera.h"
 
 FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, DebugDrawManager* debugDrawManager, InputHandler* inputLeft, InputHandler* inputRight) : 
 	scene_(Scene::getSingletonPtr()),
@@ -17,9 +19,8 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 
 FightingAppState::~FightingAppState()
 {
-	delete camera_;
-	delete cameraController_;
-	delete fighterCamera_;
+	//delete camera_;
+	//delete cameraController_;
 	delete inputHandlerLeft_;
 	delete inputHandlerRight_;
 	delete fighterFactory_;
@@ -42,17 +43,6 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	fighter2_->controllable_ = true;
 	fighter2_->setPosition(STARTING_POSITION_LEFT);
 
-	camera_ = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
-	fighterCamera_ = new FighterCamera(camera_, fighter_, fighter2_);
-
-	BaseCamera* debugCamera = new BaseCamera({ 10.0f, 3.0f, 1.0f }, { 1.0f, -3.0f, -1.0f }, { 0.0f, 0.0f, 1.0f });
-	cameraController_ = new CameraController(debugCamera);
-
-	scene_->addCamera(camera_);
-	scene_->addCamera(debugCamera);
-	scene_->setCamera(camera_->cameraIndex_);
-
-
 	const glm::vec3 ARENA_STARTING_POINT =  {0.0, 0.0, -1.75f};
 	const float ARENA_WIDTH = 21;
 	const float ARENA_DEPTH = 21;
@@ -65,19 +55,19 @@ void FightingAppState::handleKeyButtonDown(Events::KeyPressedEvent& e)
 {
 	switch (e.KeyCode)
 	{
-	case 256: //esc
+	case GLFW_KEY_ESCAPE: //esc
 	{
 		drawDebug_ = !drawDebug_;
 		if (drawDebug_)
 		{
-			scene_->setCamera(1);
-			cameraController_->controllable_ = !cursor_;
+			//scene_->setCamera(1);
+			//cameraController_->controllable_ = !cursor_;
 			fighter_->controllable_ = false;
 		}
 		else
 		{
-			scene_->setCamera(0);
-			cameraController_->controllable_ = false;
+			//scene_->setCamera(0);
+			//cameraController_->controllable_ = false;
 			fighter_->controllable_ = true;
 		}
 		break;
@@ -115,12 +105,12 @@ AppState* FightingAppState::update(float deltaTime)
 		fighter_->onUpdate(deltaTime, debugDrawManager_);
 	if (fighter2_)
 		fighter2_->onUpdate(deltaTime, debugDrawManager_);
-	if (fighterCamera_ && !drawDebug_)
-		fighterCamera_->onUpdate(deltaTime);
-	if (cameraController_)
-		cameraController_->onUpdate(deltaTime);
-	if (camera_)
-		camera_->update(deltaTime);
+	//if (fighterCamera_ && !drawDebug_)
+	//	fighterCamera_->onUpdate(deltaTime);
+	//if (cameraController_)
+	//	cameraController_->onUpdate(deltaTime);
+	//if (camera_)
+	//	camera_->update(deltaTime);
 
 	gameStateManager_->update(deltaTime);
 

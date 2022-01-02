@@ -18,6 +18,7 @@ public:
 	static EngineSettings* getSingletonPtr();
 	int windowWidth;
 	int windowHeight;
+	int framesPerSecond = 144;
 	double dt;
 	double currentTime;
 private:

@@ -1,11 +1,14 @@
 #pragma once
 #include <vector>
+#include <unordered_map>
+
 #include "../libs/entt/entt.hpp"
 #include "Entity.h"
 #include "../BaseCamera.h"
-#include "Componenets/Transform.h"
-#include "Componenets/BoneStructure.h"
-#include "Componenets/Animator.h"
+#include "Components/Transform.h"
+#include "Components/BoneStructure.h"
+#include "Components/Animator.h"
+#include "Components/Collider.h"
 #include "../Renderer/Renderable.h"
 #include "../Renderer/VkRenderer.h"
 #include "../Renderer/Textured.h"
@@ -24,50 +27,41 @@ class ENGINE_API Scene : Singleton<Scene>
 public:
 	Scene();
 	~Scene();
-	void update(float deltaTime);
-	Entity* addEntity(std::string entityName);
-	entt::entity& getEntity(std::string name);
-	int addCamera(BaseCamera* camera);//returns position of camera in camera vector
-	void setCamera(int index);
-	BaseCamera* getCurrentCamera() const;
-	bool setSkybox(const std::string& path);
-	void frameBufferResizedCallback(const Events::FrameBufferResizedEvent& e);
+
 	static Scene& getSingleton();
 	static Scene* getSingletonPtr();
 
-	//void each(std::function<void(entt::entity, entt::registry)>);
-	
-	template<typename T>
-	void each(std::function<void(entt::entity, entt::registry&, T)> fn)
+	void clearScene();
+
+	void update(float deltaTime);
+	Entity* addEntity(std::string entityName);
+	std::vector<Entity*> getEntities(std::string entityName);
+
+	struct Camera& getCurrentCamera();
+	void setActiveCamera(Entity* entity);
+
+	bool setSkybox(const std::string& path);
+	void calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projectionMatrix);
+
+	template <typename ...components>
+	std::vector<Entity*> getAllEntitiesWithComponents()
 	{
-		auto view = registry_.view<T>();
-		for (auto entity : view)
+		std::vector<Entity*> output;
+		auto view = registry_.view<components...>();
+		for (entt::entity entity : view)
 		{
-			fn(entity, registry_, view.get(entity));
+			output.push_back(entitys_[entity]);
 		}
+		return output;
 	}
-
-	template<typename T, typename B>
-	void each(std::function<void(entt::entity, entt::registry&, T, B)> fn)
-	{
-		auto view = registry_.view<T,B>();
-		for (auto entity : view)
-		{
-			fn(entity, registry_, view.get(entity));
-		}
-	}
-
-	std::vector<Entity*> entitys_;
-
+private:
+	void initalizeDefaultCamera();
 private:
 	entt::registry registry_;
-
-	std::vector<BaseCamera*> cameras_;
-	int currentCamera_;
-
+	std::unordered_map<entt::entity,Entity*> entitys_;
+	std::unordered_map < std::string, std::vector<Entity*>> entityNameMap_;
+	Entity* activeCamera_;
 	std::vector<Renderable*> objectsToDraw_;
-	int numObjectsToDraw_ = 0;
-
 	VkRenderer* renderer_;
 	class SkyBoxRenderSubsystem* skybox_;
 };

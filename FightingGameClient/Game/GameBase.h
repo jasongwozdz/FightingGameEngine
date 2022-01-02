@@ -5,7 +5,6 @@
 #include "CameraController.h"
 #include "FightingGame/InputHandler.h"
 #include "FightingGame/FighterFactory.h"
-#include "FightingGame/FighterCamera.h"
 #include "FightingGame/GameStateManager.h"
 #include "FightingGame/AppStates/AppState.h"
 
@@ -29,7 +28,6 @@ private:
 
 	BaseCamera* camera_;
 	CameraController* cameraController_;
-	FighterCamera* fighterCamera_;
 	InputHandler* inputHandler_;
 	InputHandler* inputHandlerRight_;
 	FighterFactory* fighterFactory_;
