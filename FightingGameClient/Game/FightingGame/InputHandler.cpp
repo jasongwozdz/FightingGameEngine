@@ -5,7 +5,6 @@ InputHandler::InputHandler(FightingGameInput::Side side) : side_(side){}
 
 void InputHandler::handleInputPressed(Events::KeyPressedEvent& e)
 {
-
 	uint8_t inputToQueue = 0;
 	if (side_ == FightingGameInput::Side::leftSide)
 	{

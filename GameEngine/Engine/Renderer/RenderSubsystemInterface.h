@@ -18,6 +18,7 @@ public:
 	virtual ~RenderSubsystemInterface() = default;
 
 	virtual void renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex) = 0; //called by main renderer every frame
+	virtual void onResize(VkCommandBuffer commandBuffer) = 0;
 protected:
 	VkDevice& logicalDevice_;
 	VkRenderPass& renderPass_;

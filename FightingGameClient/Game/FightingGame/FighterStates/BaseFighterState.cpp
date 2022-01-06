@@ -1,6 +1,6 @@
 #include "BaseFighterState.h"
 
-#include "../Fighter.h"
+#include "../Fighter/Fighter.h"
 
 void BaseFighterState::updateCurrentHitboxes(Fighter* fighter)
 {

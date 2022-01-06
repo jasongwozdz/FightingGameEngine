@@ -1,7 +1,8 @@
 #include "BlockingFighterState.h"
 
 #include <iostream>
-#include "../Fighter.h"
+
+#include "../Fighter/Fighter.h"
 
 
 BlockingFighterState::BlockingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData) :
@@ -22,7 +23,8 @@ BaseFighterState* BlockingFighterState::update(Fighter* fighter)
 	}
 	else //if fighter was hit in the air then they are in hitstun until they hit the ground
 	{
-		fighter->currentYSpeed_ += gravity_;
+		fighter->velocityWorldSpace_ += gravity_;
+		//fighter->currentYSpeed_ += gravity_;
 	}
 	return nullptr;
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseFighterState.h"
-#include "../Hitbox.h"
+#include "../Fighter/Hitbox.h"
 
 struct Attack;
 struct AttackResources;

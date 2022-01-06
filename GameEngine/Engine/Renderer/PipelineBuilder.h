@@ -79,6 +79,7 @@ namespace PipelineBuilder
 	multisampling.minSampleShading = .2f; // min fraction for sample shading; closer to one is smooth
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 	depthStencil.depthTestEnable = VK_FALSE;
 	if (depthEnabled)
 	{

@@ -6,7 +6,7 @@ class ControllableCameraBehavior : public BehaviorImplementationBase
 {
 public:
 
-	ControllableCameraBehavior(Entity* entity, GameBase* gameBase);
+	ControllableCameraBehavior(Entity* entity);
 	virtual void update() override;
 
 private:

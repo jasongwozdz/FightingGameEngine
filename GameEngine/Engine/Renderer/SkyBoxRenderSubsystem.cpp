@@ -10,6 +10,8 @@
 #include "../Scene/Scene.h"
 #include "../Scene/Components/Camera.h"
 
+#define NUM_FACES 6
+
 namespace ShaderUtils
 {
 	std::vector<char> readShaderFile(const std::string& filename);
@@ -18,11 +20,9 @@ namespace ShaderUtils
 
 
 SkyBoxRenderSubsystem::SkyBoxRenderSubsystem(VkDevice& logicalDevice, VkRenderPass& renderPass, VmaAllocator& allocator, VkDescriptorPool& descriptorPool, VkRenderer& renderer) :
+	scene_(Scene::getSingletonPtr()),
 	RenderSubsystemInterface(logicalDevice, renderPass, allocator, descriptorPool, renderer)
-{
-	scene_ = Scene::getSingletonPtr();
-	textureFaces = std::vector<TextureReturnVals>(6);
-};
+{};
 
 SkyBoxRenderSubsystem::~SkyBoxRenderSubsystem()
 {
@@ -31,10 +31,10 @@ SkyBoxRenderSubsystem::~SkyBoxRenderSubsystem()
 void SkyBoxRenderSubsystem::renderFrame(VkCommandBuffer commandBuffer, uint32_t currentSwapChainIndex)
 {
 	if (!skyboxSet_)
+	{
 		return;
-
+	}
 	VkDeviceSize offsets[1] = { 0 };
-
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline_->pipeline_);
 
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer_.buffer_, offsets);
@@ -44,7 +44,13 @@ void SkyBoxRenderSubsystem::renderFrame(VkCommandBuffer commandBuffer, uint32_t 
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyboxPipeline_->pipelineLayout_, 0, 1, &skyboxDescriptorSet_, 0, nullptr);
 
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(numSkyboxModelIndicies_), 1, 0, 0, 0);
+
 	updateUniformBuffer();
+}
+
+void SkyBoxRenderSubsystem::onResize(VkCommandBuffer commandBuffer)
+{
+
 }
 
 void SkyBoxRenderSubsystem::updateUniformBuffer()
@@ -73,14 +79,15 @@ void SkyBoxRenderSubsystem::createPipeline()
 	uboLayoutBinding.pImmutableSamplers = nullptr;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	//VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	//samplerLayoutBinding.binding = 1;
+	//samplerLayoutBinding.descriptorCount = 1;
+	//samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	//samplerLayoutBinding.pImmutableSamplers = nullptr;
+	//samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	//std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -108,7 +115,7 @@ void SkyBoxRenderSubsystem::createPipeline()
 	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	skyboxPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, true, false, false);
+	skyboxPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, false, false, false);
 
 	vkDestroyShaderModule(logicalDevice_, vertexShader, VK_NULL_HANDLE);
 	vkDestroyShaderModule(logicalDevice_, fragmentShader, VK_NULL_HANDLE);
@@ -156,12 +163,12 @@ void SkyBoxRenderSubsystem::createDescriptors()
 	bufferInfo.offset = 0;
 	bufferInfo.range = sizeof(skyboxBufferObject_);
 
-	VkDescriptorImageInfo imageInfo{};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = skyboxTexture_.view_;
-	imageInfo.sampler = skyboxTexture_.sampler_;
+	//VkDescriptorImageInfo imageInfo{};
+	//imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	//imageInfo.imageView = skyboxTexture_.view_;
+	//imageInfo.sampler = skyboxTexture_.sampler_;
 
-	std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+	std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
 
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[0].dstSet = skyboxDescriptorSet_;
@@ -171,13 +178,13 @@ void SkyBoxRenderSubsystem::createDescriptors()
 	descriptorWrites[0].descriptorCount = 1;
 	descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[1].dstSet = skyboxDescriptorSet_;
-	descriptorWrites[1].dstBinding = 1;
-	descriptorWrites[1].dstArrayElement = 0;
-	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	descriptorWrites[1].descriptorCount = 1;
-	descriptorWrites[1].pImageInfo = &imageInfo;
+	//descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	//descriptorWrites[1].dstSet = skyboxDescriptorSet_;
+	//descriptorWrites[1].dstBinding = 1;
+	//descriptorWrites[1].dstArrayElement = 0;
+	//descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	//descriptorWrites[1].descriptorCount = 1;
+	//descriptorWrites[1].pImageInfo = &imageInfo;
 
 	vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }
@@ -197,7 +204,7 @@ std::string getFileName(const std::string& path)
 
 int SkyBoxRenderSubsystem::getStringIndex(const std::string& filename)
 {
-	for (int i = 0; i < NUMFACES; i++)
+	for (int i = 0; i < NUM_FACES; i++)
 	{
 		if ( strcmp(filename.c_str(), skyboxFaceFileNames_[i].c_str()) == 0 )
 		{
@@ -208,6 +215,7 @@ int SkyBoxRenderSubsystem::getStringIndex(const std::string& filename)
 
 void SkyBoxRenderSubsystem::loadCube(ModelReturnVals* modelVals)
 {
+
 	size_t vertexBufferSize = modelVals->vertices.size() * sizeof(Vertex);
 
 	VkBufferCreateInfo vBufferInfo{};
@@ -219,13 +227,15 @@ void SkyBoxRenderSubsystem::loadCube(ModelReturnVals* modelVals)
 	VmaAllocationCreateInfo vmaInfo{};
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer_.buffer_, &vertexBuffer_.mem_, nullptr);
+	//=DELETE=
+	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer_.buffer_, &vertexBuffer_.mem_, nullptr));
 
 	void *vertexData;
 	vmaMapMemory(allocator_, vertexBuffer_.mem_, &vertexData);
 	memcpy(vertexData, modelVals->vertices.data(), vertexBufferSize);
 	vmaUnmapMemory(allocator_, vertexBuffer_.mem_);
 
+	//======= Indicies ======
 	size_t indexBufferSize = modelVals->indices.size() * sizeof(uint32_t);
 
 	VkBufferCreateInfo iBufferInfo{};
@@ -236,23 +246,57 @@ void SkyBoxRenderSubsystem::loadCube(ModelReturnVals* modelVals)
 
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer_.buffer_, &indexBuffer_.mem_, nullptr);
+	//=DELETE=
+	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer_.buffer_, &indexBuffer_.mem_, nullptr));
 
 	void *indexData;
 	vmaMapMemory(allocator_, indexBuffer_.mem_, &indexData);
 	memcpy(indexData, modelVals->indices.data(), indexBufferSize);
 	vmaUnmapMemory(allocator_, indexBuffer_.mem_);
+
+	//size_t vertexBufferSize = modelVals->vertices.size() * sizeof(Vertex);
+
+	//VkBufferCreateInfo vBufferInfo{};
+	//vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	//vBufferInfo.pNext = nullptr;
+	//vBufferInfo.size = vertexBufferSize;
+	//vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+	//VmaAllocationCreateInfo vmaInfo{};
+	//vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	//vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer_.buffer_, &vertexBuffer_.mem_, nullptr);
+
+	//void *vertexData;
+	//vmaMapMemory(allocator_, vertexBuffer_.mem_, &vertexData);
+	//memcpy(vertexData, modelVals->vertices.data(), vertexBufferSize);
+	//vmaUnmapMemory(allocator_, vertexBuffer_.mem_);
+
+	//size_t indexBufferSize = modelVals->indices.size() * sizeof(uint32_t);
+
+	//VkBufferCreateInfo iBufferInfo{};
+	//iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	//iBufferInfo.pNext = nullptr;
+	//iBufferInfo.size = indexBufferSize;
+	//iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+	//vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	//vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer_.buffer_, &indexBuffer_.mem_, nullptr);
+
+	//void *indexData;
+	//vmaMapMemory(allocator_, indexBuffer_.mem_, &indexData);
+	//memcpy(indexData, modelVals->indices.data(), indexBufferSize);
+	//vmaUnmapMemory(allocator_, indexBuffer_.mem_);
 }
 
-bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)//path to folder that includes skybox all sides of sky box
+bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)
 {
-	//https://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
 	skyboxSet_ = true;
 	ResourceManager& resourceManager = ResourceManager::getSingleton();
 
 	int count = 0;
 	std::vector<unsigned char> totalPixels;
-	int offset = 0;
 	int baseWidth = 0;
 	int baseHeight = 0;
 	int numChannels = 0;
@@ -269,7 +313,6 @@ bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)//path to f
 			if (fileName == skyboxFaceFileNames_[i])
 			{
 				TextureReturnVals vals = resourceManager.loadTextureFile(entry.path().string());
-				offset = vals.pixels.size();
 				baseWidth = vals.textureWidth;
 				baseHeight = vals.textureHeight;
 				totalPixels.insert(totalPixels.end(),vals.pixels.begin(), vals.pixels.end());
@@ -279,11 +322,11 @@ bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)//path to f
 	}
 	if (totalPixels.size() <= 0)
 	{
-		assert(totalPixels.size() <= 0);
 		std::cout << "ERROR couldn't load skybox" << std::endl;
+		assert(totalPixels.size() <= 0);
 	}
 	
-	createTextureResources(baseHeight, baseWidth, numChannels, totalPixels);
+	//createTextureResources(baseHeight, baseWidth, numChannels, totalPixels);
 	ModelReturnVals modelVals = resourceManager.loadObjFile(CUBE_MODEL_PATH_);
 	numSkyboxModelIndicies_ = modelVals.indices.size();
 	loadCube(&modelVals);

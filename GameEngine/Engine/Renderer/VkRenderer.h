@@ -13,6 +13,19 @@
 
 class DebugDrawManager;
 
+#define VK_CHECK(x) \
+	do \
+	{	\
+		VkResult err = x;	\
+		if (err)	\
+		{	\
+			std::cout << "ERROR: Vulkan error : " << err << std::endl;	\
+			abort();	\
+		} 	\
+	} while(0)
+
+
+
 class VkRenderer : Singleton<VkRenderer>
 {
 public:
@@ -95,28 +108,16 @@ public:
 	std::vector<RenderSubsystemInterface*> renderSubsystems_;
 	
 private:
-
 	void createDefaultRenderPass();
-
 	void createDefualtDepthResources();
-
 	void createDefaultFramebuffers();
-
 	void createSwapchainResources();
-
 	void createSynchronizationResources();
-
 	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw);
-
 	void initPipelines();
-
 	void createDescriptorSet(Renderable* object);
-
 	void createTextureResources(Renderable& o, Textured& texture);
-
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
-
 	void recreateSwapchain();
-
 	void cleanupSwapchain();
 };

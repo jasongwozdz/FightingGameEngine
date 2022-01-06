@@ -234,7 +234,7 @@ VkImageCreateInfo vkinit::image_create_info(VkFormat format, VkImageUsageFlags u
 	return info;
 }
 
-VkImageViewCreateInfo vkinit::imageview_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags, VkImageViewType viewType)
+VkImageViewCreateInfo vkinit::imageview_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspectFlags, VkImageViewType viewType, int layerCount)
 {
 	//build a image-view for the depth image to use for rendering
 	VkImageViewCreateInfo info = {};
@@ -247,7 +247,7 @@ VkImageViewCreateInfo vkinit::imageview_create_info(VkFormat format, VkImage ima
 	info.subresourceRange.baseMipLevel = 0;
 	info.subresourceRange.levelCount = 1;
 	info.subresourceRange.baseArrayLayer = 0;
-	info.subresourceRange.layerCount = 1;
+	info.subresourceRange.layerCount = layerCount;
 	info.subresourceRange.aspectMask = aspectFlags;
 
 	return info;

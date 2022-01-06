@@ -6,7 +6,7 @@
 #include "HitFighterState.h"
 #include "AttackingFighterState.h"
 #include "BlockingFighterState.h"
-#include "../Fighter.h"
+#include "../Fighter/Fighter.h"
 
 WalkingFighterState::WalkingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) : 
 	BaseFighterState(animationName, hitboxData),
@@ -24,14 +24,13 @@ BaseFighterState* WalkingFighterState::update(Fighter* fighter)
 void WalkingFighterState::enterState(Fighter* fighter)
 {
 	fighter->entity_->getComponent<Animator>().setAnimation(animationName_);
-	setXSpeedBasedOnSide(fighter);
 	std::cout << "Enter walking state" << std::endl;
 }
 
 BaseFighterState* WalkingFighterState::handleMovementInput(Fighter* fighter)
 {
-	setXSpeedBasedOnSide(fighter);
 	glm::vec2 currentMovementInput = fighter->inputHandler_.currentMovementInput_;
+	setXSpeed(fighter);
 	if (currentMovementInput.y > 0)
 	{
 		return fighter->jumpingFighterState_;
@@ -73,16 +72,8 @@ BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, Attack* attack)
 	}
 }
 
-void WalkingFighterState::setXSpeedBasedOnSide(Fighter* fighter)
+void WalkingFighterState::setXSpeed(Fighter* fighter)
 {
 	glm::vec2 currentMovementInput = fighter->inputHandler_.currentMovementInput_;
-	if (currentMovementInput.x < 0)
-	{
-		fighter->setXSpeed(-fighter->baseSpeed_);
-	}
-	else
-	{
-		fighter->setXSpeed(fighter->baseSpeed_);
-	}
+	fighter->setXSpeed(fighter->baseSpeed_ * -currentMovementInput.x);
 }
-

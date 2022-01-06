@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseFighterState.h"
-#include "../Hitbox.h"
+#include "../Fighter/Hitbox.h"
 
 class IdleFighterState : public BaseFighterState
 {

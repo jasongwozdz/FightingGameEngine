@@ -6,6 +6,7 @@
 #include "../DebugDrawManager.h"
 
 template<> Scene* Singleton<Scene>::msSingleton = 0;
+float Scene::DeltaTime = 0.0f;
 
 Scene* Scene::getSingletonPtr()
 {
@@ -18,6 +19,12 @@ Scene* Scene::getSingletonPtr()
 
 void Scene::clearScene()
 {
+	auto transform = registry_.view<Transform>();
+	for (auto entity : transform)
+	{
+		delete entitys_[entity];
+	}
+	entityNameMap_.clear();
 	registry_.clear();
 	initalizeDefaultCamera();
 }
@@ -45,6 +52,7 @@ Scene::~Scene()
 
 void Scene::update(float deltaTime)
 {
+	DeltaTime = deltaTime;
 	glm::mat4 view, projection;
 	calculateViewProjection(view, projection);
 	auto behaviorView = registry_.view<Behavior>();
@@ -172,6 +180,13 @@ void Scene::calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projection
 	//drawCameraFrustrum(camera, transform);
 }
 
+Entity * Scene::createCameraEntity()
+{
+	Entity* camera = addEntity("Camera");
+	camera->addComponent<Transform>(0.0f, 0.0f, 0.0f);
+	camera->addComponent<Camera>(camera);
+	return camera;
+}
 
 void Scene::initalizeDefaultCamera()
 {

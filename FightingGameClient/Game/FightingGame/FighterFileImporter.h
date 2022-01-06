@@ -1,6 +1,6 @@
 #pragma once
 #include <fstream>
-#include "Fighter.h"
+#include "Fighter/Fighter.h"
 
 class FighterFileImporter
 {

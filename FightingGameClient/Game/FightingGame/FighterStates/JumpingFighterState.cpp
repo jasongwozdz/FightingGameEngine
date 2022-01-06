@@ -3,7 +3,7 @@
 #include "BlockingFighterState.h"
 #include "HitFighterState.h"
 #include "JumpingAttackFighterState.h"
-#include "../Fighter.h"
+#include "../Fighter/Fighter.h"
 
 JumpingFighterState::JumpingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) : 
 	BaseFighterState(animationName, hitboxData),
@@ -20,7 +20,6 @@ BaseFighterState* JumpingFighterState::update(Fighter* fighter)
 			gravity_ = DEFAULT_GRAVITY;
 		}
 	}
-	fighter->currentYSpeed_ += gravity_;
 	return nullptr;
 }
 
@@ -50,9 +49,9 @@ void JumpingFighterState::enterState(Fighter* fighter)
 			fighter->setXSpeed(fighter->baseSpeed_);
 		}
 	}
-
 	fighter->setYSpeed(JUMP_SPEED);//set Y speed
-	gravity_ = DEFAULT_GRAVITY;//set gravity to default value so we decrement at every state update;
+	fighter->applyGravity_= true;
+	//gravity_ = DEFAULT_GRAVITY;//set gravity to default value so we decrement at every state update;
 	airDashResources_ = {};
 	//fighter->inputHandler_.clearInputQueue();//clear input queue so no inputs while on the ground affect input checking in this state
 	std::cout << "Enter jumping state" << std::endl;

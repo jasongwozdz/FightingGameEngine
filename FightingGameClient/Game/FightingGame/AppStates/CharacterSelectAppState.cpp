@@ -11,14 +11,17 @@
 #include "../ControllableCameraBehavior.h"
 #include "Scene/Components/Camera.h"
 
+#include "Input.h"
 
 CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighterFiles, InputHandler* leftSideInputs, InputHandler* rightSideInputs, DebugDrawManager* debugDrawManager, GameBase* gameBase) :
 	fighterFiles_(fighterFiles),
 	scene_(Scene::getSingletonPtr()),
 	resourceManager_(ResourceManager::getSingletonPtr()),
 	ui_(UI::UIInterface::getSingletonPtr()),
-	debugManager_(debugDrawManager)
+	debugManager_(debugDrawManager),
+	input_(Input::getSingletonPtr())
 {
+	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/SmallerSkybox");
 	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 	inputs_[LEFT_SIDE] = leftSideInputs;
 	inputs_[RIGHT_SIDE] = rightSideInputs;
@@ -27,8 +30,8 @@ CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighte
 	memset(cursorPos_, 0, sizeof(int) * NUM_FIGHTERS);
 	memset(prevCursorPos_, 0, sizeof(int) * NUM_FIGHTERS);
 	memset(fighterState_, 0, sizeof(SelectionState) * NUM_FIGHTERS);
-
 	initalizeCamera(gameBase);
+	setupInput();
 }
 
 void CharacterSelectAppState::enterState()
@@ -64,6 +67,22 @@ void CharacterSelectAppState::enterState()
 
 AppState* CharacterSelectAppState::update(float deltaTime)
 {
+	//static bool skyboxSet = false;
+	//if(!skyboxSet && Input::getSingleton().getButton("Fire2") > 0.0f)
+	//{
+	//	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	//	skyboxSet = true;
+	//	Entity* box = scene_->addEntity("Box");
+	//	box->addComponent<Transform>(1.0f, 1.0f, 1.0f);
+	//	ModelReturnVals modelVals = ResourceManager::getSingleton().loadObjFile("C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Models\\cube.obj");
+	//	box->addComponent<Renderable>(modelVals.vertices, modelVals.indices, true ,"" , true);
+
+	//	box = scene_->addEntity("Box");
+	//	box->addComponent<Transform>(1.0f, 1.0f, 1.0f);
+	//	box->addComponent<Renderable>(modelVals.vertices, modelVals.indices, true ,"" , true);
+
+	//}
+
 	//ui_->showImGuiDemoWindow();
 	for (int i = 0; i < NUM_FIGHTERS; i++)
 	{
@@ -75,7 +94,16 @@ AppState* CharacterSelectAppState::update(float deltaTime)
 		scene_->clearScene();
 		return new FightingAppState(fighterFiles_[cursorPos_[LEFT_SIDE]], fighterFiles_[cursorPos_[RIGHT_SIDE]], debugManager_, inputs_[LEFT_SIDE], inputs_[RIGHT_SIDE]);
 	}
+	
 	return nullptr;
+}
+
+std::vector<Entity*> CharacterSelectAppState::getCurrentlySelectedFighters()
+{
+	std::vector<Entity*> selctedFighters;
+	selctedFighters.push_back(fighters_[0][cursorPos_[0]]);
+	selctedFighters.push_back(fighters_[1][cursorPos_[1]]);
+	return selctedFighters;
 }
 
 void CharacterSelectAppState::drawFighterSelectGrid()
@@ -127,8 +155,8 @@ void CharacterSelectAppState::updateCursor(int fighterIndex)
 {
 	static int lastXAxisInput[NUM_FIGHTERS] = { 0, 0 };
 	static int lastYAxisInput[NUM_FIGHTERS] = { 0, 0 };
-	int currentXAxisInput = inputs_[fighterIndex]->currentMovementInput_[0];
-	int currentYAxisInput = inputs_[fighterIndex]->currentMovementInput_[1];
+	int currentXAxisInput = -input_->getAxis(HorizontalInputs[fighterIndex]);//axis is flipped
+	int currentYAxisInput = input_->getAxis(VerticalInputs[fighterIndex]);
 	prevCursorPos_[fighterIndex] = cursorPos_[fighterIndex];
 	if (currentYAxisInput < 0 && currentYAxisInput != lastYAxisInput[fighterIndex])//down pressed : move cursor down
 	{
@@ -240,14 +268,8 @@ void CharacterSelectAppState::fighterSelected(int fighterIndex, float deltaTime)
 
 void CharacterSelectAppState::flipFighter(Entity* entity)
 {
-	//entity->getComponent<Transform>().scale_.x *= -1;
-	//entity->getComponent<Transform>().scale_.y *= -1;
-	//entity->getComponent<Transform>().scale_.z *= -1;
-
 	Transform& transform = entity->getComponent<Transform>();
-	transform.rotateAround(180, { 0.0f, 1.0f, 0.0f });
-	//glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
-	//entity->getComponent<Transform>().rotation_ = flipRot * rot;
+	transform.rotateAround(180.0f, Transform::worldUp);
 }
 
 void CharacterSelectAppState::transitionState(int fighterIndex, SelectionState state)
@@ -317,17 +339,23 @@ void CharacterSelectAppState::setFinalFighterPos(int fighterIndex)
 	}
 }
 
+void CharacterSelectAppState::setupInput()
+{
+	input_->addAxis("Horizontal_P2", GLFW_KEY_RIGHT, GLFW_KEY_LEFT);
+	input_->addAxis("Vertical_P2", GLFW_KEY_UP, GLFW_KEY_DOWN);
+}
+
 void CharacterSelectAppState::initalizeCamera(GameBase* gameBase)
 {
 	camera_ = scene_->addEntity("CharacterSelectCamera");
 	camera_->addComponent<Transform>(0, 0, 0);
 	camera_->addComponent<Camera>(camera_);
-	camera_->addComponent<Behavior>(new ControllableCameraBehavior(camera_, gameBase));
+	camera_->addComponent<Behavior>(new CharacterSelectCameraBehavior(camera_, this));
 	scene_->setActiveCamera(camera_);
 }
 
 void onEvent(Events::Event& keyEvent)
 {
 	Events::EventDispatcher dispatcher(keyEvent);
-	
+
 }

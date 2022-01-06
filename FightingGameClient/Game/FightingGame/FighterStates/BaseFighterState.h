@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../Hitbox.h"
+#include "../Fighter/Hitbox.h"
 
 //Forward declarations
 class Fighter;

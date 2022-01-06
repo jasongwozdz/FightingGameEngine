@@ -11,18 +11,6 @@
 #include "../libs/VulkanMemoryAllocator/vk_mem_alloc.h"
 #include "GLFW/glfw3.h"
 
-
-#define VK_CHECK(x) \
-	do \
-	{	\
-		VkResult err = x;	\
-		if (err)	\
-		{	\
-			std::cout << "ERROR: Vulkan error : " << err << std::endl;	\
-			abort();	\
-		} 	\
-	} while(0)
-
 template<> VkRenderer* Singleton<VkRenderer>::msSingleton = 0;
 
 VkRenderer::VkRenderer(Window& window) :
@@ -514,7 +502,6 @@ void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated
 		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
 
 	createTextureResources(*mesh, *texture);
-	
 	createDescriptorSet(mesh);
 	updateUniformBuffer(*mesh);
 
@@ -937,20 +924,17 @@ void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageInde
 	VkDeviceSize offsets[1] = { 0 };
 	for (auto object : objectsToDraw)
 	{
-		//for (RenderableObject* mesh : pipeline.second)
-		//{
-			vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipeline_);
+		vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipeline_);
 
-			vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &object->vertexBuffer_, offsets);
+		vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &object->vertexBuffer_, offsets);
 
-			vkCmdBindIndexBuffer(currentCommandBuffer, object->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(currentCommandBuffer, object->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
 
-			vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipelineLayout_, 0, 1, &object->descriptorSets_[imageIndex], 0, nullptr);
+		vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipelineLayout_, 0, 1, &object->descriptorSets_[imageIndex], 0, nullptr);
 
-			vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(object->indices_.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(object->indices_.size()), 1, 0, 0, 0);
 
-			updateUniformBuffer(*object);
-		//}
+		updateUniformBuffer(*object);
 	}
 }
 
@@ -994,8 +978,8 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 	
 	vkCmdBeginRenderPass(cmdBuffer_, &rpInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	for (RenderSubsystemInterface* renderSubsystem : renderSubsystems_)
-		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
+	//for (RenderSubsystemInterface* renderSubsystem : renderSubsystems_)
+	//	renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
 
 	drawObjects(cmdBuffer_, 0, objectsToDraw);
 	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);
@@ -1169,8 +1153,8 @@ TextureResources VkRenderer::createTextureResources(int textureWidth, int textur
 	VmaAllocationCreateInfo vmaInfo{};
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	int bytesPerPixel = 4;
-	VkDeviceSize imageSize = textureWidth * textureHeight * bytesPerPixel * 6;
+	const int bytesPerPixel = 4;
+	VkDeviceSize imageSize = textureWidth * textureHeight * bytesPerPixel * textureInfo.arrayLayers;
 
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1240,8 +1224,7 @@ TextureResources VkRenderer::createTextureResources(int textureWidth, int textur
 		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &toReadable);
 	});
 
-	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, ret.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT, textureInfo.flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D);
-	imageView.subresourceRange.layerCount = textureInfo.arrayLayers;
+	VkImageViewCreateInfo imageView = vkinit::imageview_create_info(VK_FORMAT_R8G8B8A8_SRGB, ret.image_.image_, VK_IMAGE_ASPECT_COLOR_BIT, textureInfo.flags & VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT ? VK_IMAGE_VIEW_TYPE_CUBE : VK_IMAGE_VIEW_TYPE_2D, textureInfo.arrayLayers);
 
 	VK_CHECK(vkCreateImageView(logicalDevice_, &imageView, nullptr, &ret.view_)); //needs to be deleted
 

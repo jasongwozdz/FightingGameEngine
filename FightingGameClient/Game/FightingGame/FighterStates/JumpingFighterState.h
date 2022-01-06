@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseFighterState.h"
-#include "../Hitbox.h"
+#include "../Fighter/Hitbox.h"
 #include "../InputHandler.h"
 
 const float DEFAULT_GRAVITY = -0.5f;

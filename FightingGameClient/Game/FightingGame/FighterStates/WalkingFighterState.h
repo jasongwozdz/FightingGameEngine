@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseFighterState.h"
-#include "../Hitbox.h"
+#include "../Fighter/Hitbox.h"
 
 class WalkingFighterState :
 	public BaseFighterState
@@ -13,7 +13,7 @@ public:
 	BaseFighterState* handleAttackInput(Fighter* fighter) override;
 	BaseFighterState* onHit(Fighter* fighter, Attack* attack) override;
 private:
-	void setXSpeedBasedOnSide(Fighter* fighter);
+	void setXSpeed(Fighter* fighter);
 private:
 	AttackResources* attacks_;
 };

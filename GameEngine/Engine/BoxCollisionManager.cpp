@@ -43,20 +43,34 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 
 			if (collidersA[i].layer_ == collidersB[j].layer_ && collisionDetected)
 			{
-				if (!collisionPairHandled)//collision already handled
+				if (!collisionPairHandled)//collision not handled
 				{
 					currentCollisions_.insert(key);
 
 					Behavior* behavior = a->tryGetComponent<Behavior>();
 					if (behavior)
 					{
-						behavior->onCollision(b, &collidersB[j]);
+						behavior->onCollision(b, &collidersA[i], &collidersB[j]);
 					}
 
 					behavior = b->tryGetComponent<Behavior>();
 					if (behavior)
 					{
-						behavior->onCollision(a, &collidersA[i]);
+						behavior->onCollision(a, &collidersB[j], &collidersA[i]);
+					}
+				}
+				else//collision handled
+				{
+					Behavior* behavior = a->tryGetComponent<Behavior>();
+					if (behavior)
+					{
+						behavior->whileColliding(b, &collidersA[i], &collidersB[j]);
+					}
+
+					behavior = b->tryGetComponent<Behavior>();
+					if (behavior)
+					{
+						behavior->whileColliding(a, &collidersB[j],&collidersA[i]);
 					}
 				}
 			}
@@ -67,13 +81,13 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 				Behavior* behavior = a->tryGetComponent<Behavior>();
 				if (behavior)
 				{
-					behavior->onExitCollision(b, &collidersB[j]);
+					behavior->onExitCollision(b, &collidersA[i], &collidersB[j]);
 				}
 
 				behavior = b->tryGetComponent<Behavior>();
 				if (behavior)
 				{
-					behavior->onExitCollision(a, &collidersA[i]);
+					behavior->onExitCollision(a, &collidersB[j], &collidersA[i]);
 				}
 			}
 		}
@@ -85,27 +99,36 @@ bool BoxCollisionManager::checkCollision(Transform& transformA, const struct Box
 	//get world space coordinates for boxCollider
 	glm::mat4 finalTransformA = transformA.calculateTransform();
 	glm::mat4 finalTransformB = transformB.calculateTransform();
-	glm::vec4 localPosA = { colliderA.position_, 1.0f };
+	glm::vec4 localPosA = { colliderA.position_ / std::abs(transformA.scale_.x), 1.0f };
 	glm::vec4 worldPosA = finalTransformA * localPosA;
-	glm::vec4 localPosB = { colliderB.position_, 1.0f };
+	glm::vec4 localPosB = { colliderB.position_ / std::abs(transformA.scale_.x), 1.0f };
 	glm::vec4 worldPosB = finalTransformB * localPosB;
 
 	float xMaxA = worldPosA.x + (colliderA.width_/2);
 	float xMaxB = worldPosB.x + (colliderB.width_/2);
+
 	float xMinA = worldPosA.x - (colliderA.width_/2);
 	float xMinB = worldPosB.x - (colliderB.width_/2);
 
 	float yMaxA = worldPosA.y + (colliderA.height_/2);
 	float yMaxB = worldPosB.y + (colliderB.height_/2);
+
 	float yMinA = worldPosA.y - (colliderA.height_/2);
 	float yMinB = worldPosB.y - (colliderB.height_/2);
 
 	float zMaxA = worldPosA.z + (colliderA.length_/2);
 	float zMaxB = worldPosB.z + (colliderB.length_/2);
+
 	float zMinA = worldPosA.z - (colliderA.length_/2);
 	float zMinB = worldPosB.z - (colliderB.length_/2);
 
-	if (yMaxA >= yMinB && yMinA <= yMaxB && xMaxA >= xMinB && xMinA <= xMaxB && zMaxA >= zMinB && zMinA <= zMaxB)//just check x axis for now
+	//if (yMaxA >= yMinB && yMinA <= yMaxB && xMaxA >= xMinB && xMinA <= xMaxB && zMaxA >= zMinB && zMinA <= zMaxB)
+	//{
+	//	return true;
+	//}
+	if (((yMaxA >= yMinB && yMinA <= yMinB) || (yMaxB >= yMinA && yMinB <= yMaxA)) && //checking height
+		((xMaxA >= xMinB && xMinA <= xMinB) || (xMaxB >= xMinA && xMinB <= xMaxA)) && // checking width
+		((zMaxA >= zMinB && zMinA <= zMinB) || (zMaxB >= zMinA && zMinB <= zMaxA)))   // checking length
 	{
 		return true;
 	}

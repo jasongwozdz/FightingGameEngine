@@ -82,6 +82,18 @@ void Input::addButton(std::string button, int keyCode)
 
 void Input::addAxis(std::string axis, int lowKeyCode, int highKeyCode)
 {
+	auto entry = axisMap_.find(axis);
+	if (entry != axisMap_.end())
+	{
+		axisMap_[axis].push_back(std::pair<int, int>(lowKeyCode, highKeyCode));
+	}
+	else
+	{
+		std::vector<LowHighInputPair> keyCodes(1, {lowKeyCode, highKeyCode});
+		axisMap_.insert({ axis, keyCodes});
+	}
+	inputPressedMap_.insert({ lowKeyCode , 0.0f });
+	inputPressedMap_.insert({ highKeyCode, 0.0f });
 }
 
 void Input::onEvent(Events::Event & event)

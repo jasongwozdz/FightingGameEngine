@@ -42,6 +42,7 @@ public:
 
 	bool setSkybox(const std::string& path);
 	void calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projectionMatrix);
+	Entity* createCameraEntity();
 
 	template <typename ...components>
 	std::vector<Entity*> getAllEntitiesWithComponents()
@@ -54,6 +55,9 @@ public:
 		}
 		return output;
 	}
+public:
+	static float DeltaTime;
+
 private:
 	void initalizeDefaultCamera();
 private:

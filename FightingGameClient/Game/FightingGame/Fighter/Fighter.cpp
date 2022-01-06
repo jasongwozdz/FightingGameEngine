@@ -1,17 +1,17 @@
 #include <chrono>
 #include "Fighter.h"
 #include "ResourceManager.h"
-#include "FighterStates/IdleFighterState.h"
-#include "FighterStates/AttackingFighterState.h"
-#include "FighterStates/WalkingFighterState.h"
-#include "FighterStates/HitFighterState.h"
-#include "FighterStates/JumpingFighterState.h"
-#include "FighterStates/CrouchingFighterState.h"
-#include "FighterStates/BlockingFighterState.h"
-#include "FighterStates/JumpingAttackFighterState.h"
+#include "../FighterStates/IdleFighterState.h"
+#include "../FighterStates/AttackingFighterState.h"
+#include "../FighterStates/WalkingFighterState.h"
+#include "../FighterStates/HitFighterState.h"
+#include "../FighterStates/JumpingFighterState.h"
+#include "../FighterStates/CrouchingFighterState.h"
+#include "../FighterStates/BlockingFighterState.h"
+#include "../FighterStates/JumpingAttackFighterState.h"
 #include "DebugDrawManager.h"
 
-Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, FighterSide side) : entity_(entity), inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData), standingAttacks_(attacks)
+Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, FighterSide side) : inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData), standingAttacks_(attacks), BehaviorImplementationBase(entity)
 {
 	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.hitboxData, &standingAttacks_);
 	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.hitboxData, &standingAttacks_);
@@ -23,7 +23,6 @@ Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData id
 	blockedFighterState_ = new BlockingFighterState(blockStateData.animationName, blockStateData.hitboxData);
 	newState_ = idleFighterState_;
 	newState_->enterState(this);
-	//entity_->addComponent<Behavior>(new FighterBehavior(entity_));
 }
 
 Fighter::~Fighter()
@@ -36,6 +35,11 @@ Fighter::~Fighter()
 	delete crouchingFighterState_;
 	delete hitFighterState_;
 	delete blockedFighterState_;
+}
+
+Fighter* Fighter::getFighterComp(Entity * entity)
+{
+	return (Fighter*)entity->getComponent<Behavior>().behaviorImp_.get();
 }
 
 //return in milliseconds
@@ -56,7 +60,7 @@ glm::vec3 Fighter::getPosition() const
 
 void Fighter::setPosition(glm::vec3 pos)
 {
-entity_->getComponent<Transform>().position_ = pos;
+	entity_->getComponent<Transform>().position_ = pos;
 }
 
 
@@ -96,9 +100,9 @@ void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
 
 void Fighter::flipSide()
 {
-	entity_->getComponent<Transform>().scale_.x *= -1;
-	entity_->getComponent<Transform>().scale_.y *= -1;
-	entity_->getComponent<Transform>().scale_.z *= -1;
+	//entity_->getComponent<Transform>().scale_.x *= -1;
+	//entity_->getComponent<Transform>().scale_.y *= -1;
+	//entity_->getComponent<Transform>().scale_.z *= -1;
 
 	glm::quat rot = entity_->getComponent<Transform>().rotation_;
 	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
@@ -124,8 +128,11 @@ void Fighter::flipSide()
 void Fighter::updateTransform()
 {
 	Transform& transform = entity_->getComponent<Transform>();
-	transform.position_ += transform.forward() * currentXSpeed_ * deltaTime_;
-	transform.position_ += transform.up() * currentYSpeed_ * deltaTime_;
+	if (applyGravity_)
+	{
+		velocityWorldSpace_ += gravity_;
+	}
+	transform.position_ += velocityWorldSpace_ * deltaTime_;
 }
 
 void Fighter::handleStateTransition(BaseFighterState* transitionToState)
@@ -137,25 +144,14 @@ void Fighter::handleStateTransition(BaseFighterState* transitionToState)
 	}
 }
 
-void Fighter::onUpdate(float delta, DebugDrawManager* debugDrawManager)
+void Fighter::update()
 {
-	deltaTime_ = delta * .001;//convert to seconds
+	deltaTime_ = Scene::DeltaTime * .001;//convert to seconds
 	handleStateTransition(newState_->handleMovementInput(this));
 	handleStateTransition(newState_->handleAttackInput(this));
 	handleStateTransition(newState_->update(this));
-
 	inputHandler_.updateInputQueue(deltaTime_);
-
-	Transform& transform = entity_->getComponent<Transform>();
-	glm::vec3 upPos = transform.position_ + transform.up();
-	glm::vec3 rightPos = transform.position_ + transform.left();
-	glm::vec3 forwardPos = transform.position_ + transform.forward();
-
-	glm::vec3 lineStart = transform.position_;
-	debugDrawManager->drawLine(lineStart, upPos, { 255, 0, 0 });
-	debugDrawManager->drawLine(lineStart, rightPos, { 0, 255, 0 });
-	debugDrawManager->drawLine(lineStart, forwardPos, { 0, 0, 255 });
-
+	updateTransform();
 }
 
 bool Fighter::onHit(Attack& attack)
@@ -166,12 +162,12 @@ bool Fighter::onHit(Attack& attack)
 
 void Fighter::setXSpeed(float speedX)
 {
-	currentXSpeed_ = speedX;
+	velocityWorldSpace_.x = speedX;
 }
 
 void Fighter::setYSpeed(float speedY)
 {
-	currentYSpeed_ = speedY;
+	velocityWorldSpace_.y = speedY;
 }
 
 void Fighter::handleWallCollision(bool collidedWithLeftWall)
@@ -184,23 +180,28 @@ void Fighter::handleFloorCollision()
 	handleStateTransition(newState_->handleFloorCollision(this));
 }
 
-void Fighter::displaceFighter(float y, float z)
-{
-	Transform& transform = entity_->getComponent<Transform>();
-	transform.position_.y += y;
-	transform.position_.z += z;
-}
+//void Fighter::displaceFighter(float y, float z)
+//{
+//	Transform& transform = entity_->getComponent<Transform>();
+//	transform.position_.y += y;
+//	transform.position_.z += z;
+//}
 
 float Fighter::getXSpeed()
 {
-	float speedX = currentXSpeed_;
-	//if (side_ == left)
-	//	speedX *= -1;
-	return speedX;
+	return velocityWorldSpace_.x;
 }
 
 void Fighter::takeDamage(int damage)
 {
 	//made this a function since this is where individual fighter damage percentages should be calculated
 	health_ -= damage;
+}
+
+void Fighter::whileColliding(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
+{
+	if (otherEnt->name_ == "Fighter")
+	{
+		Fighter* otherFighter = (Fighter*)otherEnt->getComponent<Behavior>().behaviorImp_.get();
+	}
 }

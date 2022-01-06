@@ -43,6 +43,8 @@ public:
 	{
 		registry_.remove<T>(enttId_);
 	}
+public:
+	std::string name_;
 
 private:
 	Entity(entt::registry& registry, std::string& name);//only created through scene object
@@ -50,5 +52,4 @@ private:
 
 	entt::entity enttId_;
 	entt::registry& registry_;
-	std::string name_;
 };

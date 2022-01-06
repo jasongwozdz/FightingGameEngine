@@ -33,10 +33,6 @@ private:
 	FighterFactory* fighterFactory_;
 	GameStateManager* gameStateManager_;
 
-	Arena arena_;
-	Fighter* fighter_;
-	Fighter* fighter2_;
-
 	bool drawDebug_ = true;//should debug be drawn
 	bool cursor_ = false;//is cursour disabled;
 };

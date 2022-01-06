@@ -74,28 +74,6 @@ void GameBase::onUpdate(float deltaTime)
 	{
 		cameraController_->onUpdate(deltaTime);
 	}
-	
-
-	//Transform& t = fighter_->entity_->getComponent<Transform>();
-	//Transform& t2 = fighter2_->entity_->getComponent<Transform>();
-	//
-	//if (fighter_)
-	//	fighter_->onUpdate(deltaTime);
-	//if (fighter2_)
-	//	fighter2_->onUpdate(deltaTime);
-	//if (fighterCamera_ && !drawDebug_)
-	//	fighterCamera_->onUpdate(deltaTime);
-	//if (cameraController_)
-	//	cameraController_->onUpdate(deltaTime);
-	//if (camera_)
-	//	camera_->update(deltaTime);
-
-	//gameStateManager_->update(deltaTime);
-
-	//if (fighter_)
-	//	fighter_->updateTransform();
-	//if (fighter2_)
-	//	fighter2_->updateTransform();
 }
 
 Application* createApplication()

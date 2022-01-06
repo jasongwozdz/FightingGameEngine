@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Game\FightingGame\Fighter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Game\FightingGame\FighterFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -72,17 +69,20 @@
     <ClCompile Include="Game\FightingGame\FighterSandbox\AttackBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game\FightingGame\FighterCameraBehavior.cpp">
+    <ClCompile Include="Game\FightingGame\ControllableCameraBehavior.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Game\FightingGame\ControllableCameraBehavior.cpp">
+    <ClCompile Include="Game\FightingGame\Fighter\Fighter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\ArenaFloorBehavior.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\ArenaWallBehavior.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game\FightingGame\Fighter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Game\FightingGame\FighterFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -90,9 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\GameStateManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\FightingGame\Hitbox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\InputHandler.h">
@@ -137,19 +134,31 @@
     <ClInclude Include="Game\FightingGame\AppStates\CharacterSelectAppState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Game\FightingGame\Attack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Game\FightingGame\AppStates\FightingAppState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\FighterSandbox\AttackBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Game\FightingGame\FighterCameraBehavior.h">
+    <ClInclude Include="Game\FightingGame\ControllableCameraBehavior.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Game\FightingGame\ControllableCameraBehavior.h">
+    <ClInclude Include="Game\FightingGame\Fighter\Fighter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\Fighter\Hitbox.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\Fighter\Attack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\ArenaFloorBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\ArenaWallBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\Arena.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

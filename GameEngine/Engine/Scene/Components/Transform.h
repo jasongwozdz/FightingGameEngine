@@ -23,6 +23,10 @@ public:
 	static glm::vec3 worldLeft;
 	static glm::vec3 worldForward;
 
+	//check what side vector checkSide is in relation to middle
+	// > 0 indicates right, < 0 indicates left
+	static float checkSide(glm::vec2 middle, glm::vec2 checkSide);
+
 	glm::vec3 left();
 	glm::vec3 up();
 	glm::vec3 forward();
@@ -30,6 +34,7 @@ public:
 	void drawDebugGui();
 
 	glm::mat4 calculateTransform();
+	glm::mat4 calculateTransformNoScale();
 	void applyTransformToMesh(Renderable& mesh);
 
 	//direction to point forward vector at
@@ -59,4 +64,3 @@ private:
 	glm::quat oldRot_;
 	bool calculateTransform_ = true;
 };
-

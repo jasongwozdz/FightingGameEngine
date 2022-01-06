@@ -1,7 +1,7 @@
 #include <iostream>
 #include "HitFighterState.h"
-#include "../Attack.h"
-#include "../Fighter.h"
+#include "../Fighter/Attack.h"
+#include "../Fighter/Fighter.h"
 #include "../GameStateManager.h"
 #include "Renderer/UIInterface.h"
 
@@ -24,7 +24,8 @@ BaseFighterState* HitFighterState::update(Fighter* fighter)
 	}
 	else //if fighter was hit in the air then they are in hitstun until they hit the ground
 	{
-		fighter->currentYSpeed_ += gravity_;
+		fighter->velocityWorldSpace_ += gravity_;
+		//fighter->currentYSpeed_ += gravity_;
 	}
 	UI::UIInterface::getSingletonPtr()->addTextToTransparentBackground(std::to_string(comboCount_), { 0, 500 }, { 255, 0, 0, 100 }, 10);
 	return nullptr;

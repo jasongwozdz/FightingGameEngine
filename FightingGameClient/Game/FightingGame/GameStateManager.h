@@ -1,14 +1,7 @@
 #pragma once
-#include "Fighter.h"
+#include "Fighter/Fighter.h"
 #include "DebugDrawManager.h"
 
-struct Arena
-{
-	float width;
-	float depth;
-	glm::vec3 pos;
-	Entity* backgroundEntity;
-};
 
 //Used to store what attacks can cancel into eachother.  If an attack A is cancelable in attack B  That means that if attack A is next in the fighters attackBuffer and attack B is the current attack.  Attack A will become the new attack starting from its first frame
 struct CancelAttackMap
@@ -48,7 +41,7 @@ struct CancelAttackMap
 class GameStateManager
 {
 public:
-	GameStateManager(Fighter* fighter1, Fighter* fighter2, DebugDrawManager* debugDrawManager, Arena& arena);
+	GameStateManager(Entity* fighter1, Entity* fighter2, DebugDrawManager* debugDrawManager/*, Arena& arena*/);
 
 	~GameStateManager() = default;
 
@@ -57,7 +50,7 @@ public:
 public:
 	bool debug_ = true; //should debug be drawn
 
-	static Arena arena_;//make static so states can access the arena
+	//static Arena arena_;//make static so states can access the arena
 
 private:
 	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2);
@@ -96,8 +89,7 @@ private:
 	DebugDrawManager* debugManager_;
 	float deltaTime_;
 	struct {
-		Fighter* fighters_[2];
-		CancelAttackMap cancelAttackMap_[2];
+		Entity* fighters_[2];
 		int healthBar[2] = { 100, 100 }; 
 	}fighterResources_;//stores both fighters their cancelAttackMap and healthBars
 

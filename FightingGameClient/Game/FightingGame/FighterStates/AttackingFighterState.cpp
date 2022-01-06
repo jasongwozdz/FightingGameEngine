@@ -1,6 +1,6 @@
 #include "AttackingFighterState.h"
 #include "HitFighterState.h"
-#include "../Fighter.h"
+#include "../Fighter/Fighter.h"
 
 AttackingFighterState::AttackingFighterState(AttackResources* attacks) :
 	BaseFighterState("", {}),

@@ -3,7 +3,7 @@
 #include "AttackingFighterState.h"
 #include "BlockingFighterState.h"
 #include "HitFighterState.h"
-#include "../Fighter.h"
+#include "../Fighter/Fighter.h"
 
 CrouchingFighterState::CrouchingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) : 
 	BaseFighterState(animationName, hitboxData),

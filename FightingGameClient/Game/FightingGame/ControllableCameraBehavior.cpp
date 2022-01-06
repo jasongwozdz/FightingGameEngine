@@ -2,7 +2,7 @@
 #include "Input.h"
 #include "Scene/Components/Camera.h"
 
-ControllableCameraBehavior::ControllableCameraBehavior(Entity* entity, GameBase* gameBase) :
+ControllableCameraBehavior::ControllableCameraBehavior(Entity* entity) :
 	oldMousePos_({ 0.0f, 0.0f }),
 	BehaviorImplementationBase(entity),
 	input_(Input::getSingletonPtr())
@@ -27,16 +27,16 @@ void ControllableCameraBehavior::update()
 {
 	handleKeyInput();
 	handleMouseInput();
-	//glm::vec3 midPoint = calculateMidPoint();
-	//Transform& transform = entity_->getComponent<Transform>();
-	//transform.lookAt(midPoint - transform.position_);
 }
 
 void ControllableCameraBehavior::handleKeyInput()
 {
-	Transform& transform = entity_->getComponent<Transform>();
-	transform.position_ += transform.forward() * input_->getAxis("Vertical") * cameraSpeed_;
-	transform.position_ += transform.left() * input_->getAxis("Horizontal") * cameraSpeed_;
+	if (input_->getButton("LeftClick") > 0.0f)
+	{
+		Transform& transform = entity_->getComponent<Transform>();
+		transform.position_ += transform.forward() * input_->getAxis("Vertical") * cameraSpeed_;
+		transform.position_ += transform.left() * input_->getAxis("Horizontal") * cameraSpeed_;
+	}
 }
 
 void ControllableCameraBehavior::handleMouseInput()

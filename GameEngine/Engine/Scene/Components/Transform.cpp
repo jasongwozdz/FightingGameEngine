@@ -146,3 +146,20 @@ void Transform::rotateAround(glm::vec3 rotationInRadians)
 	rotation_ *= glm::quat(glm::rotate(rotationInRadians.y, worldUp));
 	rotation_ *= glm::quat(glm::rotate(rotationInRadians.z, worldForward));
 }
+
+float Transform::checkSide(glm::vec2 middle, glm::vec2 checkSide)
+{
+	glm::vec2 middleRotated90 = { middle.y, -middle.x };
+	return glm::dot(middleRotated90, checkSide);
+}
+
+glm::mat4 Transform::calculateTransformNoScale()
+{
+	glm::mat4 localToWorldNoScale;
+	glm::mat4 scale = glm::mat4(1.0f);
+	glm::mat4 rot = glm::toMat4(glm::normalize(rotation_));
+	glm::mat4 trans = glm::translate(glm::mat4(1.0f), position_);
+
+	localToWorldNoScale = trans * rot * scale;
+	return localToWorldNoScale;
+}
