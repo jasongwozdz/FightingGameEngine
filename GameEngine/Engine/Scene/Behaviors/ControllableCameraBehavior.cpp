@@ -1,6 +1,6 @@
 #include "ControllableCameraBehavior.h"
-#include "Input.h"
-#include "Scene/Components/Camera.h"
+#include "../../Input.h"
+#include "../Components/Camera.h"
 
 ControllableCameraBehavior::ControllableCameraBehavior(Entity* entity) :
 	oldMousePos_({ 0.0f, 0.0f }),

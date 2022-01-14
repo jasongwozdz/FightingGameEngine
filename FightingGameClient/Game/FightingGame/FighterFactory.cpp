@@ -1,113 +1,77 @@
 #include "FighterFactory.h"
 #include "ResourceManager.h"
 #include "FighterFileImporter.h"
-
 #include "Scene/Components/Collider.h"
+#include "FighterSandbox/BasicFighter/LightPunch.h"
 
 FighterFactory::FighterFactory(Scene& scene) :
 	scene_(scene)
 {}
 
-Entity* FighterFactory::createFighter(const std::string& fighterFilePath, InputHandler& inputHandler)
+Entity* FighterFactory::createFighterNew(const std::string & fighterFilePath, InputHandler & inputHandler)
 {
 	FighterFileImporter fighterFileImporter(fighterFilePath);
 	ResourceManager& resourceManager = ResourceManager::getSingleton();
 	AnimationReturnVals ret = resourceManager.loadAnimationFile(fighterFileImporter.exportData_.modelFilePath);
 	TextureReturnVals texVals = resourceManager.loadTextureFile((std::string&)fighterFileImporter.exportData_.textureFilePath);
+
 	Entity* entity = scene_.addEntity("Fighter");
 	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Fighter");
 	Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter", true);
 	Transform& transform = entity->addComponent<Transform>( 1.0f, 1.0f, 1.0f );
-	//transform.rotation_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
-	//transform.rotation_ = glm::rotate(transform.rotation_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
 	transform.setScale(0.019f);
 	Collider& collider = entity->addComponent<Collider>(entity);
 
-	//BoxCollider boxCollider = BoxCollider(mesh);
-	//collider.colliders_.push_back(boxCollider);
-
-	BoxCollider boxCollider(2, 2, 2, {0, 0, 0}, 0);
+	BoxCollider boxCollider(glm::vec3(1, 2, 1), glm::vec3(0, 2, 0), 0);
 	collider.colliders_.push_back(boxCollider);
-	//boxCollider = { 1, 5, 1, {0, 2, 3}, 0};
-	//collider.colliders_.push_back(boxCollider);
 
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation("Idle");
 
 	FighterStateData idleStateData;
 	idleStateData.animationName = fighterFileImporter.exportData_.idleData.animationName;
-	idleStateData.hitboxData = fighterFileImporter.exportData_.idleData.hitboxData;
+	idleStateData.frameData = fighterFileImporter.exportData_.idleData.frameData;
 
 	FighterStateData walkingStateData;
 	walkingStateData.animationName = fighterFileImporter.exportData_.walkingData.animationName;
-	walkingStateData.hitboxData = fighterFileImporter.exportData_.walkingData.hitboxData;
+	walkingStateData.frameData = fighterFileImporter.exportData_.walkingData.frameData;
 
 	FighterStateData crouchStateData;
 	crouchStateData.animationName = fighterFileImporter.exportData_.crouchData.animationName;
-	crouchStateData.hitboxData = fighterFileImporter.exportData_.crouchData.hitboxData;
+	crouchStateData.frameData = fighterFileImporter.exportData_.crouchData.frameData;
 
 	FighterStateData jumpStateData;
 	jumpStateData.animationName = fighterFileImporter.exportData_.jumpData.animationName;
-	jumpStateData.hitboxData = fighterFileImporter.exportData_.jumpData.hitboxData;
+	jumpStateData.frameData = fighterFileImporter.exportData_.jumpData.frameData;
 
 	FighterStateData hitStateData;
 	hitStateData.animationName = fighterFileImporter.exportData_.hitData.animationName;
-	hitStateData.hitboxData = fighterFileImporter.exportData_.hitData.hitboxData;
+	hitStateData.frameData = fighterFileImporter.exportData_.hitData.frameData;
 
 	FighterStateData blockStateData;
 	blockStateData.animationName = fighterFileImporter.exportData_.blockData.animationName;
-	blockStateData.hitboxData = fighterFileImporter.exportData_.blockData.hitboxData;
+	blockStateData.frameData = fighterFileImporter.exportData_.blockData.frameData;
 
 	AttackResources standingAttacks{};
-	standingAttacks.attacks_ = fighterFileImporter.exportData_.attacks;
-	for (int i = 0; i < fighterFileImporter.exportData_.inputData.size(); i++)
+	std::vector<FighterFileImporter::AttackData> attackData = fighterFileImporter.exportData_.attackData;
+	for (int i = 0; i < attackData.size(); i++)
 	{
-		AttackInput attackInput{};
-		attackInput.attackInput = fighterFileImporter.exportData_.inputData[i];
-		attackInput.attackIndex = i;
-		attackInput.numInputs = fighterFileImporter.exportData_.inputData[i].size();
-		standingAttacks.inputs_.push_back(attackInput);
-	}
-
-	Fighter* fighter = new Fighter(entity, inputHandler, idleStateData, walkingStateData, crouchStateData, jumpStateData, hitStateData, blockStateData, standingAttacks);
-	fighter->defaultHitboxes_ = fighterFileImporter.exportData_.idleData.hitboxData[0];
-
-	fighter->setCurrentHitboxes(fighter->defaultHitboxes_);
-	fighter->currentHitboxes_ = fighter->defaultHitboxes_;
-	fighter->attacks_ = fighterFileImporter.exportData_.attacks;
-	for(const Attack& attack : fighter->attacks_)
-	{
-		AnimationClip* clip = animator.getAnimationClipByName(attack.animationName_);
-		if (clip)
+		FighterFileImporter::AttackData currentAttack = attackData[i];
+		switch (i)
 		{
-			//clip->playbackRate_ = 3;
-			clip->isLooping_ = false;//set all atacking clips to non looping
+		case 0:
+			HitEffect hitEffect(currentAttack.blockstun_, currentAttack.hitstun_, currentAttack.freezeFrames_, currentAttack.push_, currentAttack.damage_);
+
+			standingAttacks.newAttacks_.push_back(new AttackBase(entity, currentAttack.startupFrames_, currentAttack.activeFrames_, currentAttack.recoveryFrames_, hitEffect,currentAttack.animationName_, currentAttack.frameData_));
+
+			AttackInput currentAttackInput(currentAttack.inputs_, i);
+			standingAttacks.inputs_.push_back(currentAttackInput);
+			break;
 		}
 	}
 
+	Fighter* fighter = new Fighter(entity, inputHandler, idleStateData, walkingStateData, crouchStateData, jumpStateData, hitStateData, blockStateData, standingAttacks, fighterFileImporter.exportData_.basePushBox);
 	entity->addComponent<Behavior>(fighter);
 
 	return entity;
-}
-
-bool FighterFactory::populateAttackInput(std::string inputFile, Fighter* fighter)
-{
-	AttackInput input{};
-	input.attackInput.push_back(FightingGameInput::light);
-	input.attackIndex = 0;
-	fighter->attackInputs_.push_back(input);
-
-	input.attackInput[0] = FightingGameInput::medium;
-	input.attackIndex = 1;
-	fighter->attackInputs_.push_back(input);
-
-	input.attackInput[0] = FightingGameInput::strong;
-	input.attackIndex = 2;
-	fighter->attackInputs_.push_back(input);
-
-	input.attackInput[0] = FightingGameInput::ultra;
-	input.attackIndex = 3;
-	fighter->attackInputs_.push_back(input);
-
-	return true;
 }

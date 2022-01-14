@@ -1,16 +1,10 @@
 #pragma once
 #include "BaseFighterState.h"
 #include "../Fighter/Hitbox.h"
+#include "../FighterSandbox/AttackTypes.h"
 
 struct Attack;
 struct AttackResources;
-
-enum AttackPhase
-{
-	STARTUP,
-	ACTIVE,
-	RECOVERY
-};
 
 class AttackingFighterState :
 	public BaseFighterState
@@ -22,10 +16,13 @@ public:
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;
 	BaseFighterState* handleAttackInput(Fighter* fighter) override;
 	BaseFighterState* onHit(Fighter* fighter, Attack* attack) override;
+	BaseFighterState* handleFloorCollision(Fighter* fighter) override;
 public:
-	Attack* currentAttack_;
+	AttackBase* currentAttack_;
+
 private:
 	AttackResources* attacks_;//need to store attacks to check if the current attack can be cancelled
-	AttackPhase attackPhase_ = STARTUP;
+	FrameType attackPhase_ = STARTUP;
+
 };
 

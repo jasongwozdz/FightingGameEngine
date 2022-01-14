@@ -47,7 +47,6 @@ void Transform::applyTransformToMesh(Renderable& mesh)
 {
 	finalTransform_ = calculateTransform();
 	mesh.ubo_.model = finalTransform_;
-	drawDebug();
 	return;
 }
 
@@ -69,9 +68,9 @@ glm::mat4 Transform::calculateTransform()
 			glm::mat4 rot = glm::toMat4(glm::normalize(rotation_));
 			glm::mat4 trans = glm::translate(glm::mat4(1.0f), position_);
 
-			oldPos_ = position_;
-			oldScale_ = scale_;
-			oldRot_ = rotation_;
+			//oldPos_ = position_;
+			//oldScale_ = scale_;
+			//oldRot_ = rotation_;
 
 			finalTransform_ = trans * rot * scale;
 		//}
@@ -138,6 +137,23 @@ void Transform::rotateAround(float angleToRotateInDegrees, glm::vec3 axisToRotat
 	//rotation_ = glm::quat(glm::rotate(rotation_, glm::radians(angleToRotateInDegrees), axisToRotateAround));
 	//rotation_ *= newRotation;
 	calculateTransform();
+}
+
+void Transform::moveTowards(glm::vec3 finalPos, float maxMoveMag)
+{
+	glm::vec3 dir = finalPos - position_;
+	float reqDist = glm::length(dir);
+	dir = glm::normalize(dir);
+	float mag;
+	if (reqDist < maxMoveMag)
+	{
+		mag = reqDist;
+	}
+	else
+	{
+		mag = maxMoveMag;
+	}
+	position_ += dir * mag;
 }
 
 void Transform::rotateAround(glm::vec3 rotationInRadians)

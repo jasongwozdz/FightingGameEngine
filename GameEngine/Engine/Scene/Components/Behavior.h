@@ -18,21 +18,22 @@ public:
 		std::cout << "BehaviorImplementation deleted" << std::endl; 
 	};
 
-	Entity* entity_;
-private:
-	virtual void onCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
-	virtual void whileColliding(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
-	virtual void onExitCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
-
-	virtual void onAttach() {};//called when script is attached to entity
-	virtual void update() = 0;//called every frame
-
-	friend class Behavior;
-protected:
 	Transform& getTransform()
 	{
 		return entity_->getComponent<Transform>();
 	}
+
+public:
+	Entity* entity_;
+
+private:
+	virtual void onCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void whileColliding(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void onExitCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void onAttach() {};//called when script is attached to entity
+	virtual void update() = 0;//called every frame
+
+	friend class Behavior;
 };
 
 class Behavior

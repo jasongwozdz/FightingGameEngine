@@ -1,5 +1,7 @@
 #pragma once
 #include "../Application.h"
+#include "Scene/Entity.h"
+#include "Renderer/UIInterface.h"
 
 class Editor : public Application
 {
@@ -9,12 +11,16 @@ public:
 
 	void onUpdate(float deltaTime);
 	void onStartup();
-	void onEvent(Events::Event& event);
-
-	void moveCamera(Events::KeyEvent& keyEvent);
-	void adjustCameraRotation();
 
 private:
+	[[nodiscard]] bool addEntity(std::string path, std::string name);
+	void drawUI();
+	void handleInput();
 
+private:
+	UI::UIInterface* uiInterface_;
+	class Entity* currentlySelected_ = nullptr;
+	std::vector<class Entity*> entitys_;
+	const std::string cubeModelPath_ = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FightingGameClient\\Models\\cube.obj";
 	float deltaTime_;
 };

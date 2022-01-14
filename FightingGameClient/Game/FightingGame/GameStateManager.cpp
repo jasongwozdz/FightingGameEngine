@@ -10,146 +10,41 @@
 
 #define NUM_FIGHTERS 2
 
-//return in milliseconds
-extern double getCurrentTime();
+GameStateManager* GameStateManager::msSingleton = 0;
 
-//Arena GameStateManager::arena_{};
 
-GameStateManager::GameStateManager(Entity* fighter1, Entity* fighter2, DebugDrawManager* debugDrawManager/*,Arena& arena*/) :
+GameStateManager& GameStateManager::getSingleton()
+{
+	assert(msSingleton);
+	return *msSingleton;
+}
+
+GameStateManager* GameStateManager::getSingletonPtr()
+{
+	return msSingleton;
+}
+
+GameStateManager::GameStateManager(Entity* fighter1, Entity* fighter2, DebugDrawManager* debugDrawManager, Arena& arena) :
 	ui_(UI::UIInterface::getSingleton()),
-	debugManager_(debugDrawManager)
+	debugManager_(debugDrawManager),
+	arena_(arena)
 {
 	fighterResources_.fighters_[0] = fighter1;
 	fighterResources_.fighters_[1] = fighter2;
-
-	timerResources_.startTime = getCurrentTime() * .001;//convert to seconds
+	msSingleton = this;
 };
 
 void GameStateManager::update(float deltaTime)
 {
 	deltaTime_ = deltaTime * 0.001;
-	//updateAttacks();
+	updateFighterTransforms();
 	checkFighterSide();
+	handleFighterCollision();
+	handleInboundChecks();
 	drawHealthBars();
 	//updateTimer();
-	if(debug_)
-		drawDebug();
 }
 
-bool GameStateManager::checkAttackCollision(Fighter& attackingFighter, Fighter& recievingFighter)
-{
-	//Grab all hurtboxes from the attacking fighter and all hitboxes from the recieving fighter and do a collision check 
-	const std::vector<Hitbox>& hurtboxes = attackingFighter.currentHurtboxes_;
-	const std::vector<Hitbox>& hitboxes = recievingFighter.currentHitboxes_;
-	glm::vec3 attackFighterPos = attackingFighter.getPosition();
-	glm::vec3 recievingFighterPos = recievingFighter.getPosition();
-	Transform& t1 = attackingFighter.entity_->getComponent<Transform>();
-	Transform& t2 = recievingFighter.entity_->getComponent<Transform>();
-	for (const Hitbox& hurtbox : hurtboxes)
-	{
-		for (const Hitbox& hitbox : hitboxes) 
-		{
-			areHitboxesColliding(attackFighterPos, hurtbox, recievingFighterPos, hitbox);
-			//if(areHitboxesColliding(attackFighterPos, hurtbox, recievingFighterPos, hitbox))
-			//{
-			//	return true;
-			//}
-			if (areHitboxesColliding(t1, hurtbox, t2, hitbox))
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-bool GameStateManager::fighterCollisionCheck()
-{
-	//Fighter* fighter1 = fighterResources_.fighters_[0]->getComponent<Behavior>();
-	//Fighter* fighter2 = fighterResources_.fighters_[1];
-	//Transform& fighter1Trans = fighter1->entity_->getComponent<Transform>();
-	//Transform& fighter2Trans = fighter2->entity_->getComponent<Transform>();
-
-	//for (const Hitbox& fighter1Pushbox : fighter1->currentPushBoxes_)
-	//{
-	//	for (const Hitbox& fighter2Pushbox : fighter2->currentPushBoxes_)
-	//	{
-	//		//if fighters collide determine how they should be pushed.  Only do this check when fighters have finshed flipping sides.  If we don't wait for side flipping then when a fighter crossing up the other fighter while jumping into them then the jumping fighters speed will be set to 0 and all momentum will be lost.  This caused a weird effect where if a fighter slightly clips the other fighter while jumping they will drop right in front of them
-	//		//if (areHitboxesColliding(fighter1Trans.position_, fighter1Pushbox, fighter2Trans.position_, fighter2Pushbox) && !fighter1->flipSide_ && !fighter2->flipSide_)
-	//		if (areHitboxesColliding(fighter1Trans, fighter1Pushbox, fighter2Trans, fighter2Pushbox) && !fighter1->flipSide_ && !fighter2->flipSide_)
-	//		{
-	//			float speed1 = fighter1->getXSpeed();
-	//			float speed2 = fighter2->getXSpeed();
-
-	//			//make sure that speeds are always negative;
-	//			if (speed1 > 0)
-	//			{
-	//				speed1 *= -1;
-	//			}
-	//			else if (speed2 > 0)
-	//			{
-	//				speed2 *= -1;
-	//			}
-	//			//apply each fighters speed to eachother
-	//			//if both fighters are moving towards eachother they will move in place
-	//			//if only one fighter is moving towards the other then the non moving fighter will be pushed
-	//			const float PUSH_OFFSET = 0.01f;//add a slight offset to the speed so that both fighters are pushed until they aren't touching
-	//			
-	//			float extraOffset = 0;//calculate how close the fighters are to eachother.  Scale the offset amount based on their distance. The closer the fighters are the larger the offset will be
-	//			float fighter1PushboxGlobalPos = fighter1Trans.position_.y + fighter1Pushbox.position_.y;
-	//			float fighter2PushboxGlobalPos = fighter2Trans.position_.y + fighter2Pushbox.position_.y;
-
-	//			float dist = glm::distance(fighter1PushboxGlobalPos, fighter2PushboxGlobalPos);
-	//			float maxDist = (fighter1Pushbox.width_ / 2) + (fighter2Pushbox.width_ / 2);
-	//			extraOffset = (maxDist - dist) * 10; 
-
-	//			fighter1->setXSpeed(-speed2 + PUSH_OFFSET + extraOffset);
-	//			fighter2->setXSpeed(-speed1 + PUSH_OFFSET + extraOffset);
-	//			fighter1->updateTransform();
-	//			fighter2->updateTransform();
-	//			fighter1->setXSpeed(0);
-	//			fighter2->setXSpeed(0);
-	//		}
-	//	}
-	//}
-	//return false;
-	return false;
-}
-
-void GameStateManager::clampFighterOutOfBounds()
-{
-	//make sure fighter is within the bounds of the Arena
-	//for (int fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
-	//{
-	//	Fighter* fighter = fighterResources_.fighters_[fighterIndex];
-	//	Transform& fighterTransform = fighter->entity_->getComponent<Transform>();
-	//	glm::vec3 fighterPos = fighter->getPosition();
-	//	for (const Hitbox& pushbox : fighter->currentPushBoxes_)
-	//	{
-	//		//check if the fighter is colliding with the sides of the arena, if they are push them out
-	//		if ((pushbox.width_ / 2 + fighterPos.y) > (arena_.pos.y + (arena_.width / 2)))
-	//		{
-	//			fighterTransform.position_.y = (arena_.pos.y + (arena_.width / 2)) - (pushbox.width_ / 2);
-	//			fighter->handleWallCollision(false);//collided with right side
-	//		}
-
-	//		if ((fighterPos.y - pushbox.width_ / 2) < (-arena_.width / 2 + arena_.pos.y))
-	//		{
-	//			fighterTransform.position_.y = (-arena_.width / 2 + arena_.pos.y) + (pushbox.width_ / 2);
-	//			fighter->handleWallCollision(true);//collided with left side
-	//		}
-
-	//		//check if fighter is colliding with the bottom of the arena if they are push them up
-	//		float fighterZ = fighterPos.z;
-	//		float pushBoxZ = pushbox.position_.z - pushbox.height_ / 2;
-	//		if ((fighterZ + pushBoxZ) < (arena_.pos.z ))
-	//		{
-	//			fighterTransform.position_.z = (arena_.pos.z - pushBoxZ);
-	//			fighter->handleFloorCollision();
-	//		}
-	//	}
-	//}
-}
 
 void GameStateManager::drawHealthBars()
 {
@@ -170,41 +65,12 @@ void GameStateManager::drawHealthBars()
 	ui_.drawRect(backHealthBarWidth, 60, { -width*.2, -height*.1 }, { 255, 0, 0, 1 });
 }
 
-void GameStateManager::drawDebug()
-{
-	//debugManager_->drawGrid(arena_.pos, Transform::worldLeft, 90.0f, 21, 21, { 255, 255, 255 }); //floor
-
-	//glm::vec3 pos = arena_.pos;
-	//pos.z += (arena_.depth);
-	//pos.y += (arena_.width/2);
-	//float rotationAngle = 0.0f;
-	//debugManager_->drawGrid(pos, Transform::worldForward, 0.0f, arena_.width, arena_.depth, { 255, 255, 255 }); //back wall
-
-	//pos = arena_.pos;
-	//rotationAngle = 90.0f;
-	//pos.z += (arena_.width / 2);
-	//debugManager_->drawGrid(pos, Transform::worldLeft, rotationAngle, arena_.width, arena_.depth, { 255, 255, 255 }); //ceiling
-
-	//pos = arena_.pos;
-	//rotationAngle = 90.0f;
-	//pos.y += arena_.width / 2;
-	//pos.z += (arena_.width / 4);
-	//debugManager_->drawGrid(pos, Transform::worldUp, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }); //left wall
-
-	//pos = arena_.pos;
-	//rotationAngle = 90.0f;
-	//pos.y -= arena_.width / 2;
-	//pos.z += (arena_.width / 4);
-	//debugManager_->drawGrid(pos, Transform::worldUp, rotationAngle, arena_.width, arena_.depth/2+1, { 255, 255, 255 }); //right wall
-
-}
-
 void GameStateManager::updateTimer()
 {
 	const glm::vec4 TIMER_COLOR = {0, 1, 1, 1};
 	const float TIMER_TEXT_SCALE = 4.0f;
 
-	float currentTime = getCurrentTime() * 0.001f;//convert to seconds
+	float currentTime = /*getCurrentTime() */ 0.001f;//convert to seconds
 	uint32_t secondsInMatch = (uint32_t)(currentTime - timerResources_.startTime);
 
 	glm::vec2 windowPos{};
@@ -241,64 +107,128 @@ void GameStateManager::updateTimer()
 	ui_.addTextToTransparentBackground(std::to_string(secondsInMatch), windowPos, TIMER_COLOR, TIMER_TEXT_SCALE);
 }
 
-void GameStateManager::updateAttacks()
+void GameStateManager::updateFighterTransforms()
 {
-	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
+	for (int i = 0; i < 2; i++)
 	{
-		uint32_t opposingFighterIndex = fighterIndex ^ 1;
-		Fighter* attackingFighter = (Fighter*)fighterResources_.fighters_[fighterIndex]->getComponent<Behavior>().behaviorImp_.get();
-		Fighter* recievingFighter = (Fighter*)fighterResources_.fighters_[opposingFighterIndex]->getComponent<Behavior>().behaviorImp_.get();;
-		if (checkAttackCollision(*attackingFighter, *recievingFighter))
+		Fighter* fighter = Fighter::getFighterComp(fighterResources_.fighters_[i]);
+		fighter->updateTransform();
+	}
+}
+
+void GameStateManager::handleInboundChecks()
+{
+	for (int i = 0; i < 2; i++)
+	{
+		Transform& transform = fighterResources_.fighters_[i]->getComponent<Transform>();
+		Fighter* fighter = Fighter::getFighterComp(fighterResources_.fighters_[i]);
+		fighter->collidingWithWall = false;
+
+		//collided with floor
+		if (transform.position_.y < arena_.pos.y)
 		{
-			Attack* currentAttack = attackingFighter->currentAttack_;
-			if (currentAttack )
-			{
-				if (!currentAttack->handled_)
-				{
-					recievingFighter->onHit(*currentAttack);
-					currentAttack->handled_ = true;
-				}
-			}
-			else
-			{
-				printf("ERROR: collision detected but fighter is not currently attacking");
-			}
+			transform.position_.y = arena_.pos.y;
+			fighter->applyGravity_ = false;
+			fighter->handleFloorCollision();
+		}
+
+		//left wall collision
+		if (transform.position_.x > arena_.pos.x + arena_.size.x/2)
+		{
+			transform.position_.x = arena_.pos.x + arena_.size.x/2;
+			fighter->collidingWithWall = true;
+			fighter->handleWallCollision(true);
+		}
+
+		if (transform.position_.x < arena_.pos.x - arena_.size.x/2)
+		{
+			transform.position_.x = arena_.pos.x - arena_.size.x/2;
+			fighter->collidingWithWall = true;
+			fighter->handleWallCollision(false);
 		}
 	}
 }
 
-void GameStateManager::drawHitbox(const glm::vec3& fighterPos, const Hitbox& hitbox, const glm::vec3& color)
+void GameStateManager::handleFighterCollision()
 {
-	glm::vec3 newPos = hitbox.position_;
-	glm::vec3 pushBoxPos = { 0.0f, fighterPos.y + newPos.y, fighterPos.z + newPos.z };
-	debugManager_->drawRect(pushBoxPos, color, -hitbox.width_ / 2, hitbox.width_ / 2, -hitbox.height_ / 2, hitbox.height_ / 2);
-}
-
-void GameStateManager::drawHitbox(const Transform& fighterPos, const Hitbox& hitbox, const glm::vec3& color)
-{
-	glm::vec4 newPos = { hitbox.position_ / std::abs(fighterPos.scale_.x), 1.0f };//get hitbox pos relative to fighter scale
-	glm::vec3 pushBoxPos = fighterPos.finalTransform_ * newPos;
-	debugManager_->drawRect(pushBoxPos, color, -hitbox.width_ / 2, hitbox.width_ / 2, -hitbox.height_ / 2, hitbox.height_ / 2);
-}
-
-void GameStateManager::drawHitboxDebug()
-{
-	for (uint32_t fighterIndex = 0; fighterIndex < NUM_FIGHTERS; fighterIndex++)
+	Fighter* fighter1 = Fighter::getFighterComp(fighterResources_.fighters_[0]);
+	Fighter* fighter2 = Fighter::getFighterComp(fighterResources_.fighters_[1]);
+	if(fighter1->colldingWithFighter && fighter2->colldingWithFighter)
 	{
-		Fighter* currentFighter = (Fighter*)fighterResources_.fighters_[fighterIndex]->getComponent<Behavior>().behaviorImp_.get();
-		glm::vec3 fighterPos = currentFighter->getPosition();
-		Transform& transform = currentFighter->entity_->getComponent<Transform>();
-		for (const Hitbox& pushbox : currentFighter->currentPushBoxes_)
+		Transform& fighter1Trans = fighter1->getTransform();
+		Transform& fighter2Trans = fighter2->getTransform();
+
+		float speed1 = fighter1->velocityWorldSpace_.x;
+		float speed2 = fighter2->velocityWorldSpace_.x;
+
+		Collider collider1 = fighter1->entity_->getComponent<Collider>();
+		Collider collider2 = fighter2->entity_->getComponent<Collider>();
+
+		BoxCollider fighter1Collider;
+		BoxCollider fighter2Collider;
+
+		for (BoxCollider& collider : collider1.colliders_)
 		{
-			drawHitbox(transform, pushbox, { 0, 255, 0 });
+			if (collider.layer_ == 0)
+			{
+				fighter1Collider = collider;
+				break;
+			}
 		}
-		for (const Hitbox& hurtbox : currentFighter->currentHurtboxes_)
+
+		for (BoxCollider& collider : collider2.colliders_)
 		{
-			drawHitbox(transform, hurtbox, { 255, 0, 0 });
+			if (collider.layer_ == 0)
+			{
+				fighter2Collider = collider;
+				break;
+			}
 		}
-		for (const Hitbox& hitbox : currentFighter->currentHitboxes_)
+
+		//apply each fighters speed to eachother
+
+		//calculate how close the fighters are to eachother.  Scale the offset amount based on their distance. The closer the fighters are the larger the offset will be
+		float extraOffset = 0;
+		glm::vec3 fighter1ColliderWorldPos = fighter1Trans.calculateTransformNoScale() * glm::vec4(fighter1Collider.position_, 1.0f);
+		glm::vec3 fighter2ColliderWorldPos = fighter2Trans.calculateTransformNoScale() * glm::vec4(fighter2Collider.position_, 1.0f);
+
+		float dist = glm::distance(fighter1ColliderWorldPos.x, fighter2ColliderWorldPos.x);
+		float maxDist = (fighter1Collider.size_.x / 2) + (fighter2Collider.size_.x / 2);
+		extraOffset = (maxDist - dist) * 10.0f; 
+
+		//both checks below prevent fighter from walking inside other fighter while one of them is colliding with wall
+		if (fighter2->collidingWithWall && glm::dot(fighter1->velocityWorldSpace_, fighter1Trans.forward()) >= 0.0f)
 		{
-			drawHitbox(transform, hitbox, { 255, 255, 0 });
+			fighter1Trans.position_.x = fighter1->oldPos_.x;
+		}
+		if (fighter1->collidingWithWall && glm::dot(fighter2->velocityWorldSpace_, fighter2Trans.forward()) >= 0.0f)
+		{
+			fighter2Trans.position_.x = fighter2->oldPos_.x;
+		}
+
+
+		//both checks below do the following
+		if (!fighter1->collidingWithWall && // don't move if you're colliding with wall
+			glm::dot(fighter2->velocityWorldSpace_, fighter2Trans.forward()) >= 0.0f && //only move if other fighter is moving towards you
+			glm::dot(fighter1Trans.forward(), fighter2Trans.forward()) <= 0.0f) //only move if the other fighter is facing the opposite direction as you
+		{
+			float offset = extraOffset;
+			if (fighter1->side_ == right)
+			{
+				offset *= -1;
+			}
+			fighter1Trans.position_.x += (offset + speed2) * Scene::DeltaTimeMs;
+		}
+		if (!fighter2->collidingWithWall &&
+			glm::dot(fighter1->velocityWorldSpace_, fighter1Trans.forward()) >= 0.0f &&
+			glm::dot(fighter2Trans.forward(), fighter1Trans.forward()) <= 0.0f)
+		{
+			float offset = extraOffset;
+			if (fighter2->side_ == right)
+			{
+				offset *= -1;
+			}
+			fighter2Trans.position_.x += (offset + speed1) * Scene::DeltaTimeMs;
 		}
 	}
 }
@@ -323,53 +253,3 @@ void GameStateManager::checkFighterSide()
 	}
 }
 
-bool GameStateManager::areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2)
-{
-	float hitbox1YMin = pos1.y + (hitbox1.position_.y - hitbox1.width_ / 2);
-	float hitbox1YMax = pos1.y + (hitbox1.position_.y + hitbox1.width_ / 2);
-	float hitbox1ZMin = pos1.z + (hitbox1.position_.z - hitbox1.height_ / 2);
-	float hitbox1ZMax = pos1.z + (hitbox1.position_.z + hitbox1.height_ / 2);
-
-	float hitbox2YMin = pos2.y + (hitbox2.position_.y - hitbox2.width_ / 2);
-	float hitbox2YMax = pos2.y + (hitbox2.position_.y + hitbox2.width_ / 2);
-	float hitbox2ZMin = pos2.z + (hitbox2.position_.z - hitbox2.height_ / 2);
-	float hitbox2ZMax = pos2.z + (hitbox2.position_.z + hitbox2.height_ / 2);
-
-	std::cout << "OLD COLLISON CHECK" << std::endl;
-	std::cout << "hitbox1YMin: " << hitbox1YMin << " hitbox1YMax: " << hitbox1YMax << " hitbox1ZMin: " << hitbox1ZMin << " hitbox1ZMax: " << hitbox1ZMax << std::endl;
-	std::cout << "hitbox2YMin: " << hitbox2YMin << " hitbox2YMax: " << hitbox2YMax << " hitbox2ZMin: " << hitbox2ZMin << " hitbox2ZMax: " << hitbox2ZMax << std::endl;
-	std::cout << "END OLD COLLISON CHECK" << std::endl;
-
-	if (hitbox1YMin < hitbox2YMax && hitbox1YMax > hitbox2YMin && hitbox1ZMax > hitbox2ZMin && hitbox1ZMin < hitbox2ZMax)
-	{
-		return true;
-	}
-	return false;
-}
-
-bool GameStateManager::areHitboxesColliding(const Transform& transform1, const Hitbox& hitbox1, const Transform& transform2, const Hitbox& hitbox2)
-{
-	glm::vec4 newPos = { hitbox1.position_ / std::abs(transform1.scale_.x), 1.0f };//get hitbox pos relative to fighter scale
-	glm::vec3 hitboxPos = transform1.finalTransform_ * newPos;
-	float hitbox1YMin = hitboxPos.y - hitbox1.width_  / 2;
-	float hitbox1YMax = hitboxPos.y + hitbox1.width_  / 2;
-	float hitbox1ZMin = hitboxPos.z - hitbox1.height_ / 2;
-	float hitbox1ZMax = hitboxPos.z + hitbox1.height_ / 2;
-
-	newPos = { hitbox2.position_ / std::abs(transform2.scale_.x), 1.0f };//get hitbox pos relative to fighter scale
-	hitboxPos = transform2.finalTransform_ * newPos;
-	float hitbox2YMin = hitboxPos.y - hitbox2.width_  / 2;
-	float hitbox2YMax = hitboxPos.y + hitbox2.width_  / 2;
-	float hitbox2ZMin = hitboxPos.z - hitbox2.height_ / 2;
-	float hitbox2ZMax = hitboxPos.z + hitbox2.height_ / 2;
-
-	std::cout << "NEW COLLISON CHECK" << std::endl;
-	std::cout << "hitbox1YMin: " << hitbox1YMin << " hitbox1YMax: " << hitbox1YMax << " hitbox1ZMin: " << hitbox1ZMin << " hitbox1ZMax: " << hitbox1ZMax << std::endl;
-	std::cout << "hitbox2YMin: " << hitbox2YMin << " hitbox2YMax: " << hitbox2YMax << " hitbox2ZMin: " << hitbox2ZMin << " hitbox2ZMax: " << hitbox2ZMax << std::endl;
-	std::cout << "END NEW COLLISON CHECK" << std::endl;
-
-	if (hitbox1YMin < hitbox2YMax && hitbox1YMax > hitbox2YMin && hitbox1ZMax > hitbox2ZMin && hitbox1ZMin < hitbox2ZMax)
-	{
-		return true;
-	}
-}

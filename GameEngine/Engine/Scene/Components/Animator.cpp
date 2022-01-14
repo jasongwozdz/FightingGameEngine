@@ -85,6 +85,22 @@ void Animator::setAnimation(std::string name)
 	std::cout << "Error: animation not found" << std::endl;
 }
 
+void Animator::setAnimationTime(float timeInSeconds)
+{
+	if (currentAnimation_ != -1)
+	{
+		const AnimationClip& clip = animations_[currentAnimation_];
+		assert(timeInSeconds <= clip.durationInSeconds_);
+		localTime_ = timeInSeconds;
+		std::cout << "localTime : " << timeInSeconds << std::endl;
+		timeSet_ = true;
+	}
+	else
+	{
+		std::cout << "Error tried to setAnimationTime when there is no animation currently set" << std::endl;
+	}
+}
+
 void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable)
 {
 	if (frameNumber > clip.frameCount_)
@@ -197,8 +213,12 @@ void Animator::update(float deltaTime, Renderable& renderable)
 	{
 		const AnimationClip& clip = animations_[currentAnimation_];
 
-		localTime_ += deltaTime * 0.001 * clip.playbackRate_;//in seconds
-		//std::cout << "DeltaTime " << deltaTime << std::endl;
+		//was time set by setAnimationTime
+		if (!timeSet_)
+		{
+			localTime_ += deltaTime * 0.001 * clip.playbackRate_;//in seconds
+		}
+		timeSet_ = false;
 
 		if (clip.isLooping_)
 		{

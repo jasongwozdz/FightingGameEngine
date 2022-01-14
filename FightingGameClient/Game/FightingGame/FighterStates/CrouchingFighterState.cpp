@@ -5,14 +5,14 @@
 #include "HitFighterState.h"
 #include "../Fighter/Fighter.h"
 
-CrouchingFighterState::CrouchingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) : 
-	BaseFighterState(animationName, hitboxData),
+CrouchingFighterState::CrouchingFighterState(std::string animationName, std::vector<FrameInfo> frameData, AttackResources* attacks) : 
+	BaseFighterState(animationName, frameData),
 	attacks_(attacks)
 {}
 
 BaseFighterState* CrouchingFighterState::update(Fighter* fighter)
 {
-	updateCurrentHitboxes(fighter);
+	//updateCurrentHitboxes(fighter);
 	if (fighter->flipSide_)
 		fighter->flipSide();
 	return nullptr;
@@ -35,16 +35,28 @@ BaseFighterState* CrouchingFighterState::handleMovementInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState* CrouchingFighterState::handleAttackInput(Fighter* fighter)
+//BaseFighterState* CrouchingFighterState::handleAttackInput(Fighter* fighter)
+//{
+//	//Attack* attack = checkAttackInputs(fighter, *attacks_);
+//	//if (attack)
+//	//{
+//	//	static_cast<AttackingFighterState*>(fighter->attackingFighterState_)->currentAttack_ = attack;
+//	//	return fighter->attackingFighterState_;
+//	//}
+//	return nullptr;
+//}
+
+BaseFighterState * CrouchingFighterState::handleAttackInput(Fighter * fighter)
 {
-	Attack* attack = checkAttackInputs(fighter, *attacks_);
+	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
 	if (attack)
 	{
-		static_cast<AttackingFighterState*>(fighter->attackingFighterState_)->currentAttack_ = attack;
-		return fighter->attackingFighterState_;
+		fighter->currentAttack_ = attack;
+		return fighter->jumpingAttackFighterState_;
 	}
 	return nullptr;
 }
+
 
 BaseFighterState* CrouchingFighterState::onHit(Fighter* fighter, Attack* attack)
 {

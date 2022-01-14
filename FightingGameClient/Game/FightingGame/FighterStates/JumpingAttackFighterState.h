@@ -18,6 +18,5 @@ public:
 	Attack* currentAttack_;
 private:
 	AttackResources* attacks_;//need to store attacks to check if the current attack can be cancelled
-	glm::vec3 gravity_ = { 0.0f, -1.0f, 0.0f };
 };
 

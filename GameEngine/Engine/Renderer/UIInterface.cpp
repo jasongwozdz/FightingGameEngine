@@ -359,17 +359,20 @@ void UI::UIInterface::endMenu()
 }
 
 
-void UI::UIInterface::beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen, bool istransparent)
+void UI::UIInterface::beginWindow(const std::string& windowTitle, float width, float height, glm::vec2 pos, bool* isOpen, bool istransparent)
 {
 	ImGuiWindowFlags flags = 0;
 	if (istransparent)
 	{
 		flags |= ImGuiWindowFlags_NoBackground;
-		flags |= ImGuiWindowFlags_NoTitleBar;
-		flags |= ImGuiWindowFlags_NoResize;
 		flags |= ImGuiWindowFlags_NoInputs;
+		flags |= ImGuiWindowFlags_NoTitleBar;
 	}
-	ImGui::SetNextWindowSize({ width, height }, ImGuiCond_FirstUseEver);
+	flags |= ImGuiWindowFlags_NoResize;
+	flags |= ImGuiWindowFlags_NoCollapse;
+
+	ImGui::SetNextWindowSize({ width, height }, 0);
+	ImGui::SetNextWindowPos({ pos.x, pos.y }, 0, { 0.5f, 0.5f });
 	ImGui::Begin(windowTitle.c_str(), isOpen, flags);
 }
 
@@ -386,6 +389,8 @@ void UI::UIInterface::addText(const std::string& text)
 bool UI::UIInterface::addInput(const std::string& defaultText, std::string* input)
 {
 	ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue;
+	char imGuiInputBuffer[256];
+	memset(imGuiInputBuffer, 0x0, 256);
 	//returns true if enter is pressed
 	if (ImGui::InputText(defaultText.c_str(), imGuiInputBuffer, sizeof(imGuiInputBuffer), inputTextFlags))
 	{

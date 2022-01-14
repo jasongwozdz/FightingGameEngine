@@ -111,7 +111,7 @@ namespace UI
 		bool beginMenu(const std::string& menuName);
 		bool addMenuItem(const std::string& menuItem, bool* clickedOn);
 		void endMenu();
-		void beginWindow(const std::string& windowTitle, float width, float height, bool* isOpen = NULL, bool isTransparent = false);
+		void beginWindow(const std::string& windowTitle, float width, float height, glm::vec2 pos, bool* isOpen = NULL, bool isTransparent = false);
 		void EndWindow();
 		void addText(const std::string& text);
 		bool addInput(const std::string& defaulText, std::string* input);
@@ -153,6 +153,6 @@ namespace UI
 		VkBuffer indexBuffer_;
 		VmaAllocation vertexBufferMem_;
 		VmaAllocation indexBufferMem_;
-		char imGuiInputBuffer[256];
+		char imGuiInputBuffer_[256];
 	};
 }

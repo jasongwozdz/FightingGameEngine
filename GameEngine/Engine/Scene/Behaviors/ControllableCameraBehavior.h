@@ -1,8 +1,13 @@
 #pragma once
-#include "Scene/Components/Behavior.h"
-#include "../GameBase.h"
+#include "../Components/Behavior.h"
 
-class ControllableCameraBehavior : public BehaviorImplementationBase
+#ifdef ENGINE_EXPORTS
+#define ENGINE_API __declspec(dllexport)
+#else
+#define ENGINE_API __declspec(dllimport)
+#endif
+
+class ENGINE_API ControllableCameraBehavior : public BehaviorImplementationBase
 {
 public:
 

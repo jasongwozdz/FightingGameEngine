@@ -304,10 +304,9 @@ void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStru
 	recursivePopulateBoneStructure(root, mesh, boneStructure, 0);
 }
 
-AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& filePath)
+AnimationReturnVals ResourceManager::loadAnimationFile(const std::string& filePath)
 {
 	auto find = m_resourceRegistry.find(filePath);
-	AnimationReturnVals* vals;
 	if (find == m_resourceRegistry.end())
 	{
 		std::map<std::string, uint32_t> boneMapping;
@@ -318,7 +317,12 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 
 		const aiScene* scene = importer.ReadFile(filePath
 			.c_str(), 0);
-		assert(scene != nullptr);
+		if (!scene)
+		{
+			AnimationReturnVals vals;
+			vals.succesful = false;
+			return vals;
+		}
 
 		uint32_t vertexCount(0);		
 		for (uint32_t m = 0; m < scene->mNumMeshes; m++) {
@@ -366,13 +370,21 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 		for (int i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh* pAiMesh = scene->mMeshes[i];
+			bool hasColor = false;
 			for (uint32_t j = 0; j < pAiMesh->mNumVertices; ++j)
 			{
 				Vertex vertex{};
 				vertex.pos = glm::make_vec3(&pAiMesh->mVertices[j].x);
 				vertex.normal = glm::make_vec3(&pAiMesh->mNormals[j].x);
 				vertex.texCoord = glm::make_vec2(&pAiMesh->mTextureCoords[0][j].x);
-				vertex.color = { 255, 0, 0 };
+				if (hasColor)
+				{
+					vertex.color = glm::make_vec3(&pAiMesh->mColors[0][j].r);
+				}
+				else
+				{
+					vertex.color = glm::vec3(255.0f);
+				}
 				
 				for (uint32_t k = 0; k < MAX_BONES_PER_VERTEX; ++k)
 				{
@@ -397,19 +409,20 @@ AnimationReturnVals& ResourceManager::loadAnimationFile(const std::string& fileP
 
 		boneStructures_.push_back(boneStructure);
 
-		vals = new AnimationReturnVals();
-		vals->vertices = vertices;
-		vals->indices = indices;
-		vals->boneStructIndex = boneStructures_.size()-1;
-		vals->animations = animationClips;
-		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
+		AnimationReturnVals* valsPtr = new AnimationReturnVals();
+		valsPtr->vertices = vertices;
+		valsPtr->indices = indices;
+		valsPtr->boneStructIndex = boneStructures_.size()-1;
+		valsPtr->animations = animationClips;
+		valsPtr->succesful = true;
+		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(valsPtr);
+		return *valsPtr;
 	}
 	else
 	{
-		vals = reinterpret_cast<AnimationReturnVals*>(m_resourceRegistry[filePath]);
+		AnimationReturnVals* valsPtr = reinterpret_cast<AnimationReturnVals*>(m_resourceRegistry[filePath]);
+		return *valsPtr;
 	}
-	
-	return *vals;
 }
 
 TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)

@@ -504,10 +504,7 @@ void DebugDrawManager::drawFilledRect(glm::vec3 pos, const glm::vec3& color,  gl
 	pickerPipelineInfo.globalIndexOffset_ += NUM_INDICIES;
 }
 
-
-
-
-void DebugDrawManager::drawCube(glm::vec3 pos, glm::vec3 size /*L x W x H*/, glm::vec3 color)
+void DebugDrawManager::drawCube(glm::vec3 pos, glm::vec3 size, glm::vec3 color)
 {
 	const unsigned int NUM_INDICIES = 24;
 	const unsigned int NUM_VERTICIES = 8;

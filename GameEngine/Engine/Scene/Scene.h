@@ -57,9 +57,13 @@ public:
 	}
 public:
 	static float DeltaTime;
+	static float DeltaTimeMs;
 
 private:
 	void initalizeDefaultCamera();
+	//just for debug
+	void drawCameraFrustrum(Camera& currentCamera, Transform& cameraTransform);
+
 private:
 	entt::registry registry_;
 	std::unordered_map<entt::entity,Entity*> entitys_;
@@ -68,5 +72,6 @@ private:
 	std::vector<Renderable*> objectsToDraw_;
 	VkRenderer* renderer_;
 	class SkyBoxRenderSubsystem* skybox_;
+	class BoxCollisionManager* boxCollisionManager_;
 };
 

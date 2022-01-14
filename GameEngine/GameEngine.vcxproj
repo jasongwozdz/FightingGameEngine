@@ -169,6 +169,7 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Engine\BoxCollisionManager.h" />
     <ClInclude Include="Engine\Input.h" />
+    <ClInclude Include="Engine\Scene\Behaviors\ControllableCameraBehavior.h" />
     <ClInclude Include="Engine\Scene\Components\Behavior.h" />
     <ClInclude Include="Engine\Scene\Components\Camera.h" />
     <ClInclude Include="Engine\Scene\Components\Collider.h" />
@@ -236,6 +237,7 @@
     <ClCompile Include="Engine\Renderer\vkinit.cpp" />
     <ClCompile Include="Engine\Renderer\VkRenderer.cpp" />
     <ClCompile Include="Engine\ResourceManager.cpp" />
+    <ClCompile Include="Engine\Scene\Behaviors\ControllableCameraBehavior.cpp" />
     <ClCompile Include="Engine\Scene\Components\Animator.cpp" />
     <ClCompile Include="Engine\Scene\Components\BoneStructure.cpp" />
     <ClCompile Include="Engine\Scene\Components\Transform.cpp" />

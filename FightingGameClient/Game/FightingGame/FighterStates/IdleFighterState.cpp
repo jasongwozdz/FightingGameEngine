@@ -7,13 +7,14 @@
 #include "../Fighter/Fighter.h"
 
 
-IdleFighterState::IdleFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) :
-	BaseFighterState(animationName, hitboxData),
+IdleFighterState::IdleFighterState(std::string animationName, std::vector<FrameInfo> frameData, AttackResources* attacks) :
+	BaseFighterState(animationName, frameData),
 	attacks_(attacks)
 {}
 
 BaseFighterState* IdleFighterState::update(Fighter* fighter)
 {
+	//updateCurrentHitboxes(fighter);
 	updateCurrentHitboxes(fighter);
 	if (fighter->flipSide_)
 		fighter->flipSide();
@@ -23,6 +24,7 @@ BaseFighterState* IdleFighterState::update(Fighter* fighter)
 void IdleFighterState::enterState(Fighter* fighter)
 {
 	fighter->entity_->getComponent<Animator>().setAnimation(animationName_);
+	updateCurrentHitboxes(fighter);
 	//reset speeds
 	fighter->setXSpeed(0);
 	fighter->setYSpeed(0);
@@ -47,28 +49,29 @@ BaseFighterState* IdleFighterState::handleMovementInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState* IdleFighterState::handleAttackInput(Fighter* fighter)
+BaseFighterState * IdleFighterState::handleAttackInput(Fighter* fighter)
 {
-	Attack* attack = checkAttackInputs(fighter, *attacks_);
+	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
 	if (attack)
 	{
-		static_cast<AttackingFighterState*>(fighter->attackingFighterState_)->currentAttack_ = attack;
+		attack->initateAttack();
 		return fighter->attackingFighterState_;
 	}
 	return nullptr;
 }
 
+
 BaseFighterState* IdleFighterState::onHit(Fighter* fighter, Attack* attack)
 {
 	if (isFighterHoldingBack(fighter))
 	{
-		static_cast<BlockingFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
+		fighter->blockedFighterState_->hitByAttack_ = attack;
 		return fighter->blockedFighterState_;
 	}
 	else
 	{
 		fighter->takeDamage(attack->damage);
-		static_cast<HitFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
+		fighter->hitFighterState_->hitByAttack_ = attack;
 		return fighter->hitFighterState_;
 	}
 }

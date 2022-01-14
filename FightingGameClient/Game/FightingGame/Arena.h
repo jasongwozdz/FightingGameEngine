@@ -4,8 +4,9 @@
 
 struct Arena
 {
-	float width, depth, length;
+	glm::vec3 size;
 	glm::vec3 pos;
 	Entity* entity;
+	std::vector<Entity*> walls;
 };
 

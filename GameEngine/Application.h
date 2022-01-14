@@ -25,6 +25,7 @@ public:
 	void setCursor(bool showCursor);
 
 	void run();
+public:
 	// Singletons
 	ResourceManager* resourceManager_;
 	VkRenderer* renderer_;
@@ -32,8 +33,9 @@ public:
 	Window* window_;
 	Scene* scene_;
 	DebugDrawManager* debugManager_;
-	BoxCollisionManager* boxCollisionManager_;
 	class Input* input_;
+
+	static int FrameCount;
 
 private:
 	std::vector<std::function<void(Events::Event&)>> callbacks_;

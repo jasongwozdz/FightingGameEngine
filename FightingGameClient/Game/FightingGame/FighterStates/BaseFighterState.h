@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
-#include "../Fighter/Hitbox.h"
+
+#include "Scene/Components/Collider.h"
+#include "../FighterSandbox/AttackTypes.h"
 
 //Forward declarations
 class Fighter;
@@ -21,15 +23,19 @@ public:
 	virtual BaseFighterState* handleFloorCollision(Fighter* fighter) { return nullptr; }//OPTIONAL: called by gamestate manager when colliding with the ground
 
 protected:
-	BaseFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData) :
+	BaseFighterState(std::string animationName, std::vector<FrameInfo> hitboxData) :
 		animationName_(animationName),
-		hitboxData_(hitboxData)
+		frameData_(hitboxData),
+		currentFrame_(0)
 	{};
+
 	void updateCurrentHitboxes(Fighter* fighter);
-	Attack* checkAttackInputs(Fighter* fighter, AttackResources& attack);//Checks the attacks in inputHandler's inputQueue to see if a an attack's input was inputted
+	class AttackBase* checkAttackInputsNew(Fighter* fighter, AttackResources& attacks);
 	bool isFighterHoldingBack(Fighter* fighter);
 protected:
 	std::string animationName_;
-	std::vector<std::vector<Hitbox>> hitboxData_;
+	//std::vector<std::vector<BoxCollider>> hitboxData_;
+	std::vector<FrameInfo> frameData_;
+	int currentFrame_;
 };
 

@@ -4,9 +4,11 @@
 #include "Components/Camera.h"
 #include "../../Engine/EngineSettings.h"
 #include "../DebugDrawManager.h"
+#include "../BoxCollisionManager.h"
 
 template<> Scene* Singleton<Scene>::msSingleton = 0;
 float Scene::DeltaTime = 0.0f;
+float Scene::DeltaTimeMs = 0.0f;
 
 Scene* Scene::getSingletonPtr()
 {
@@ -39,7 +41,8 @@ Scene& Scene::getSingleton()
 }
 
 Scene::Scene() : 
-	renderer_(VkRenderer::getSingletonPtr())
+	renderer_(VkRenderer::getSingletonPtr()),
+	boxCollisionManager_(new BoxCollisionManager())
 {
 	skybox_ = renderer_->addRenderSubsystem<SkyBoxRenderSubsystem>();
 	initalizeDefaultCamera();
@@ -47,14 +50,24 @@ Scene::Scene() :
 
 Scene::~Scene()
 {
+	delete boxCollisionManager_;
 	registry_.clear();
 }
 
 void Scene::update(float deltaTime)
 {
 	DeltaTime = deltaTime;
+	DeltaTimeMs = deltaTime * 0.001f;
 	glm::mat4 view, projection;
-	calculateViewProjection(view, projection);
+
+	auto cameraView = registry_.view<Camera, Transform>();
+	for(auto entity : cameraView)
+	{
+		Camera& camera = cameraView.get<Camera>(entity);
+		Transform& transform = cameraView.get<Transform>(entity);
+		drawCameraFrustrum(camera, transform);
+	}
+
 	auto behaviorView = registry_.view<Behavior>();
 	for (auto entity : behaviorView)
 	{
@@ -62,28 +75,24 @@ void Scene::update(float deltaTime)
 		behavior.update();
 	}
 
+	boxCollisionManager_->update(this);
+
+	calculateViewProjection(view, projection);
 	auto v = registry_.view<Transform>();
 	for (auto entity : v)
 	{
 		auto& transform = v.get<Transform>(entity);
-
-		transform.drawDebugGui();
 		glm::mat4 finalTransform = transform.calculateTransform();
+		transform.drawDebug();
+		
 		Renderable* mesh = registry_.try_get<Renderable>(entity);
 		if (mesh)
 		{
 			transform.applyTransformToMesh(*mesh);
-
 			mesh->ubo_.view = view;
 			mesh->ubo_.proj = projection;
 
-			auto behavior = registry_.try_get<Behavior>(entity);
-			if (behavior)
-			{
-				behavior->update();
-			}
-
-			auto animator = registry_.try_get<Animator>(entity);
+			Animator* animator = registry_.try_get<Animator>(entity);
 			if (animator && mesh->render_)
 			{
 				animator->update(deltaTime, *mesh);
@@ -99,8 +108,11 @@ void Scene::update(float deltaTime)
 
 				mesh->uploaded_ = true;
 			}
+
 			if (mesh->render_)
+			{
 				objectsToDraw_.push_back(mesh);
+			}
 		}
 	}
 	renderer_->draw(objectsToDraw_);
@@ -150,10 +162,16 @@ void Scene::setActiveCamera(Entity* entity)
 	activeCamera_ = entity;
 }
 
-void drawCameraFrustrum(Camera& currentCamera, Transform& cameraTransform)
+void Scene::drawCameraFrustrum(Camera& currentCamera, Transform& cameraTransform)
 {
 	DebugDrawManager& debugDrawManager = DebugDrawManager::getSingleton();
-	debugDrawManager.drawLine(cameraTransform.position_, cameraTransform.position_ + cameraTransform.forward(), {255, 0, 0});
+	float angleRads = glm::radians(currentCamera.fovAngleInDegrees_);
+	glm::vec3 dirRight = glm::vec3(glm::sin(angleRads), 0.0f, glm::cos(angleRads));
+	glm::vec3 dirLeft = glm::vec3(glm::sin(-angleRads), 0.0f, glm::cos(-angleRads));
+	glm::vec3 worldDirRight = cameraTransform.calculateTransform() * glm::vec4(dirRight, 0.0f);
+	glm::vec3 worldDirLeft = cameraTransform.calculateTransform() * glm::vec4(dirLeft, 0.0f);
+	debugDrawManager.drawLine(cameraTransform.position_, cameraTransform.position_ + worldDirRight * 3.0f, { 255, 255, 255 });
+	debugDrawManager.drawLine(cameraTransform.position_, cameraTransform.position_ + worldDirLeft * 3.0f, { 255, 255, 255 });
 }
 
 void Scene::calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projectionMatrix)

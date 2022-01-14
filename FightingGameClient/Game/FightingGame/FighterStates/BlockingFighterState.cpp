@@ -5,13 +5,13 @@
 #include "../Fighter/Fighter.h"
 
 
-BlockingFighterState::BlockingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData) :
-	BaseFighterState(animationName, hitboxData)
+BlockingFighterState::BlockingFighterState(std::string animationName, std::vector<FrameInfo> frameData) :
+	BaseFighterState(animationName, frameData)
 {}
 
 BaseFighterState* BlockingFighterState::update(Fighter* fighter)
 {
-	updateCurrentHitboxes(fighter);
+	//updateCurrentHitboxes(fighter);
 	fighter->setXSpeed(movePerFrame_);
 	if (gravity_ == 0)//if fighter was not hit while in the air then do normal blockstun processing
 	{
@@ -23,7 +23,7 @@ BaseFighterState* BlockingFighterState::update(Fighter* fighter)
 	}
 	else //if fighter was hit in the air then they are in hitstun until they hit the ground
 	{
-		fighter->velocityWorldSpace_ += gravity_;
+		//fighter->velocityWorldSpace_ += gravity_;
 		//fighter->currentYSpeed_ += gravity_;
 	}
 	return nullptr;
@@ -43,7 +43,7 @@ void BlockingFighterState::enterState(Fighter* fighter)
 	if (inAir_)
 	{
 		//fighter is currently in the air so set gravity
-		gravity_ = DEFAULT_GRAVITY;
+		fighter->applyGravity_ = true;
 	}
 }
 

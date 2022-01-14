@@ -5,7 +5,7 @@ class CrouchingFighterState :
 	public BaseFighterState
 {
 public:
-	CrouchingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks);
+	CrouchingFighterState(std::string animationName, std::vector<FrameInfo> frameData, AttackResources* attacks);
 	BaseFighterState* update(Fighter* fighter) override;
 	void enterState(Fighter* fighter) override;
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;

@@ -150,6 +150,9 @@
     <ClInclude Include="Engine\Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Scene\Behaviors\ControllableCameraBehavior.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\libs\imgui\implot\implot.cpp">
@@ -243,6 +246,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Scene\Behaviors\ControllableCameraBehavior.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

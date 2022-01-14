@@ -5,13 +5,13 @@
 #include "../GameStateManager.h"
 #include "Renderer/UIInterface.h"
 
-HitFighterState::HitFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData) :
+HitFighterState::HitFighterState(std::string animationName, std::vector<FrameInfo> hitboxData) :
 	BaseFighterState(animationName, hitboxData)
 {}
 
 BaseFighterState* HitFighterState::update(Fighter* fighter)
 {
-	updateCurrentHitboxes(fighter);
+	//updateCurrentHitboxes(fighter);
 	std::cout << currentHitstunFrame_ << std::endl;
 	if (gravity_ == 0)//if fighter was not hit while in the air then do normal hitstun processing
 	{
@@ -24,7 +24,7 @@ BaseFighterState* HitFighterState::update(Fighter* fighter)
 	}
 	else //if fighter was hit in the air then they are in hitstun until they hit the ground
 	{
-		fighter->velocityWorldSpace_ += gravity_;
+		//fighter->velocityWorldSpace_ += gravity_;
 		//fighter->currentYSpeed_ += gravity_;
 	}
 	UI::UIInterface::getSingletonPtr()->addTextToTransparentBackground(std::to_string(comboCount_), { 0, 500 }, { 255, 0, 0, 100 }, 10);
@@ -48,7 +48,7 @@ void HitFighterState::enterState(Fighter* fighter)
 	{
 		fighter->setYSpeed(10);
 		//fighter is currently in the air so set gravity
-		gravity_ = DEFAULT_GRAVITY;
+		fighter->applyGravity_ = true;
 	}
 }
 BaseFighterState* HitFighterState::handleMovementInput(Fighter* fighter)

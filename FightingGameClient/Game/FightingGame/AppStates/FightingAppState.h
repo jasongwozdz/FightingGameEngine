@@ -5,12 +5,10 @@
 #include "AppState.h"
 #include "Events.h"
 #include "BaseCamera.h"
-#include "../../CameraController.h"
 #include "../InputHandler.h"
 #include "../FighterFactory.h"
 #include "../GameStateManager.h"
 #include "Scene/Components/Behavior.h"
-#include "../Arena.h"
 
 class FightingAppState :
 	public AppState
@@ -20,14 +18,15 @@ public:
 	~FightingAppState();
 	virtual void enterState();
 	virtual AppState* update(float deltaTime);
-	void initScene(std::string fighterFilePath1, std::string fighterFilePath2);
 	void generateArenaBackground();
-	void handleKeyButtonDown(Events::KeyPressedEvent& e);
-	void initalizeCamera();
 
 private:
-	void checkInput();
+	void initScene(std::string fighterFilePath1, std::string fighterFilePath2);
 	void initArena();
+	void initCamera();
+	void initColliderLayers();
+
+	void checkInput();
 
 private:
 	const glm::vec3 ARENA_STARTING_POINT =  {0.0f, 0.0f, 0.0f};
@@ -53,6 +52,7 @@ private:
 	bool drawDebug_ = false;//should debug be drawn
 	bool cursor_ = false;//is cursour disabled;
 	Scene* scene_;
+	class Arena* arena_;
 
 };
 
@@ -117,6 +117,7 @@ private:
 private:
 #define PI 3.14159265358979323846 
 	std::vector<Entity*> fighters_;
+
 	const float DISTANCE = 20.0f;
 	const float HEIGHT = 2.0f;
 	const float FOV_PUSH =  10.0f;

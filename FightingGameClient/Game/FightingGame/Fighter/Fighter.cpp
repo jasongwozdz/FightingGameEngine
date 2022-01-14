@@ -1,28 +1,30 @@
-#include <chrono>
 #include "Fighter.h"
-#include "ResourceManager.h"
-#include "../FighterStates/IdleFighterState.h"
-#include "../FighterStates/AttackingFighterState.h"
-#include "../FighterStates/WalkingFighterState.h"
-#include "../FighterStates/HitFighterState.h"
-#include "../FighterStates/JumpingFighterState.h"
-#include "../FighterStates/CrouchingFighterState.h"
-#include "../FighterStates/BlockingFighterState.h"
-#include "../FighterStates/JumpingAttackFighterState.h"
-#include "DebugDrawManager.h"
 
-Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, FighterSide side) : inputHandler_(inputHandler),side_(side), idleStateData_(idleStateData), walkingStateData_(walkingStateData), standingAttacks_(attacks), BehaviorImplementationBase(entity)
+#include <chrono>
+
+#include "ResourceManager.h"
+#include "../GameStateManager.h"
+
+//debug
+#include "../Application.h"
+
+Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, BoxCollider basePushBox, FighterSide side) :
+	inputHandler_(inputHandler),
+	side_(side),
+	standingAttacks_(attacks),
+	BehaviorImplementationBase(entity),
+	basePushBox_(basePushBox)
 {
-	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.hitboxData, &standingAttacks_);
-	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.hitboxData, &standingAttacks_);
-	jumpingFighterState_ = new JumpingFighterState(jumpStateData.animationName, jumpStateData.hitboxData, &standingAttacks_);
+	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.frameData, &standingAttacks_);
+	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.frameData, &standingAttacks_);
+	jumpingFighterState_ = new JumpingFighterState(jumpStateData.animationName, jumpStateData.frameData, &standingAttacks_);
 	jumpingAttackFighterState_ = new JumpingAttackFighterState(&standingAttacks_);
 	attackingFighterState_ = new AttackingFighterState(&standingAttacks_);
-	hitFighterState_ = new HitFighterState(hitStateData.animationName, hitStateData.hitboxData);
-	crouchingFighterState_ = new CrouchingFighterState(crouchStatedata.animationName, crouchStatedata.hitboxData, &standingAttacks_);
-	blockedFighterState_ = new BlockingFighterState(blockStateData.animationName, blockStateData.hitboxData);
-	newState_ = idleFighterState_;
-	newState_->enterState(this);
+	hitFighterState_ = new HitFighterState(hitStateData.animationName, hitStateData.frameData);
+	crouchingFighterState_ = new CrouchingFighterState(crouchStatedata.animationName, crouchStatedata.frameData, &standingAttacks_);
+	blockedFighterState_ = new BlockingFighterState(blockStateData.animationName, blockStateData.frameData);
+	state_ = idleFighterState_;
+	state_->enterState(this);
 }
 
 Fighter::~Fighter()
@@ -42,15 +44,6 @@ Fighter* Fighter::getFighterComp(Entity * entity)
 	return (Fighter*)entity->getComponent<Behavior>().behaviorImp_.get();
 }
 
-//return in milliseconds
-double getCurrentTime()
-{
-	std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
-	auto ms = std::chrono::time_point_cast<std::chrono::milliseconds>(currentTime);
-	auto nano = ms.time_since_epoch();
-	return nano.count();
-}
-
 glm::vec3 Fighter::getPosition() const
 {
 	Transform& transform = entity_->getComponent<Transform>();
@@ -63,71 +56,19 @@ void Fighter::setPosition(glm::vec3 pos)
 	entity_->getComponent<Transform>().position_ = pos;
 }
 
-
-void Fighter::setCurrentHitboxes(const std::vector<Hitbox>& hitboxes)
-{
-	currentHitboxes_.clear();
-	currentHurtboxes_.clear();
-	currentPushBoxes_.clear();
-	for (Hitbox hitbox : hitboxes)
-	{
-		if(side_ == left)
-		{ 
-			hitbox.position_.y *= -1;
-		}
-
-		switch (hitbox.layer_)
-		{
-			case Hitbox::HitboxLayer::Push:
-			{
-				
-				currentPushBoxes_.push_back(hitbox);
-				break;
-			}
-			case Hitbox::HitboxLayer::Hit:
-			{
-				currentHitboxes_.push_back(hitbox);
-				break;
-			}
-			case Hitbox::HitboxLayer::Hurt:
-			{
-				currentHurtboxes_.push_back(hitbox);
-				break;
-			}
-		}
-	}
-}
-
 void Fighter::flipSide()
 {
-	//entity_->getComponent<Transform>().scale_.x *= -1;
-	//entity_->getComponent<Transform>().scale_.y *= -1;
-	//entity_->getComponent<Transform>().scale_.z *= -1;
-
 	glm::quat rot = entity_->getComponent<Transform>().rotation_;
 	glm::quat flipRot(0.0f, 0.0f, 1.0f, 0.0f);
 	entity_->getComponent<Transform>().rotation_ = flipRot * rot;
 	side_ = FighterSide(side_ ^ 1);
-
-	//for (Hitbox& hitbox : currentHitboxes_)
-	//{
-	//	hitbox.position_.y *= -1;
-	//}
-	//for (Hitbox& hitbox : currentHurtboxes_)
-	//{
-	//	hitbox.position_.y *= -1;
-	//}
-	//for (Hitbox& hitbox : currentPushBoxes_)
-	//{
-	//	hitbox.position_.y *= -1;
-	//}
-
 	flipSide_ = false;
 }
 
 void Fighter::updateTransform()
 {
 	Transform& transform = entity_->getComponent<Transform>();
+	oldPos_ = transform.position_;
 	if (applyGravity_)
 	{
 		velocityWorldSpace_ += gravity_;
@@ -139,24 +80,24 @@ void Fighter::handleStateTransition(BaseFighterState* transitionToState)
 {
 	if (transitionToState)
 	{
-		newState_ = transitionToState;
-		newState_->enterState(this);
+		lastState_ = state_;
+		state_ = transitionToState;
+		state_->enterState(this);
 	}
 }
 
 void Fighter::update()
 {
 	deltaTime_ = Scene::DeltaTime * .001;//convert to seconds
-	handleStateTransition(newState_->handleMovementInput(this));
-	handleStateTransition(newState_->handleAttackInput(this));
-	handleStateTransition(newState_->update(this));
+	handleStateTransition(state_->handleMovementInput(this));
+	handleStateTransition(state_->handleAttackInput(this));
+	handleStateTransition(state_->update(this));
 	inputHandler_.updateInputQueue(deltaTime_);
-	updateTransform();
 }
 
-bool Fighter::onHit(Attack& attack)
+bool Fighter::onAttackHit(HitEffect hitEffect)
 {
-	handleStateTransition(newState_->onHit(this, &attack));
+
 	return false;
 }
 
@@ -172,24 +113,18 @@ void Fighter::setYSpeed(float speedY)
 
 void Fighter::handleWallCollision(bool collidedWithLeftWall)
 {
-	handleStateTransition(newState_->handleWallCollision(this, collidedWithLeftWall));
+	float pushOffset = 0.00f;
+	if (collidedWithLeftWall)
+	{
+		pushOffset *= -1;
+	}
+	getTransform().position_.x = oldPos_.x + pushOffset;
+	handleStateTransition(state_->handleWallCollision(this, collidedWithLeftWall));
 }
 
 void Fighter::handleFloorCollision()
 {
-	handleStateTransition(newState_->handleFloorCollision(this));
-}
-
-//void Fighter::displaceFighter(float y, float z)
-//{
-//	Transform& transform = entity_->getComponent<Transform>();
-//	transform.position_.y += y;
-//	transform.position_.z += z;
-//}
-
-float Fighter::getXSpeed()
-{
-	return velocityWorldSpace_.x;
+	handleStateTransition(state_->handleFloorCollision(this));
 }
 
 void Fighter::takeDamage(int damage)
@@ -198,10 +133,26 @@ void Fighter::takeDamage(int damage)
 	health_ -= damage;
 }
 
-void Fighter::whileColliding(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
+void Fighter::onCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
 {
-	if (otherEnt->name_ == "Fighter")
+	if (otherEnt->name_ == "Fighter" && thisCollider->layer_ == HitboxLayers::PUSH_BOX)
 	{
-		Fighter* otherFighter = (Fighter*)otherEnt->getComponent<Behavior>().behaviorImp_.get();
+		colldingWithFighter = true;
 	}
 }
+
+void Fighter::whileColliding(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
+{
+	if (otherEnt->name_ == "Fighter" )
+	{
+	}
+}
+
+void Fighter::onExitCollision(Entity * otherEnt, BoxCollider * thisCollider, BoxCollider * otherCollider)
+{
+	if (otherEnt->name_ == "Fighter" && thisCollider->layer_ == HitboxLayers::PUSH_BOX)
+	{
+		colldingWithFighter = false;
+	}
+}
+

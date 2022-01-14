@@ -77,7 +77,17 @@ float Input::getButton(std::string button)
 
 void Input::addButton(std::string button, int keyCode)
 {
-
+	auto entry = buttonMap_.find(button);
+	if (entry != buttonMap_.end())
+	{
+		buttonMap_[button].push_back(keyCode);
+	}
+	else
+	{
+		std::vector<int> keycodes(1, keyCode);
+		buttonMap_.insert({ button, keycodes });
+	}
+	inputPressedMap_.insert({ keyCode, 0.0f });
 }
 
 void Input::addAxis(std::string axis, int lowKeyCode, int highKeyCode)

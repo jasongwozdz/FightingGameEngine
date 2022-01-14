@@ -130,6 +130,7 @@ struct ENGINE_API AnimationReturnVals : ReturnVals
 
 	~AnimationReturnVals() {};
 	int boneStructIndex;
+	bool succesful;
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
 	std::vector<AnimationClip> animations;
@@ -150,7 +151,7 @@ public:
 
 	TextureReturnVals& loadTextureFile(const std::string& filePath);
 
-	AnimationReturnVals& loadAnimationFile(const std::string& filePath);
+	AnimationReturnVals loadAnimationFile(const std::string& filePath);
 
 	void freeResource(std::string filePath);
 

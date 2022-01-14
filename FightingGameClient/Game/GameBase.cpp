@@ -14,9 +14,8 @@ void GameBase::onStartup()
 {
 	inputHandler_ = new InputHandler();
 	inputHandlerRight_ = new InputHandler(FightingGameInput::Side::rightSide);
-	cameraController_ = new CameraController();
 	
-	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1.fgAnim", "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\fighter2.fgAnim"}, inputHandler_, inputHandlerRight_, debugManager_, this);
+	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim" }, inputHandler_, inputHandlerRight_, debugManager_, this);
 	currentAppState_ = AppState::transitionAppState(characterSelectAppState_);
 	addEventCallback(ENGINE_EVENT_CALLBACK(GameBase::onEvent));
 }
@@ -26,7 +25,6 @@ GameBase::~GameBase()
 	delete inputHandler_;
 	delete inputHandlerRight_;
 	delete characterSelectAppState_;
-	delete cameraController_;
 }
 
 
@@ -49,12 +47,6 @@ void GameBase::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher d(e);
 	d.dispatch<Events::KeyPressedEvent>(std::bind(&GameBase::handleKeyButtonDown, this, std::placeholders::_1));
-	if (cameraController_)
-	{
-		d.dispatch<Events::KeyPressedEvent>(std::bind(&CameraController::handleKeyPressed, cameraController_, std::placeholders::_1));
-		d.dispatch<Events::KeyReleasedEvent>(std::bind(&CameraController::handleKeyReleased, cameraController_, std::placeholders::_1));
-		d.dispatch<Events::MouseMoveEvent>(std::bind(&CameraController::handleMouseMoved, cameraController_, std::placeholders::_1));
-	}
 
 	d.dispatch<Events::KeyPressedEvent>(std::bind(&InputHandler::handleInputPressed, inputHandler_, std::placeholders::_1));
 	d.dispatch<Events::KeyReleasedEvent>(std::bind(&InputHandler::handleInputReleased, inputHandler_, std::placeholders::_1));
@@ -69,10 +61,6 @@ void GameBase::onUpdate(float deltaTime)
 	if ((newAppState = currentAppState_->update(deltaTime)) != nullptr)
 	{
 		currentAppState_ = AppState::transitionAppState(newAppState);
-	}
-	if (cameraController_)
-	{
-		cameraController_->onUpdate(deltaTime);
 	}
 }
 

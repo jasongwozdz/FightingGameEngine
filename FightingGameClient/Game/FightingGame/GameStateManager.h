@@ -1,7 +1,9 @@
 #pragma once
 #include "Fighter/Fighter.h"
+#include "Scene/Components/Collider.h"
 #include "DebugDrawManager.h"
-
+#include "Singleton.h"
+#include "Arena.h"
 
 //Used to store what attacks can cancel into eachother.  If an attack A is cancelable in attack B  That means that if attack A is next in the fighters attackBuffer and attack B is the current attack.  Attack A will become the new attack starting from its first frame
 struct CancelAttackMap
@@ -38,52 +40,29 @@ struct CancelAttackMap
 	}
 };
 
-class GameStateManager
+class GameStateManager : public Singleton<GameStateManager>
 {
 public:
-	GameStateManager(Entity* fighter1, Entity* fighter2, DebugDrawManager* debugDrawManager/*, Arena& arena*/);
-
+	GameStateManager(Entity* fighter1, Entity* fighter2, DebugDrawManager* debugDrawManager, Arena& arena);
 	~GameStateManager() = default;
-
 	void update(float deltaTime);
+
+	static GameStateManager& getSingleton();
+	static GameStateManager* getSingletonPtr();
 
 public:
 	bool debug_ = true; //should debug be drawn
 
-	//static Arena arena_;//make static so states can access the arena
-
 private:
-	bool checkAttackCollision(Fighter& fighter1, Fighter& fighter2);
-
-	//Keeps fighters within the bounds of the arena.  Also handles when a jump reaches the floor
-	void clampFighterOutOfBounds();
-	
-	//checks if fighters collided with eachother and pushes them based on their current speeds
-	bool fighterCollisionCheck();
-
-	//handles attack state for both fighters
-	void updateAttacks();
-
 	//Calculates the size of each health bar before sending draw commands to the ui interface
 	void drawHealthBars();
-
 	void checkFighterSide();
-
 	void updateTimer();
+	void updateFighterTransforms();
 
-	//draws grids to visualize arena bounds, fighters hitboxes, hurtboxes, and pushboxes.  Also draws x,y,z axis lines
-	void drawDebug();
+	void handleInboundChecks();
+	void handleFighterCollision();
 
-	void drawHitboxDebug();
-	
-	void drawHitbox(const glm::vec3& fighterPos, const Hitbox& hitbox, const glm::vec3& color);//helper method for drawHitboxDebug
-
-	void drawHitbox(const Transform& transform, const Hitbox& hitbox, const glm::vec3& color);
-
-	//Helper method that just checks if 2 hitboxes are colliding
-	bool areHitboxesColliding(const glm::vec3 pos1, const Hitbox& hitbox1, const glm::vec3& pos2, const Hitbox& hitbox2);
-
-	bool areHitboxesColliding(const Transform& transform1, const Hitbox& hitbox1, const Transform& transform2, const Hitbox& hitbox2);
 private:
 	UI::UIInterface& ui_;
 	DebugDrawManager* debugManager_;
@@ -98,4 +77,7 @@ private:
 		const int maxTime = 120;//seconds
 		float startTime; // seconds
 	} timerResources_;
+
+	std::vector<Fighter*> colliding_;
+	Arena& arena_;
 };

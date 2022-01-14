@@ -5,19 +5,19 @@
 #include "JumpingAttackFighterState.h"
 #include "../Fighter/Fighter.h"
 
-JumpingFighterState::JumpingFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData, AttackResources* attacks) : 
-	BaseFighterState(animationName, hitboxData),
+JumpingFighterState::JumpingFighterState(std::string animationName, std::vector<FrameInfo> frameData, AttackResources* attacks) : 
+	BaseFighterState(animationName, frameData),
 	attacks_(attacks)
 {}
 
 BaseFighterState* JumpingFighterState::update(Fighter* fighter)
 {
-	updateCurrentHitboxes(fighter);
+	//updateCurrentHitboxes(fighter);
 	if (airDashResources_.airDashing_)//during the start of the airdash ignore gravity
 	{
 		if (++airDashResources_.currentDashFrame > airDashResources_.dashFrames)
 		{
-			gravity_ = DEFAULT_GRAVITY;
+			fighter->applyGravity_ = true;
 		}
 	}
 	return nullptr;
@@ -27,29 +27,7 @@ void JumpingFighterState::enterState(Fighter* fighter)
 {
 	fighter->entity_->getComponent<Animator>().setAnimation(animationName_);
 	const InputHandler& inputHandler = fighter->inputHandler_;
-	if (inputHandler.currentMovementInput_.x > 0)
-	{
-		if (fighter->side_ == left)
-		{
-			fighter->setXSpeed(fighter->baseSpeed_);
-		}
-		else
-		{
-			fighter->setXSpeed(-fighter->baseSpeed_);
-		}
-	}
-	else if(inputHandler.currentMovementInput_.x < 0)
-	{
-		if (fighter->side_ == left)
-		{
-			fighter->setXSpeed(-fighter->baseSpeed_);
-		}
-		else
-		{
-			fighter->setXSpeed(fighter->baseSpeed_);
-		}
-	}
-	fighter->setYSpeed(JUMP_SPEED);//set Y speed
+	fighter->setYSpeed(fighter->jumpSpeed_);//set Y speed
 	fighter->applyGravity_= true;
 	//gravity_ = DEFAULT_GRAVITY;//set gravity to default value so we decrement at every state update;
 	airDashResources_ = {};
@@ -59,32 +37,22 @@ void JumpingFighterState::enterState(Fighter* fighter)
 
 BaseFighterState* JumpingFighterState::handleMovementInput(Fighter* fighter)
 {
-	//TODO: implement air dashing
 	const InputHandler& inputHandler = fighter->inputHandler_;
 	if (!airDashResources_.airDashing_)
 	{
-		const float AIR_DASH_SPEED = -20.0f;
 		if (inputHandler.isSequenceInInputQueue(airDashInputLeft))
 		{
-			if (fighter->side_ == left)
-				fighter->setXSpeed(AIR_DASH_SPEED);
-			else
-				fighter->setXSpeed(-AIR_DASH_SPEED);
-
+			fighter->setXSpeed(fighter->airDashSpeed_);
 			fighter->setYSpeed(0);
 			airDashResources_.airDashing_ = true;
-			gravity_ = 0;
+			fighter->applyGravity_ = false;
 		}
 		else if (inputHandler.isSequenceInInputQueue(airDashInputRight))
 		{
-			if (fighter->side_ == left)
-				fighter->setXSpeed(-AIR_DASH_SPEED);
-			else
-				fighter->setXSpeed(AIR_DASH_SPEED);
-
+			fighter->setXSpeed(-fighter->airDashSpeed_);
 			fighter->setYSpeed(0);
 			airDashResources_.airDashing_ = true;
-			gravity_ = 0;
+			fighter->applyGravity_ = false;
 		}
 	}
 	return nullptr;
@@ -92,10 +60,10 @@ BaseFighterState* JumpingFighterState::handleMovementInput(Fighter* fighter)
 
 BaseFighterState* JumpingFighterState::handleAttackInput(Fighter* fighter)
 {
-	Attack* attack = checkAttackInputs(fighter, *attacks_);
+	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
 	if (attack)
 	{
-		static_cast<JumpingAttackFighterState*>(fighter->jumpingAttackFighterState_)->currentAttack_ = attack;
+		attack->initateAttack();
 		return fighter->jumpingAttackFighterState_;
 	}
 	return nullptr;
@@ -106,7 +74,7 @@ BaseFighterState* JumpingFighterState::onHit(Fighter* fighter, Attack* attack)
 	
 	if (isFighterHoldingBack(fighter))
 	{
-		BlockingFighterState* fighterState = static_cast<BlockingFighterState*>(fighter->hitFighterState_);
+		BlockingFighterState* fighterState = fighter->blockedFighterState_;
 		fighterState->inAir_ = true;
 		fighterState->hitByAttack_ = attack;
 		return fighter->blockedFighterState_;
@@ -114,7 +82,7 @@ BaseFighterState* JumpingFighterState::onHit(Fighter* fighter, Attack* attack)
 	else
 	{
 		fighter->takeDamage(attack->damage);
-		HitFighterState* fighterState = static_cast<HitFighterState*>(fighter->hitFighterState_);
+		HitFighterState* fighterState = fighter->hitFighterState_;
 		fighterState->inAir_ = true;
 		fighterState->hitByAttack_ = attack;
 		return fighter->hitFighterState_;

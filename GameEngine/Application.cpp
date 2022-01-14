@@ -18,6 +18,8 @@ double getCurrentTime()
 	return nano.count();
 }
 
+int Application::FrameCount = 0;
+
 Application::Application()
 {
 	resourceManager_ = new ResourceManager();
@@ -29,7 +31,6 @@ Application::Application()
 	renderer_->init();
 	scene_ = Scene::getSingletonPtr();
 	debugManager_ = renderer_->debugDrawManager_;
-	boxCollisionManager_ = new BoxCollisionManager();
 	input_ = new Input(this);
 }
 
@@ -69,7 +70,6 @@ void Application::cleanup()
 	delete engineSettings_;
 	delete window_;
 	delete renderer_;
-	delete boxCollisionManager_;
 }
 
 void Application::run()
@@ -80,6 +80,7 @@ void Application::run()
 	onStartup();
 	while (!glfwWindowShouldClose(window_->getGLFWWindow()))
 	{
+		FrameCount++;
 		endTime = getCurrentTime();
 		deltaTime = static_cast<float>(endTime - start);//get time in milliseconds
 		if (deltaTime >= 1000 / engineSettings_->framesPerSecond)
@@ -89,7 +90,6 @@ void Application::run()
 			renderer_->prepareFrame();
 			onUpdate(deltaTime);
 			scene_->update(deltaTime);
-			boxCollisionManager_->update(scene_);
 		}
 	}
 	vkDeviceWaitIdle(renderer_->logicalDevice_);

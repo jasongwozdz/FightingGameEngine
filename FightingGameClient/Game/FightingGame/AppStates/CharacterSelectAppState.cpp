@@ -8,7 +8,7 @@
 #include "BaseCamera.h"
 #include "DebugDrawManager.h"
 #include "FightingAppState.h"
-#include "../ControllableCameraBehavior.h"
+#include "Scene/Behaviors/ControllableCameraBehavior.h"
 #include "Scene/Components/Camera.h"
 
 #include "Input.h"
@@ -112,7 +112,7 @@ void CharacterSelectAppState::drawFighterSelectGrid()
 	float width = EngineSettings::getSingletonPtr()->windowWidth;
 	float height = EngineSettings::getSingletonPtr()->windowHeight;
 	ui_->centerNextWindow();
-	ui_->beginWindow("A", width, height, NULL, true);
+	ui_->beginWindow("A", width, height, {width/2, height/2}, NULL, true);
 	std::vector<std::pair<std::string, glm::vec4>> gridVals;
 	for (int i = 0; i < fighterFiles_.size();i++)
 	{

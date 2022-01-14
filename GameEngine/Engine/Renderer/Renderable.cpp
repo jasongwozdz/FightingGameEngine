@@ -31,7 +31,8 @@ Renderable::Renderable(Renderable&& other) :
 	descriptorSets_(other.descriptorSets_),
 	allocator_(other.allocator_),
 	logicalDevice_(other.logicalDevice_),
-	isLine_(other.isLine_)
+	isLine_(other.isLine_),
+	render_(other.render_)
 {
 	other.vertexBuffer_ = nullptr;
 	other.vertexMem_ = nullptr;
@@ -70,7 +71,8 @@ Renderable::Renderable(const Renderable& other) :
 	descriptorSets_(other.descriptorSets_),
 	allocator_(other.allocator_),
 	logicalDevice_(other.logicalDevice_),
-	isLine_(other.isLine_)
+	isLine_(other.isLine_),
+	render_(other.render_)
 {
 	textureResources_ = other.textureResources_;
 	ubo_ = other.ubo_;

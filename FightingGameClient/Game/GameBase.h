@@ -2,7 +2,6 @@
 #include "../Application.h"
 #include "../Engine/Scene/Scene.h"
 #include "BaseCamera.h"
-#include "CameraController.h"
 #include "FightingGame/InputHandler.h"
 #include "FightingGame/FighterFactory.h"
 #include "FightingGame/GameStateManager.h"
@@ -27,7 +26,6 @@ private:
 	CharacterSelectAppState* characterSelectAppState_;
 
 	BaseCamera* camera_;
-	CameraController* cameraController_;
 	InputHandler* inputHandler_;
 	InputHandler* inputHandlerRight_;
 	FighterFactory* fighterFactory_;

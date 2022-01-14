@@ -1,13 +1,11 @@
 #pragma once
 #include "BaseFighterState.h"
 
-extern const float DEFAULT_GRAVITY;
-
 class HitFighterState :
 	public BaseFighterState
 {
 public:
-	HitFighterState(std::string animationName, std::vector<std::vector<Hitbox>> hitboxData);
+	HitFighterState(std::string animationName, std::vector<FrameInfo> hitboxData);
 	BaseFighterState* update(Fighter* fighter) override;
 	void enterState(Fighter* fighter) override;
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;

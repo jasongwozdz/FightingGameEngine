@@ -43,6 +43,8 @@ public:
 
 	void setAnimation(std::string name);
 
+	void setAnimationTime(float timeInSeconds);
+
 	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable);
 
 	void update(float deltaTime, Renderable& renderable);
@@ -96,4 +98,5 @@ private:
 	std::vector<glm::mat4> boneTransforms_;
 	unsigned int lastIndex_ = 0;
 	bool dontUpdate_ = false; //set to true when getAnimationPoseByFrame is called
+	bool timeSet_ = false;//set when setAnimationTime() is called
 };

@@ -24,4 +24,8 @@
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Engine\Settings\EngineSettings.ini" />
+    <None Include="Engine\Settings\KeyMap.ini" />
+  </ItemGroup>
 </Project>

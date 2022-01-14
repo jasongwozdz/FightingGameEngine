@@ -14,7 +14,7 @@ FighterFileImporter::FighterFileImporter(const std::string& filePath)
 	file_.open(filePath, std::ios::in);
 	if (file_.is_open())
 	{
-		readFile();
+		readFileNew();
 	}
 	else
 	{
@@ -22,21 +22,55 @@ FighterFileImporter::FighterFileImporter(const std::string& filePath)
 	}
 }
 
-std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::string hitboxData)
+std::vector<FrameInfo> FighterFileImporter::extraAttackColliderData(std::string hitboxData)
 {
-	std::vector<std::vector<Hitbox>> returnData;
+	std::vector<FrameInfo> frameData;
 	for (std::string::iterator character = hitboxData.begin(); character < hitboxData.end(); character++)
 	{
 		if (*character == '[')
 		{
-			std::vector<Hitbox> frameData;
+			//frame info
+			//(displacment.x, displacement.y, displacement.z, tags, type)
+			FrameInfo frameInfo;
+			if (*(character+1) == '(')
+			{
+				character++;
+				for (int i = 0; i < 5; i++)
+				{
+					std::string currNum;
+					while (*(++character) != ',' && *character != ')')
+					{
+							currNum.push_back(*character);
+					}
+					switch (i)
+					{
+					case 0:
+						frameInfo.displacement_.x = stof(currNum);
+						break;
+					case 1:
+						frameInfo.displacement_.y = stof(currNum);
+						break;
+					case 2:
+						frameInfo.displacement_.z = stof(currNum);
+						break;
+					case 3: 
+						frameInfo.tags_ = stoi(currNum);
+						break;
+					case 4: 
+						frameInfo.type_ = (FrameType)stoi(currNum);
+						break;
+					}
+				}
+			}
+			std::vector<BoxCollider> colliderData;
 			while (*(++character) != ']')
 			{
-				if (*character == '{')
+				if (*character == '{') 
 				{
-					Hitbox h{};
-					//loops through each field needed to populate hitbox data
-					for (int currentField = 0; currentField < 6; currentField++)
+					BoxCollider currentCollider;
+					//loops through each field needed to populate collider data
+					//{size.x, size.y, size.z, pos.x, pos.y, pos.z, layer}
+					for (int currentField = 0; currentField < 7; currentField++)
 					{
 						std::string currNum;
 						while (*(++character) != ',' && *character != '}')
@@ -47,51 +81,84 @@ std::vector<std::vector<Hitbox>> FighterFileImporter::extractHitboxData(std::str
 						{
 							case 0:
 							{
-								h.width_ = std::stof(currNum);
+								currentCollider.size_.x = std::stof(currNum);
 								break;
 							}
 							case 1:
 							{
-								h.height_ = std::stof(currNum);
+								currentCollider.size_.y = std::stof(currNum);
 								break;
 							}
 							case 2:
 							{
-								h.position_.x = std::stof(currNum);
+								currentCollider.size_.z = std::stof(currNum);
 								break;
 							}
 							case 3:
 							{
-								h.position_.y = std::stof(currNum);
-								if (flipHitboxes_)
-									h.position_.y *= -1;
+								currentCollider.position_.x = std::stof(currNum);
 								break;
 							}
 							case 4:
 							{
-								h.position_.z = std::stof(currNum);
+								currentCollider.position_.y = std::stof(currNum);
 								break;
 							}
 							case 5:
 							{
-								h.layer_ = (Hitbox::HitboxLayer)std::stoi(currNum);
+								currentCollider.position_.z = std::stof(currNum);
+								break;
+							}
+							case 6:
+							{
+								currentCollider.layer_ = (HitboxLayers)std::stoi(currNum);
 								break;
 							}
 						}
 						currNum.clear();
-
-						}
-					frameData.push_back(h);
 					}
+					colliderData.push_back(currentCollider);
 				}
-				returnData.push_back(frameData);
 			}
+			frameInfo.colliders_ = colliderData;
+			frameData.push_back(frameInfo);
 		}
-	return returnData;
+	}
+	return frameData;
 }
 
-//This will populate exportData_
-void FighterFileImporter::readFile()
+std::vector<uint8_t> FighterFileImporter::extractInput(std::string inputData)
+{
+	std::vector<uint8_t> output;
+	std::string::iterator character = inputData.begin();
+	if (*character == '{')
+	{
+		std::string num;
+		while (*(++character) != '}')
+		{
+			if (*character == ',')
+			{
+				output.push_back(stoi(num));
+			}
+			num += *character;
+		}
+		output.push_back(stoi(num));
+		return output;
+	}
+	else
+	{
+		std::cout << "Error extract input failed" << std::endl;
+	}
+
+	return std::vector<uint8_t>();
+}
+
+FighterFileImporter::~FighterFileImporter()
+{
+
+}
+
+void FighterFileImporter::readFileNew()
 {
 	std::string currentLine;
 	//get modelPath
@@ -99,27 +166,11 @@ void FighterFileImporter::readFile()
 	{
 		exportData_.modelFilePath = currentLine.substr(12);
 	}
+
 	//get texturepath
 	if (std::getline(file_, currentLine))
 	{
 		exportData_.textureFilePath = currentLine.substr(14);
-	}
-	//get rightside rotation
-	if (std::getline(file_, currentLine))
-	{
-		exportData_.rightSideRotation = std::stof(currentLine.substr(20));
-	}
-
-	//get up rotation
-	if (std::getline(file_, currentLine))
-	{
-		exportData_.upRotation = std::stof(currentLine.substr(getSizeOfString("UpRotation : ")));
-	}
-
-	//get FlipHitboxes flag
-	if (std::getline(file_, currentLine))
-	{
-		flipHitboxes_ = std::stoi(currentLine.substr(getSizeOfString("FlipHitboxes : ")));
 	}
 
 	//get idleAnimation name
@@ -131,8 +182,8 @@ void FighterFileImporter::readFile()
 	//get idleHitboxData
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("IdleHitboxData : ")));
-		exportData_.idleData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("IdleHitboxData : ")));
+		exportData_.idleData.frameData = frameData;
 	}
 
 	//get WalkAnimation name
@@ -144,10 +195,11 @@ void FighterFileImporter::readFile()
 	//get walkHitboxData 
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("WalkHitboxData : ")));
-		exportData_.walkingData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("WalkHitboxData : ")));
+		exportData_.walkingData.frameData = frameData;
 	}
 
+	//crouch
 	if (std::getline(file_, currentLine))
 	{
 		exportData_.crouchData.animationName = currentLine.substr(getSizeOfString("CrouchAnimation : "));
@@ -155,10 +207,11 @@ void FighterFileImporter::readFile()
 
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("CrouchHitboxData : ")));
-		exportData_.crouchData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("CrouchHitboxData : ")));
+		exportData_.crouchData.frameData = frameData;
 	}
 
+	//jump data
 	if (std::getline(file_, currentLine))
 	{
 		exportData_.jumpData.animationName = currentLine.substr(getSizeOfString("JumpAnimation : "));
@@ -166,10 +219,11 @@ void FighterFileImporter::readFile()
 
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("JumpHitboxData : ")));
-		exportData_.jumpData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("JumpHitboxData : ")));
+		exportData_.jumpData.frameData = frameData;
 	}
 
+	//hit data
 	if (std::getline(file_, currentLine))
 	{
 		exportData_.hitData.animationName = currentLine.substr(getSizeOfString("HitAnimation : "));
@@ -177,10 +231,11 @@ void FighterFileImporter::readFile()
 
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("HitHitboxData : ")));
-		exportData_.hitData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("HitHitboxData : ")));
+		exportData_.hitData.frameData = frameData;
 	}
 
+	//block data
 	if (std::getline(file_, currentLine))
 	{
 		exportData_.blockData.animationName = currentLine.substr(getSizeOfString("BlockAnimation : "));
@@ -188,133 +243,62 @@ void FighterFileImporter::readFile()
 
 	if(std::getline(file_, currentLine))
 	{ 
-		std::vector<std::vector<Hitbox>> extractedHitboxData = extractHitboxData(currentLine.substr(getSizeOfString("BlockHitboxData : ")));
-		exportData_.blockData.hitboxData = extractedHitboxData;
+		std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("BlockHitboxData : ")));
+		exportData_.blockData.frameData = frameData;
 	}
 
 	while (std::getline(file_, currentLine))
 	{
-		Attack attack{};
+		AttackData attack{};
 		if (currentLine.find("animationName : ") != std::string::npos)
 		{
-			attack.animationName_ = currentLine.substr(16);
+			attack.animationName_ = currentLine.substr(getSizeOfString("animationName : "));
 			if (std::getline(file_, currentLine))
 			{
-				attack.startupFrames = std::stoi(currentLine.substr(10));
+				attack.startupFrames_ =  std::stoi(currentLine.substr(getSizeOfString("startup : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.activeFrames = std::stoi(currentLine.substr(9));
+				attack.activeFrames_ = std::stoi(currentLine.substr(getSizeOfString("active : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.recoveryFrames = std::stoi(currentLine.substr(11));
+				attack.recoveryFrames_ = std::stoi(currentLine.substr(getSizeOfString("recovery : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.blockstunFrames = std::stoi(currentLine.substr(12));
+				attack.blockstun_ = std::stoi(currentLine.substr(getSizeOfString("blockstun : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.hitstunFrames = std::stoi(currentLine.substr(10));
+				attack.hitstun_ = std::stoi(currentLine.substr(getSizeOfString("hitstun : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.hitPushMag = std::stof(currentLine.substr(10));
+				attack.freezeFrames_ = std::stoi(currentLine.substr(getSizeOfString("freeze : ")));
 			}
 			if (std::getline(file_, currentLine))
 			{
-				attack.damage = std::stoi(currentLine.substr(9));
+				attack.push_ = std::stof(currentLine.substr(getSizeOfString("pushMag : ")));
 			}
-			std::vector<InputKey> attackInput;
 			if (std::getline(file_, currentLine))
 			{
-				attackInput.push_back(std::stoi(currentLine.substr(8)));
+				attack.damage_ = std::stoi(currentLine.substr(getSizeOfString("damage : ")));
 			}
-			exportData_.inputData.push_back(attackInput);
-			int numFrames = 0;
+			std::vector<uint8_t> attackInput;
 			if (std::getline(file_, currentLine))
 			{
-				numFrames = std::stoi(currentLine.substr(12));
+				attackInput = extractInput(currentLine.substr(getSizeOfString("input : ")));
 			}
+			attack.inputs_ = attackInput;
 
-			attack.hurtboxWidthHeight.resize(numFrames);
-			attack.hurtboxPos.resize(numFrames);
 			if (std::getline(file_, currentLine))
 			{
-				AnimationData parsedAttackData{};
-				for (std::string::iterator character = currentLine.begin(); character < currentLine.end(); character++)
-				{
-					if (*character == '[')
-					{
-						std::vector<Hitbox> frameData;
-						while (*(++character) != ']')
-						{
-							if (*character == '{')
-							{
-								Hitbox h{};
-								//loops through each field needed to populate hitbox data
-								for (int currentField = 0; currentField < 6; currentField++)
-								{
-									std::string currNum;
-									while (*(++character) != ',' && *character != '}')
-									{
-										currNum.push_back(*character);
-									}
-
-									switch (currentField)
-									{
-										case 0:
-										{
-											h.width_ = std::stof(currNum);
-											break;
-										}
-										case 1:
-										{
-											h.height_ = std::stof(currNum);
-											break;
-										}
-										case 2:
-										{
-											h.position_.x = std::stof(currNum);
-											break;
-										}
-										case 3:
-										{
-											h.position_.y = std::stof(currNum);
-											if (flipHitboxes_)
-												h.position_.y *= -1;
-											break;
-										}
-										case 4:
-										{
-											h.position_.z = std::stof(currNum);
-											break;
-										}
-										case 5:
-										{
-											h.layer_ = (Hitbox::HitboxLayer)std::stoi(currNum);
-											break;
-										}
-									}
-									currNum.clear();
-
-									}
-								frameData.push_back(h);
-								}
-							}
-							parsedAttackData.hitboxData.push_back(frameData);
-							attack.hitboxesPerFrame.push_back(frameData);
-						}
-					}
-				exportData_.attackData.push_back(parsedAttackData);
-				}
+				std::vector<FrameInfo> frameData = extraAttackColliderData(currentLine.substr(getSizeOfString("AttackData : ")));;
+				attack.frameData_ = frameData;
 			}
-		exportData_.attacks.push_back(attack);
 		}
+		exportData_.attackData.push_back(attack);
+	}
 }
 
-FighterFileImporter::~FighterFileImporter()
-{
-
-}

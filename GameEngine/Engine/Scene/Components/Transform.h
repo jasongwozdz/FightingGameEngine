@@ -32,6 +32,7 @@ public:
 	glm::vec3 forward();
 
 	void drawDebugGui();
+	void drawDebug();
 
 	glm::mat4 calculateTransform();
 	glm::mat4 calculateTransformNoScale();
@@ -42,6 +43,7 @@ public:
 	//rotation around each local axis
 	void rotateAround(glm::vec3 rotationInRadians);
 	void rotateAround(float angleToRotateInDegrees, glm::vec3 axisToRotateAround);
+	void moveTowards(glm::vec3 finalPos, float maxMoveMag);
 
 public:
 	glm::mat4 finalTransform_ = glm::mat4(1.0f);
@@ -54,9 +56,6 @@ public:
 
 	bool drawDebugGui_ = false;
 	bool drawDebug_ = false;
-
-private:
-	void drawDebug();
 
 private:
 	glm::vec3 oldPos_;
