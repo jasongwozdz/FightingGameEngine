@@ -15,7 +15,6 @@
 
 
 #define MAX_BONES_PER_VERTEX 4
-#define MAX_BONES 64
 
 #ifdef ENGINE_EXPORTS
 #define ENGINE_API __declspec(dllexport)

@@ -23,7 +23,7 @@ void AttackBase::initateAttack()
 {
 	currentFrameIndex_ = 0;
 	Fighter* fighter = Fighter::getFighterComp(entity_);
-	fighter->currentAttack_ = this;
+	//fighter->currentAttack_ = this;
 	setAnimation(entity_, animationName_);
 	setColliders();
 }
@@ -34,7 +34,7 @@ bool AttackBase::updateAttack()
 	if (currentFrameIndex_ >= totalFrames_)
 	{
 		Fighter* fighter = Fighter::getFighterComp(entity_);
-		fighter->currentAttack_ = nullptr;
+		//fighter->currentAttack_ = nullptr;
 		return true;//animation is done attack is done
 	}
 	setAnimationTime();
@@ -49,7 +49,7 @@ Entity* AttackBase::createNewEntity(std::string name)
 
 void AttackBase::addCollider(Entity* attachTo, glm::vec3 pos, glm::vec3 size, int layer)
 {
-	BoxCollider boxCollider = BoxCollider(size, pos, layer);
+	BoxCollider boxCollider = BoxCollider(size, pos, layer, attachTo);
 	Collider* collider = attachTo->tryGetComponent<Collider>();
 	if (!collider)
 	{

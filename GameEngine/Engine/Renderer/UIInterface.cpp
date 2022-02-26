@@ -120,7 +120,7 @@ UI::UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDev
 	ranges.push_back(range);
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	PipelineBuilder::PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
+	PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
 
 	uiPipeline_ = r;
 

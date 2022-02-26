@@ -1,0 +1,59 @@
+LP_5
+{
+    AnimationName(Attack)
+    Input(LIGHT)
+    Damage(1)
+    Hitstun(30)
+    Blockstun(30)
+    Push(5)
+    Freeze(15)
+    MoveState(STANDING)
+    CancelList[2](LP_5,HP_6)
+}
+[
+    Collider
+    {
+        layer(PUSH_BOX)
+        size(1, 2, 1)
+        pos(0, 2, 0)
+    }
+
+    Collider
+    {
+        layer(HURT_BOX)
+        size(1, 2, 2)
+        pos(0, 2, 0)
+    }
+
+    Tags(COUNTER_HIT)
+    SetVelocity(4, 0);
+
+    Range(0,51)
+]
+[
+    Collider
+    {
+        layer(HIT_BOX)
+        size(1, 2, 1)
+        pos(0, 1, 1)
+    }
+    
+    Tags(COUNTER_HIT)
+
+    Cancelable(2)
+
+    Range(35, 50)
+]
+[
+    Collider
+    {
+        layer(HIT_BOX)
+        size(1, 2, 1)
+        pos(0, 1, 1)
+    }
+    
+    Tags(COUNTER_HIT, EXECUTE_CANCEL)
+
+
+    Range(50, 51)
+]

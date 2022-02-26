@@ -31,13 +31,14 @@ BaseFighterState* JumpingAttackFighterState::handleAttackInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState* JumpingAttackFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* JumpingAttackFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
-	fighter->takeDamage(attack->damage);
-	HitFighterState* fighterState = static_cast<HitFighterState*>(fighter->hitFighterState_);
-	fighterState->inAir_ = true;
-	fighterState->hitByAttack_ = attack;
-	return fighter->hitFighterState_;
+	//fighter->takeDamage(attack->damage);
+	//HitFighterState* fighterState = static_cast<HitFighterState*>(fighter->hitFighterState_);
+	//fighterState->inAir_ = true;
+	//fighterState->hitByAttack_ = attack;
+	//return fighter->hitFighterState_;
+	return nullptr;
 }
 
 BaseFighterState* JumpingAttackFighterState::handleFloorCollision(Fighter* fighter)

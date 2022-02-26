@@ -10,6 +10,7 @@
 #include "Renderable.h"
 #include "RenderSubsystemInterface.h"
 #include "VkTypes.h"
+#include "Asset/AssetInstance.h"
 
 class DebugDrawManager;
 
@@ -36,13 +37,40 @@ public:
 	void draw(std::vector<Renderable*>& objectsToDraw);
 	void cleanup();
 	void uploadObject(Renderable* renderableObject);
+	void uploadMesh(Renderable* mesh);
+	void uploadStaticMeshData(Renderable* mesh);
+	void uploadTextureData(Textured* texture);
 	void uploadObject(Renderable* renderableObject, Textured* texture, bool animated = false);
 	void prepareFrame();
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
 	void updateUniformBuffer(Renderable& mesh);
-	VkShaderModule createShaderModule(const std::vector<char>& code);
+	VkShaderModule createShaderModule(std::string shaderPath);
+	//VkShaderModule createShaderModule(const std::vector<char>& code);
 	std::vector<char> readShaderFile(const std::string& filename);
 	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
+
+
+	template<typename UniformDataType>
+	void uploadDynamicData(AssetInstance* assetInstance);
+	//{
+	//	std::vector<DynamicMeshData<UniformDataType>>& data =  assetInstance->data_;
+	//	//======= Uniform ======
+	//	size_t uniformBufferSize = sizeof(UniformDataType);
+	//	VkBufferCreateInfo uBufferInfo{};
+	//	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	//	uBufferInfo.pNext = nullptr;
+	//	uBufferInfo.size = uniformBufferSize;
+	//	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+	//	VmaAllocationCreateInfo vmaInfo{};
+	//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	//	data.resize(swapChainResources_.imageCount_);
+	//	for (int i = 0; i < swapChainResources_.imageCount_; i++)
+	//	{
+	//		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &data[i].uniformData_.buffer , &data[i].uniformData_.mem_, nullptr));
+	//	}
+	//};
 	
 	template<class T> T* addRenderSubsystem()
 	{
@@ -102,7 +130,7 @@ public:
 	VkFence renderFence_;
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
-	std::vector<PipelineBuilder::PipelineResources*> pipelines_;
+	std::vector<PipelineResources*> pipelines_;
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
 	std::vector<RenderSubsystemInterface*> renderSubsystems_;
@@ -120,4 +148,16 @@ private:
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 	void recreateSwapchain();
 	void cleanupSwapchain();
+
+	template<typename UniformDataType>
+	void createUniformBuffers(AssetInstance* assetInstance);
+
+	template<typename UniformDataType>
+	void allocateDescriptorSet(AssetInstance* assetInstance);
+
+	void createPipelineNew(AssetInstance* assetInstance);
+
+private:
+	std::unordered_map<std::string, VkShaderModule> shaderMap_;//maps vertex shader file location to its VKShaderModule
+	std::unordered_map<PipelineCreateInfo, PipelineResources*, PipelineCreateInfoHash> pipelineMap_;
 };

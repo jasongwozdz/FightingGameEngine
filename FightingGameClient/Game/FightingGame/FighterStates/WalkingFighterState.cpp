@@ -47,30 +47,31 @@ BaseFighterState* WalkingFighterState::handleMovementInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState * WalkingFighterState::handleAttackInput(Fighter * fighter)
+BaseFighterState* WalkingFighterState::handleAttackInput(Fighter* fighter)
 {
-	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
-	if (attack)
+	MoveType move = checkAttackInputsNew(fighter, *attacks_);
+	if (move)
 	{
-		attack->initateAttack();
+		fighter->entity_->getComponent<MoveInfoComponent>().moveInfo_ = move;
 		return fighter->attackingFighterState_;
 	}
 	return nullptr;
 }
 
-BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
-	if (isFighterHoldingBack(fighter))
-	{
-		fighter->blockedFighterState_->hitByAttack_ = attack;
-		return fighter->blockedFighterState_;
-	}
-	else
-	{
-		fighter->takeDamage(attack->damage);
-		fighter->hitFighterState_->hitByAttack_ = attack;
-		return fighter->hitFighterState_;
-	}
+	//if (isFighterHoldingBack(fighter))
+	//{
+	//	fighter->blockedFighterState_->hitByAttack_ = attack;
+	//	return fighter->blockedFighterState_;
+	//}
+	//else
+	//{
+	//	fighter->takeDamage(attack->damage);
+	//	fighter->hitFighterState_->hitByAttack_ = attack;
+	//	return fighter->hitFighterState_;
+	//}
+	return nullptr;
 }
 
 void WalkingFighterState::setXSpeed(Fighter* fighter)

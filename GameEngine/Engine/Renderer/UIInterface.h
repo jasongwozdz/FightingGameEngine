@@ -146,7 +146,7 @@ namespace UI
 		std::vector<uint32_t> indicies_;
 		VkDeviceSize globalVertexOffset_ = 0;
 		VkDeviceSize globalIndexOffset_ = 0;
-		PipelineBuilder::PipelineResources* uiPipeline_;
+		PipelineResources* uiPipeline_;
 		VkDescriptorSetLayout descriptorLayout_;
 		VmaAllocator& allocator_;
 		VkBuffer vertexBuffer_;

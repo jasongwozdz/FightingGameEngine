@@ -6,8 +6,6 @@
 #include <iostream>
 #include <memory>
 
-#define MAX_BONES 64
-
 #ifdef ENGINE_EXPORTS
 #define ENGINE_API __declspec(dllexport)
 #else

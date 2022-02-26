@@ -49,29 +49,21 @@ BaseFighterState* IdleFighterState::handleMovementInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState * IdleFighterState::handleAttackInput(Fighter* fighter)
+BaseFighterState* IdleFighterState::handleAttackInput(Fighter* fighter)
 {
-	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
-	if (attack)
+	MoveType move = checkAttackInputsNew(fighter, *attacks_);
+	if (move)
 	{
-		attack->initateAttack();
+		MoveInfoComponent& moveInfoComp = fighter->entity_->getComponent<MoveInfoComponent>();
+		moveInfoComp.moveInfo_ = move;
 		return fighter->attackingFighterState_;
 	}
 	return nullptr;
 }
 
 
-BaseFighterState* IdleFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* IdleFighterState::onHit(Fighter* fighter, OnHitType hitEffect)
 {
-	if (isFighterHoldingBack(fighter))
-	{
-		fighter->blockedFighterState_->hitByAttack_ = attack;
-		return fighter->blockedFighterState_;
-	}
-	else
-	{
-		fighter->takeDamage(attack->damage);
-		fighter->hitFighterState_->hitByAttack_ = attack;
-		return fighter->hitFighterState_;
-	}
+	fighter->hitFighterState_->hitByEffect_ = hitEffect;
+	return fighter->hitFighterState_;
 }

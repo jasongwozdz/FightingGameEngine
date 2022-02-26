@@ -5,6 +5,7 @@
 
 struct Attack;
 struct AttackResources;
+class MoveHandler;
 
 class AttackingFighterState :
 	public BaseFighterState
@@ -15,14 +16,14 @@ public:
 	void enterState(Fighter* fighter) override;
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;
 	BaseFighterState* handleAttackInput(Fighter* fighter) override;
-	BaseFighterState* onHit(Fighter* fighter, Attack* attack) override;
+	BaseFighterState* onHit(Fighter* fighter, OnHitType attack) override;
 	BaseFighterState* handleFloorCollision(Fighter* fighter) override;
 public:
-	AttackBase* currentAttack_;
+	MoveType currentMove_;
 
 private:
 	AttackResources* attacks_;//need to store attacks to check if the current attack can be cancelled
 	FrameType attackPhase_ = STARTUP;
-
+	MoveHandler* moveHandler_;
 };
 

@@ -2,31 +2,15 @@
 #include <iostream>
 #include <vector>
 #include "vkinit.h"
+#include "VkTypes.h"
 
 namespace PipelineBuilder
 {
-	struct PipelineResources
-	{
-		VkDevice& logicalDevice_;
-		VkPipeline pipeline_;
-		VkPipelineLayout pipelineLayout_;
-
-		PipelineResources(VkDevice& logicalDevice) :
-			logicalDevice_(logicalDevice)
-		{};
-
-		~PipelineResources()
-		{
-			std::cout << "destroy PipelineResources" << std::endl;
-			vkDestroyPipelineLayout(logicalDevice_, pipelineLayout_, nullptr);
-			vkDestroyPipeline(logicalDevice_, pipeline_, nullptr);
-		}
-	};
 
 	template<class Vertex>
-	PipelineBuilder::PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, std::vector<VkPushConstantRange> range, bool depthEnabled, bool cullingEnabled, bool isLine = false)
+	PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, std::vector<VkPushConstantRange> range, bool depthEnabled, bool cullingEnabled, bool isLine = false)
 	{
-	PipelineBuilder::PipelineResources* retVals = new PipelineBuilder::PipelineResources(logicalDevice);
+	PipelineResources* retVals = new PipelineResources(logicalDevice);
 
 	auto bindingDescription = Vertex::getBindingDescription();
 	auto attributeDescriptions = Vertex::getAttributeDescriptions();

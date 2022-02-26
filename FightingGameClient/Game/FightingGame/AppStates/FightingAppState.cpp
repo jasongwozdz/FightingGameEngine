@@ -8,12 +8,15 @@
 #include "Input.h"
 #include "../FighterSandbox/AttackTypes.h"
 
+FightingAppState::FightingAppMode FightingAppState::mode_ = FightingAppState::NORMAL;
+
 FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, DebugDrawManager* debugDrawManager, InputHandler* inputLeft, InputHandler* inputRight) : 
 	scene_(Scene::getSingletonPtr()),
 	inputHandlerLeft_(inputLeft),
 	inputHandlerRight_(inputRight),
 	debugDrawManager_(debugDrawManager)
 {
+	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
 	fighter1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim";
 	fighter2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim";
 	inputHandlerLeft_->clearInputQueue();
@@ -23,6 +26,7 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	initArena();
 	initCamera();
 	initColliderLayers();
+	Input::getSingleton().addButton("Escape", GLFW_KEY_ESCAPE);
 	gameStateManager_ = new GameStateManager(fighters_[0], fighters_[1], debugDrawManager, *arena_);
 }
 
@@ -76,8 +80,8 @@ void FightingAppState::initCamera()
 void FightingAppState::initColliderLayers()
 {
 	BoxCollisionManager* boxCollisionManager = BoxCollisionManager::getSingletonPtr();
-	boxCollisionManager->addLayerRule(HitboxLayers::PUSH_BOX, HitboxLayers::PUSH_BOX);
-	boxCollisionManager->addLayerRule(HitboxLayers::HURT_BOX, HitboxLayers::HIT_BOX);
+	boxCollisionManager->addLayerRule(ColliderLayer::PUSH_BOX, ColliderLayer::PUSH_BOX);
+	boxCollisionManager->addLayerRule(ColliderLayer::HURT_BOX, ColliderLayer::HIT_BOX);
 }
 
 void FightingAppState::checkInput()
@@ -90,6 +94,10 @@ void FightingAppState::checkInput()
 	else if (input.getButton("Fire2") > 0.0f)
 	{
 		scene_->setActiveCamera(fightingGameCamera_);
+	}
+	else if (input.getButton("Escape") > 0.0f)
+	{
+		mode_ = (FightingAppState::FightingAppMode)((int)mode_ ^ 1);//swap mode
 	}
 }
 
@@ -133,6 +141,10 @@ void FightingAppState::generateArenaBackground()
 	//Transform& arenaTransform = arena_.entity->addComponent<Transform>(BACKGROUND_POS.x, BACKGROUND_POS.y, BACKGROUND_POS.z);
 }
 
+bool FightingAppState::isFrameByFrameModeActive()
+{
+	return mode_ == FightingAppMode::FRAMEBYFRAME;
+}
 
 AppState* FightingAppState::update(float deltaTime)
 {

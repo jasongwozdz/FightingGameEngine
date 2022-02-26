@@ -1,15 +1,17 @@
 #include "AttackingFighterState.h"
 #include "HitFighterState.h"
 #include "../Fighter/Fighter.h"
+#include "../FighterSandbox/MoveHandler.h"
 
 AttackingFighterState::AttackingFighterState(AttackResources* attacks) :
 	BaseFighterState("", {}),
-	attacks_(attacks)
+	attacks_(attacks),
+	moveHandler_(new MoveHandler)
 {}
 
 BaseFighterState* AttackingFighterState::update(Fighter* fighter)
 {
-	if (currentAttack_->updateAttack())
+	if(moveHandler_->updateMove(fighter))
 	{
 		return fighter->lastState_;
 	}
@@ -18,11 +20,9 @@ BaseFighterState* AttackingFighterState::update(Fighter* fighter)
 
 void AttackingFighterState::enterState(Fighter* fighter)
 {
-	currentAttack_ = fighter->currentAttack_;
-	//reset speeds
-	fighter->setXSpeed(0);
-	fighter->setYSpeed(0);
 	std::cout << "Enter AttackingState" << std::endl;
+	MoveInfo* moveInfo = fighter->entity_->getComponent<MoveInfoComponent>().moveInfo_;
+	moveHandler_->setMove(fighter, moveInfo);
 }
 
 BaseFighterState* AttackingFighterState::handleMovementInput(Fighter* fighter)
@@ -32,19 +32,22 @@ BaseFighterState* AttackingFighterState::handleMovementInput(Fighter* fighter)
 
 BaseFighterState* AttackingFighterState::handleAttackInput(Fighter* fighter)
 {
+	MoveType nextMove = checkAttackInputsNew(fighter, fighter->attacks_);
+	if (nextMove)
+	{
+		moveHandler_->addNextMove(nextMove);
+	}
 	return nullptr;
 }
 
-BaseFighterState* AttackingFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* AttackingFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
-	fighter->takeDamage(attack->damage);
-	static_cast<HitFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
-	return fighter->hitFighterState_;
-	return fighter->hitFighterState_;
+	//fighter->currentAttack_ = nullptr;
+	return fighter->idleFighterState_;
 }
 
 BaseFighterState* AttackingFighterState::handleFloorCollision(Fighter* fighter)
 {
-	fighter->currentAttack_ = nullptr;
+	//fighter->currentAttack_ = nullptr;
 	return fighter->idleFighterState_;
 }

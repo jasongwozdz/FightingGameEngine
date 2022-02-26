@@ -8,6 +8,8 @@
 class Fighter;
 struct AttackResources;
 struct Attack;
+typedef HitEffect OnHitType;
+typedef MoveInfo* MoveType;
 
 class BaseFighterState
 {
@@ -18,7 +20,7 @@ public:
 	virtual void enterState(Fighter* fighter) = 0;
 	virtual BaseFighterState* handleMovementInput(Fighter* fighter) = 0;
 	virtual BaseFighterState* handleAttackInput(Fighter* fighter) = 0;
-	virtual BaseFighterState* onHit(Fighter* fighter, Attack* attack) = 0;
+	virtual BaseFighterState* onHit(Fighter* fighter, OnHitType attack) = 0;
 	virtual BaseFighterState* handleWallCollision(Fighter* fighter, bool collidedWithLeftSide) { return nullptr; }//OPTIONAL: called by gamestate manager when a wall is collided with.  Bool argument will be true if collided with left side of the arena, false if collided with right side of the arena
 	virtual BaseFighterState* handleFloorCollision(Fighter* fighter) { return nullptr; }//OPTIONAL: called by gamestate manager when colliding with the ground
 
@@ -30,7 +32,7 @@ protected:
 	{};
 
 	void updateCurrentHitboxes(Fighter* fighter);
-	class AttackBase* checkAttackInputsNew(Fighter* fighter, AttackResources& attacks);
+	MoveType checkAttackInputsNew(Fighter* fighter, AttackResources& attacks);
 	bool isFighterHoldingBack(Fighter* fighter);
 protected:
 	std::string animationName_;

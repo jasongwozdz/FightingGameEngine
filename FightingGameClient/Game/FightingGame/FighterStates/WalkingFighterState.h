@@ -12,7 +12,7 @@ public:
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;
 	//BaseFighterState* handleAttackInput(Fighter* fighter) override;
 	BaseFighterState* handleAttackInput(Fighter* fighter) override;
-	BaseFighterState* onHit(Fighter* fighter, Attack* attack) override;
+	BaseFighterState* onHit(Fighter* fighter, OnHitType attack) override;
 private:
 	void setXSpeed(Fighter* fighter);
 private:

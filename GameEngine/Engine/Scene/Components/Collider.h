@@ -7,6 +7,7 @@
 
 #include "../../Renderer/Renderable.h"
 #include "Transform.h"
+#include "Collider.h"
 
 class Entity;
 
@@ -15,7 +16,7 @@ typedef void(BoxColliderCallback)(Entity* otherEnt, class BoxCollider* thisColli
 
 struct BoxCollider
 {
-	BoxCollider(glm::vec3 size, glm::vec3 pos, uint32_t layer) :
+	BoxCollider(glm::vec3 size, glm::vec3 pos, uint32_t layer, Entity* entity) :
 		size_(size),
 		position_(pos),
 		layer_(layer),
@@ -26,7 +27,8 @@ struct BoxCollider
 		size_(glm::vec3(0)),
 		position_(glm::vec3(0)),
 		layer_(0),
-		callback_(nullptr)
+		callback_(nullptr),
+		entity_(nullptr)
 	{};
 
 	BoxCollider(Renderable& mesh, Entity* entity)//generate optimal bouding box for a mesh
@@ -56,20 +58,29 @@ struct BoxCollider
 	glm::vec3 position_;//pos in entitys local space
 	uint32_t layer_;
 	std::function<BoxColliderCallback> callback_;
+	Entity* entity_;
 };
 
 struct Collider
 {
-	Collider(Entity* entity) : entity_(entity) {};
+	Collider(Entity* entity) : entity_(entity), collidersOutOfDate_(false) {};
 
-	Collider(Entity* entity, glm::vec3 size, glm::vec3 position, uint32_t layer) : 
-		entity_(entity) 
+	Collider(Entity* entity, glm::vec3 size, glm::vec3 position, uint32_t layer) :
+		entity_(entity),
+		collidersOutOfDate_(false)
 	{
-		BoxCollider collider(size, position, layer);
+		BoxCollider collider(size, position, layer, entity_);
 		colliders_.push_back(collider);
 	};
 
+	void setColliders(std::vector<BoxCollider>& newColliders)
+	{
+		collidersOutOfDate_ = true;
+		colliders_ = newColliders;
+	}
+
 	std::vector<BoxCollider> colliders_;
 	Entity* entity_;
+	bool collidersOutOfDate_;
 };
 

@@ -9,19 +9,18 @@
 #include "../Application.h"
 
 Fighter::Fighter(Entity* entity, InputHandler& inputHandler, FighterStateData idleStateData, FighterStateData walkingStateData, FighterStateData crouchStatedata, FighterStateData jumpStateData, FighterStateData hitStateData, FighterStateData blockStateData, AttackResources attacks, BoxCollider basePushBox, FighterSide side) :
+	BehaviorImplementationBase(entity),
 	inputHandler_(inputHandler),
 	side_(side),
-	standingAttacks_(attacks),
-	BehaviorImplementationBase(entity),
-	basePushBox_(basePushBox)
+	attacks_(attacks)
 {
-	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.frameData, &standingAttacks_);
-	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.frameData, &standingAttacks_);
-	jumpingFighterState_ = new JumpingFighterState(jumpStateData.animationName, jumpStateData.frameData, &standingAttacks_);
-	jumpingAttackFighterState_ = new JumpingAttackFighterState(&standingAttacks_);
-	attackingFighterState_ = new AttackingFighterState(&standingAttacks_);
+	idleFighterState_ = new IdleFighterState(idleStateData.animationName, idleStateData.frameData, &attacks_);
+	walkingFighterState_ = new WalkingFighterState(walkingStateData.animationName, walkingStateData.frameData, &attacks_);
+	jumpingFighterState_ = new JumpingFighterState(jumpStateData.animationName, jumpStateData.frameData, &attacks_);
+	jumpingAttackFighterState_ = new JumpingAttackFighterState(&attacks_);
+	attackingFighterState_ = new AttackingFighterState(&attacks_);
 	hitFighterState_ = new HitFighterState(hitStateData.animationName, hitStateData.frameData);
-	crouchingFighterState_ = new CrouchingFighterState(crouchStatedata.animationName, crouchStatedata.frameData, &standingAttacks_);
+	crouchingFighterState_ = new CrouchingFighterState(crouchStatedata.animationName, crouchStatedata.frameData, &attacks_);
 	blockedFighterState_ = new BlockingFighterState(blockStateData.animationName, blockStateData.frameData);
 	state_ = idleFighterState_;
 	state_->enterState(this);
@@ -93,11 +92,12 @@ void Fighter::update()
 	handleStateTransition(state_->handleAttackInput(this));
 	handleStateTransition(state_->update(this));
 	inputHandler_.updateInputQueue(deltaTime_);
+	colldingWithFighter = false;
 }
 
 bool Fighter::onAttackHit(HitEffect hitEffect)
 {
-
+	handleStateTransition(state_->onHit(this, hitEffect));
 	return false;
 }
 
@@ -135,9 +135,28 @@ void Fighter::takeDamage(int damage)
 
 void Fighter::onCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
 {
-	if (otherEnt->name_ == "Fighter" && thisCollider->layer_ == HitboxLayers::PUSH_BOX)
+	if (otherEnt->name_ == "Fighter" )
 	{
-		colldingWithFighter = true;
+		switch (thisCollider->layer_)
+		{
+			case ColliderLayer::PUSH_BOX:
+			{
+				colldingWithFighter = true;
+				break;
+			}
+			case ColliderLayer::HIT_BOX://this fighter's attack hit the other fighter
+			{
+				Fighter* otherFighter = Fighter::getFighterComp(otherEnt);
+				MoveInfo* currentMove = entity_->getComponent<MoveInfoComponent>().moveInfo_;
+				_ASSERT(currentMove);//there should always be a current move set in this case
+				if (!currentMove->hit_)
+				{
+					currentMove->hit_ = true;
+					otherFighter->onAttackHit(currentMove->hitEffect_);
+				}
+				break;
+			}
+		}
 	}
 }
 
@@ -145,14 +164,16 @@ void Fighter::whileColliding(Entity* otherEnt, BoxCollider* thisCollider, BoxCol
 {
 	if (otherEnt->name_ == "Fighter" )
 	{
+		colldingWithFighter = true;
 	}
 }
 
-void Fighter::onExitCollision(Entity * otherEnt, BoxCollider * thisCollider, BoxCollider * otherCollider)
+void Fighter::onExitCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollider* otherCollider)
 {
-	if (otherEnt->name_ == "Fighter" && thisCollider->layer_ == HitboxLayers::PUSH_BOX)
-	{
-		colldingWithFighter = false;
-	}
+	//if (otherEnt->name_ == "Fighter" /*&& thisCollider->layer_ == HitboxLayers::PUSH_BOX*/)
+	//{
+	//	std::cout << "exit collision" << std::endl;
+	//	colldingWithFighter = false;
+	//}
 }
 

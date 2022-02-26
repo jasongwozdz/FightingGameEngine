@@ -96,7 +96,7 @@ private:
 		VkDescriptorSetLayout storageBufferDescriptorLayout_;
 		VkDescriptorSet descriptorSet_;
 
-		PipelineBuilder::PipelineResources* pipeline_;
+		PipelineResources* pipeline_;
 	} pickerPipelineInfo;
 
 	//Stores everything thats needed for the debugPipeline.  This pipeline's topology is set to LINE_LIST
@@ -115,6 +115,6 @@ private:
 		VmaAllocation vertexBufferMem_;
 		VmaAllocation indexBufferMem_;
 
-		PipelineBuilder::PipelineResources* pipeline_;
+		PipelineResources* pipeline_;
 	} debugPipelineInfo;
 };

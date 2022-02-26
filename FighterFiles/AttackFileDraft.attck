@@ -1,0 +1,73 @@
+LP_5
+AnimationName(Attack)
+Input(16)
+Damage(1)
+Hitstun(5)
+Blockstun(5)
+Push(1.0)
+[
+    Collider
+    {
+        layer(PUSH_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Collider
+    {
+        layer(HURT_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Tags(COUNTER_HIT, INVINCIBLE)
+
+    Extends(5)
+]
+[
+    Collider
+    {
+        layer(PUSH_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Collider
+    {
+        layer(HURT_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Tags(COUNTER_HIT)
+]
+[
+    Collider
+    {
+        layer(PUSH_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Collider
+    {
+        layer(HURT_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+
+    Collider
+    {
+        layer(HIT_BOX)
+        size(1, 2, 1)
+        pos(0, 0, 0)
+    }
+    
+    Tags(COUNTER_HIT, CANCELABLE)
+
+    Cancelable
+    {
+        LP_2
+    }
+]
+

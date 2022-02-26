@@ -14,18 +14,24 @@ class FightingAppState :
 	public AppState
 {
 public:
+	enum FightingAppMode
+	{
+		NORMAL,
+		FRAMEBYFRAME
+	};
+
 	FightingAppState(std::string fighter1, std::string fighter2, DebugDrawManager* debugDrawManager, InputHandler* inputLeft, InputHandler* inputRight);
 	~FightingAppState();
 	virtual void enterState();
 	virtual AppState* update(float deltaTime);
 	void generateArenaBackground();
+	static bool isFrameByFrameModeActive();//HACK
 
 private:
 	void initScene(std::string fighterFilePath1, std::string fighterFilePath2);
 	void initArena();
 	void initCamera();
 	void initColliderLayers();
-
 	void checkInput();
 
 private:
@@ -51,9 +57,9 @@ private:
 
 	bool drawDebug_ = false;//should debug be drawn
 	bool cursor_ = false;//is cursour disabled;
-	Scene* scene_;
+	class Scene* scene_;
 	class Arena* arena_;
-
+	static FightingAppMode mode_;//HACK
 };
 
 #include "Scene/Components/Camera.h"

@@ -169,6 +169,9 @@
     <ClInclude Include="Application.h" />
     <ClInclude Include="Engine\BoxCollisionManager.h" />
     <ClInclude Include="Engine\Input.h" />
+    <ClInclude Include="Engine\Renderer\Asset\Asset.h" />
+    <ClInclude Include="Engine\Renderer\Asset\AssetInstance.h" />
+    <ClInclude Include="Engine\Renderer\Asset\AssetTypes.h" />
     <ClInclude Include="Engine\Scene\Behaviors\ControllableCameraBehavior.h" />
     <ClInclude Include="Engine\Scene\Components\Behavior.h" />
     <ClInclude Include="Engine\Scene\Components\Camera.h" />
@@ -231,11 +234,13 @@
     <ClCompile Include="Engine\libs\imgui\implot\implot_demo.cpp" />
     <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
     <ClCompile Include="Engine\libs\vk-bootstrap\VkBootstrap.cpp" />
+    <ClCompile Include="Engine\Renderer\Asset\Asset.cpp" />
+    <ClCompile Include="Engine\Renderer\Asset\AssetInstance.cpp" />
     <ClCompile Include="Engine\Renderer\Renderable.cpp" />
-    <ClCompile Include="Engine\Renderer\Textured.cpp" />
     <ClCompile Include="Engine\Renderer\UIInterface.cpp" />
     <ClCompile Include="Engine\Renderer\vkinit.cpp" />
     <ClCompile Include="Engine\Renderer\VkRenderer.cpp" />
+    <ClCompile Include="Engine\Renderer\VkTypes.cpp" />
     <ClCompile Include="Engine\ResourceManager.cpp" />
     <ClCompile Include="Engine\Scene\Behaviors\ControllableCameraBehavior.cpp" />
     <ClCompile Include="Engine\Scene\Components\Animator.cpp" />

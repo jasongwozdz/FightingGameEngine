@@ -78,6 +78,12 @@
     <ClCompile Include="Game\FightingGame\FighterSandbox\BasicFighter\LightPunch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Game\FightingGame\FighterSandbox\MoveHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\FightingGame\FighterSandbox\HitHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\FightingGame\FighterFactory.h">
@@ -156,6 +162,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Game\FightingGame\FighterSandbox\AttackTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\FighterSandbox\MoveHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\FightingGame\FighterSandbox\HitHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

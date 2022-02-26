@@ -35,9 +35,11 @@ public:
 		std::string modelFilePath;
 		std::string textureFilePath;
 		std::vector<AttackData> attackData;
+
+		std::vector<MoveInfo> moveData;
+		std::vector<std::vector<uint8_t>> inputs;
+
 		BoxCollider basePushBox;
-		float rightSideRotation; // in radians 
-		float upRotation; // in radians 
 		AnimationData idleData;
 		AnimationData walkingData;
 		AnimationData crouchData;
@@ -47,9 +49,18 @@ public:
 	} exportData_;
 
 private:
-	void readFileNew();
+	void readFile();
+	void readFileNew(std::string filepath);
+	MoveInfo extractAttackDataFile(std::string filePath);
 	std::vector<FrameInfo> extraAttackColliderData(std::string hitboxData);
 	std::vector<uint8_t> extractInput(std::string inputData);
+	std::string extractSingleParen(std::string line, std::string descriptor);
+	float extractSingleParenInt(std::string line, std::string descriptor);
+	glm::vec3 extractTripleParenVec(std::string line, std::string descriptor);
+	std::vector<std::string> extractParenStr(std::string line, std::string descriptor);
+	std::vector<int> extractParenInt(std::string line, std::string descriptor);
+	BoxCollider extractColliderData(std::ifstream& file);
+	int extractTags(std::string line);
 
 private:
 	std::ifstream file_;//opened in constructor closed in destructor

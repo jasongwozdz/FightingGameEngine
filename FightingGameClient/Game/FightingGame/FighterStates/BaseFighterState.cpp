@@ -2,25 +2,18 @@
 
 #include "../Fighter/Fighter.h"
 #include "../FighterSandbox/AttackBase.h"
+#include "BoxCollisionManager.h"
+#include "../FighterSandbox/AttackTypes.h"
 
 void BaseFighterState::updateCurrentHitboxes(Fighter* fighter)
 {
-	//const Animator& animator = fighter->entity_->getComponent<Animator>();
-	//uint32_t frameIndex = animator.currentFrameIndex_;
-	//if (frameIndex > hitboxData_.size())
-	//{
-	//	printf("ERROR: no hitbox data for frameIndex: %i in State Idle", frameIndex);
-	//}
-	//else
-	{
-		Collider& collider = fighter->entity_->getComponent<Collider>();
-		collider.colliders_ = frameData_[currentFrame_].colliders_;
-	}
+	Collider& collider = fighter->entity_->getComponent<Collider>();
+	collider.setColliders(frameData_[currentFrame_].colliders_);
 }
 
-AttackBase* BaseFighterState::checkAttackInputsNew(Fighter* fighter, AttackResources& attacks)
+MoveType BaseFighterState::checkAttackInputsNew(Fighter* fighter, AttackResources& attacks)
 {
-	AttackBase* currentAttack = nullptr;
+	MoveType currentAttack = nullptr;
 	InputHandler& inputHandler = fighter->inputHandler_;
 	std::queue<std::deque<FightingGameInput::InputTime>::iterator> toBeDeleted;
 	int attackIndex = 0;
@@ -44,14 +37,14 @@ AttackBase* BaseFighterState::checkAttackInputsNew(Fighter* fighter, AttackResou
 						inputHandler.inputQueue_.erase(toBeDeleted.front());
 						toBeDeleted.pop();
 					}
-					currentAttack = attacks.newAttacks_[attackIndex];
+					//currentAttack = attacks.newAttacks_[attackIndex];
+					currentAttack = &attacks.moves_[attackIndex];
 					return currentAttack;
 				}
 			}
 		}
 		attackIndex++;
 	}
-
 	return currentAttack;
 }
 

@@ -15,7 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-#define MAX_BONES 64
+extern const int MAX_BONES;
 
 /*
 should write a load texture file that loads in textures pixel data given a path to it.

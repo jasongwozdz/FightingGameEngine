@@ -68,7 +68,8 @@ private:
 		"Fire2",
 		"Fire3",
 		"LeftClick",
-		"RightClick"
+		"RightClick",
+		"Escape"
 	};
 	std::vector<std::string> iniAxisNames = 
 	{

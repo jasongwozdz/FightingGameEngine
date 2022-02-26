@@ -22,7 +22,11 @@ CharacterSelectAppState::CharacterSelectAppState(std::vector<std::string> fighte
 	input_(Input::getSingletonPtr())
 {
 	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/SmallerSkybox");
-	scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	//debug
+	bothFighterSelected_ = true;
+
+
 	inputs_[LEFT_SIDE] = leftSideInputs;
 	inputs_[RIGHT_SIDE] = rightSideInputs;
 	selectedFighters_[LEFT_SIDE] = fighterFiles_[0];
@@ -139,12 +143,10 @@ Entity* CharacterSelectAppState::loadFighter(const std::string& fighterFile)
 	AnimationReturnVals ret = resourceManager_->loadAnimationFile(fighterFileImporter.exportData_.modelFilePath);
 	TextureReturnVals texVals = resourceManager_->loadTextureFile((std::string&)fighterFileImporter.exportData_.textureFilePath);
 	Entity* entity = scene_->addEntity("Fighter");
-	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels, "Fighter");
-	Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter");
+	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels);
+	Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "");
 	mesh.render_ = false;
 	Transform& transform = entity->addComponent<Transform>( -50, 0, 0 );
-	//transform.rotation_ = glm::rotate(glm::mat4(1.0f), fighterFileImporter.exportData_.upRotation, { 1.0f, 0.0f, 0.0f });
-	//transform.rotation_ = glm::rotate(transform.rotation_, fighterFileImporter.exportData_.rightSideRotation, { 0.0f, 1.0f, 0.0f });
 	transform.setScale(0.019f);
 	Animator& animator = entity->addComponent<Animator>(ret.animations, ret.boneStructIndex);
 	animator.setAnimation("Idle");

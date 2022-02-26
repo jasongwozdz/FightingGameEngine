@@ -13,6 +13,7 @@ BoxCollisionManager::BoxCollisionManager()
 
 void BoxCollisionManager::update(Scene* currentScene)
 {
+	collisionsNotHandled_ = currentCollisions_;
 	std::vector<Entity*> entitys = currentScene->getAllEntitiesWithComponents<Collider, Transform>();
 	for (int i = 0; i < ((int)entitys.size() - 1); i++)
 	{
@@ -23,6 +24,25 @@ void BoxCollisionManager::update(Scene* currentScene)
 			handleCollisions(currentEntity, compareEntity);
 		}
 	}
+
+	//clear collisions for colliders that may not exist anymore
+	for (const auto& [key, value] : collisionsNotHandled_)
+	{
+		Behavior* behavior = value.first->tryGetComponent<Behavior>();
+		if (behavior)
+		{
+			behavior->onExitCollision(value.second, nullptr, nullptr);
+		}
+
+		behavior = value.second->tryGetComponent<Behavior>();
+		if (behavior)
+		{
+			behavior->onExitCollision(value.first, nullptr, nullptr);
+		}
+		
+		currentCollisions_.erase(key);//BUG HERE: for some reason sometimes an unhandled collision is not being erased from the map
+	}
+
 }
 
 void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
@@ -35,49 +55,56 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 	std::vector<BoxCollider>& collidersB = colliderB.colliders_;
 	Transform& transformB = b->getComponent<Transform>();
 
-	for (int i = 0; i < collidersA.size(); i++)
+	for (int aI = 0; aI < collidersA.size(); aI++)
 	{
-		for (int j = 0; j < collidersB.size(); j++)
+		for (int bI = 0; bI < collidersB.size(); bI++)
 		{
-			drawDebug(transformA, collidersA[i]);
-			drawDebug(transformB, collidersB[j]);
+			BoxCollider& boxColliderA = collidersA[aI];
+			BoxCollider& boxColliderB = collidersB[bI];
 
-			Key key{ &collidersA[i], &collidersB[j] };
+			drawDebug(transformA, boxColliderA);
+			drawDebug(transformB, boxColliderB);
 
-			if (!checkLayers(collidersA[i], collidersB[j]))
+			Key key{ &collidersA[aI], &collidersB[bI] };
+
+			if (!checkLayers(boxColliderA, boxColliderB))
 			{
 				continue;
 			}
 
 			bool collisionPairHandled = currentCollisions_.find(key) != currentCollisions_.end();
-			bool collisionDetected = checkCollision(transformA, collidersA[i], transformB, collidersB[j]);
+			if (collisionPairHandled)
+			{
+				collisionsNotHandled_.erase(key);
+			}
+
+			bool collisionDetected = checkCollision(transformA, boxColliderA, transformB, boxColliderB);
 
 			if (collisionDetected)
 			{
 				if (!collisionPairHandled)//collision not handled
 				{
-					currentCollisions_.insert(key);
+					currentCollisions_.insert({ key, std::pair(a, b) });
 
 					//behavior callbacks
 					Behavior* behavior = a->tryGetComponent<Behavior>();
 					if (behavior)
 					{
-						behavior->onCollision(b, &collidersA[i], &collidersB[j]);
+						behavior->onCollision(b, &collidersA[aI], &collidersB[bI]);
 					}
 					behavior = b->tryGetComponent<Behavior>();
-					if (behavior)
+					if (behavior && aI < collidersA.size() && bI < collidersB.size())
 					{
-						behavior->onCollision(a, &collidersB[j], &collidersA[i]);
+						behavior->onCollision(a, &collidersB[bI], &collidersA[aI]);
 					}
 
-					//collider specific callback
-					if (collidersA[i].callback_)
+					if (collidersA[aI].callback_)
 					{
-						collidersA[i].callback_(b, &collidersA[i], &collidersB[j]);
+						collidersA[aI].callback_(b, &collidersA[aI], &collidersB[bI]);
 					}
-					if (collidersB[j].callback_)
+					if (collidersB[bI].callback_)
 					{
-						collidersB[j].callback_(a, &collidersB[j], &collidersA[i]);
+						collidersB[bI].callback_(a, &collidersB[bI], &collidersA[aI]);
 					}
 				}
 				else//collision handled
@@ -85,13 +112,13 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 					Behavior* behavior = a->tryGetComponent<Behavior>();
 					if (behavior)
 					{
-						behavior->whileColliding(b, &collidersA[i], &collidersB[j]);
+						behavior->whileColliding(b, &collidersA[aI], &collidersB[bI]);
 					}
 
 					behavior = b->tryGetComponent<Behavior>();
 					if (behavior)
 					{
-						behavior->whileColliding(a, &collidersB[j],&collidersA[i]);
+						behavior->whileColliding(a, &collidersB[bI],&collidersA[aI]);
 					}
 				}
 			}
@@ -102,17 +129,18 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 				Behavior* behavior = a->tryGetComponent<Behavior>();
 				if (behavior)
 				{
-					behavior->onExitCollision(b, &collidersA[i], &collidersB[j]);
+					behavior->onExitCollision(b, &collidersA[aI], &collidersB[bI]);
 				}
 
 				behavior = b->tryGetComponent<Behavior>();
 				if (behavior)
 				{
-					behavior->onExitCollision(a, &collidersB[j], &collidersA[i]);
+					behavior->onExitCollision(a, &collidersB[bI], &collidersA[aI]);
 				}
 			}
 		}
 	}
+	
 }
 
 bool BoxCollisionManager::checkCollision(Transform& transformA, const struct BoxCollider& colliderA, Transform& transformB, const struct BoxCollider& colliderB)
@@ -213,6 +241,9 @@ void BoxCollisionManager::drawDebug(Transform& transform, BoxCollider& collider)
 		color = { 0, 255, 0 };
 		break;
 	case 1:
+		color = { 255, 255, 0 };
+		break;
+	case 2:
 		color = { 255, 0, 0 };
 		break;
 	default:
@@ -246,6 +277,11 @@ void BoxCollisionManager::addLayerRule(int layer, int affectedLayers)
 			layerRules_.insert({ affectedLayers, std::vector<int>(1,layer) });
 		}
 	}
+}
+
+void BoxCollisionManager::clearCollisions()
+{
+	currentCollisions_.clear();
 }
 
 BoxCollisionManager& BoxCollisionManager::getSingleton()

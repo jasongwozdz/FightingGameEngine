@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "../../DebugDrawManager.h"
+#include "../../EngineSettings.h"
 
 glm::vec3 Transform::worldLeft =	{ 1.0f, 0.0f, 0.0f };
 glm::vec3 Transform::worldUp =		{ 0.0f, 1.0f, 0.0f };
@@ -28,11 +29,21 @@ void Transform::drawDebugGui()
 {
 	if (drawDebugGui_)
 	{
-		ImGui::Begin("Transform debug");
-		ImGui::InputFloat("quat x", &rotation_.x);
-		ImGui::InputFloat("quat y", &rotation_.y);
-		ImGui::InputFloat("quat z", &rotation_.z);
-		ImGui::InputFloat("quat w", &rotation_.w);
+		UI::UIInterface& ui = UI::UIInterface::getSingleton();
+		EngineSettings& engineSettings = EngineSettings::getSingleton();
+		float windowWidth = engineSettings.windowWidth;
+		float windowHeight = engineSettings.windowHeight;
+
+		ui.beginWindow("Transform", windowWidth / 5, windowHeight / 5, { windowWidth/2, windowHeight/2 }, nullptr, false);
+		std::string posStr = "Position: ";
+		posStr += "x ";
+		posStr += position_.x;
+		posStr += "y ";
+		posStr += position_.y;
+		posStr += "z ";
+		posStr += position_.z;
+		ui.addText(posStr);
+		ui.EndWindow();
 	}
 }
 
@@ -141,6 +152,10 @@ void Transform::rotateAround(float angleToRotateInDegrees, glm::vec3 axisToRotat
 
 void Transform::moveTowards(glm::vec3 finalPos, float maxMoveMag)
 {
+	if (finalPos == position_)//make sure that finalPos and position_ are very close to eachother.  glm::length will return nan if thats the case.
+	{
+		return;
+	}
 	glm::vec3 dir = finalPos - position_;
 	float reqDist = glm::length(dir);
 	dir = glm::normalize(dir);

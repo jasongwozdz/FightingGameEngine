@@ -20,13 +20,14 @@ public:
 	~BoxCollisionManager() = default;
 	void update(Scene* currentScene);
 	void addLayerRule(int layer, int affectedLayers);
+	void clearCollisions();
+	static bool checkCollision(Transform& transformA, const BoxCollider& colliderA, Transform& transformB, const BoxCollider& colliderB);
 
 	static BoxCollisionManager& getSingleton();
 	static BoxCollisionManager* getSingletonPtr();
 
 private:
 	void handleCollisions(Entity* a, Entity* b);
-	bool checkCollision(Transform& transformA, const BoxCollider& colliderA, Transform& transformB, const BoxCollider& colliderB);
 	//checks if collidersA layers
 	bool checkLayers(const BoxCollider& colliderA, const BoxCollider& colliderB);
 	void drawDebug(Transform& transform, BoxCollider& collider);
@@ -45,13 +46,16 @@ private:
 
 			auto boxHash = [](BoxCollider* box)
 			{
+				_ASSERT(box->entity_);
 				size_t hash = std::hash<float>{}(box->size_[0]) ^
 					std::hash<float>{}(box->size_[1])    ^
 					std::hash<float>{}(box->size_[2])   ^
 					std::hash<uint32_t>{}(box->layer_) ^
 					std::hash<float>{}(box->position_[0])   ^
 					std::hash<float>{}(box->position_[1])   ^
-					std::hash<float>{}(box->position_[2]);
+					std::hash<float>{}(box->position_[2])   ^
+					std::hash<Entity*>{}(box->entity_)   ^
+					std::hash<BoxCollider*>{}(box);
 
 				return hash;
 			};
@@ -59,6 +63,7 @@ private:
 			return boxHash(key.first) ^ boxHash(key.second);
 		}
 	};
-	std::unordered_set<Key, KeyHash> currentCollisions_;
+	std::unordered_map<Key, std::pair<Entity*,Entity*>, KeyHash> currentCollisions_;
+	std::unordered_map<Key, std::pair<Entity*,Entity*>, KeyHash> collisionsNotHandled_;
 
 };

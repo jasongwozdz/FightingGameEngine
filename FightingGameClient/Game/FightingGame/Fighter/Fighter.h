@@ -21,31 +21,6 @@
 
 class DebugDrawManager;
 
-struct AttackInput
-{
-	AttackInput(std::vector<uint8_t> attackInputIn, int attackIndex) :
-		attackInput(attackInputIn)
-	{};
-
-	std::vector<uint8_t> attackInput;
-	int attackIndex = 0;
-	double dtBetweenAttacks; // IN MILLISECONDS
-	double lastCheckTime = 0;
-	float currentInput = 0;
-};
-
-//enum FighterState
-//{
-//	idle,
-//	walkingForward,
-//	walkingBackward,
-//	jumping,
-//	attacking,
-//	crouching,
-//	hitstun,
-//	blocking
-//};
-
 enum FighterSide
 {
 	left = 0,
@@ -60,10 +35,10 @@ struct FighterStateData
 
 struct AttackResources
 {
-	std::vector<AttackBase*> newAttacks_;
+	std::map<std::string, int> nameToAttackIndex_;
 	std::vector<AttackInput> inputs_;
+	std::vector<MoveInfo> moves_;
 };
-
 
 class Fighter : public BehaviorImplementationBase
 {
@@ -89,6 +64,8 @@ public:
 	virtual void whileColliding(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
 	virtual void onExitCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
 public:
+	AttackResources attacks_;
+
 	float baseSpeed_ = 5.0f;
 	float jumpSpeed_ = 25.0f;
 	float airDashSpeed_ = 15.0f;
@@ -96,10 +73,7 @@ public:
 	glm::vec3 velocityWorldSpace_;
 	glm::vec3 oldPos_ = glm::vec3(0.0f);
 
-	BoxCollider basePushBox_;
-
 	BaseFighterState* lastState_;
-	AttackBase* currentAttack_ = nullptr;
 	FighterSide side_;
 	int maxHealth_ = 100;
 	bool flipSide_ = false;
@@ -117,23 +91,22 @@ public:
 	HitFighterState* hitFighterState_ = nullptr;
 	BlockingFighterState* blockedFighterState_ = nullptr;
 
-	std::map<int, std::vector<int>>  cancelAttackMap_;
 	InputHandler& inputHandler_;
 	int health_ = 100;
 
 private:
 	friend class GameStateManager;
+	friend class AttackingFighterState;
 	//Inherited from BehaviorImplementationBase
 	virtual void update();
 	void updateTransform();
 	void handleStateTransition(BaseFighterState* transitionToState);
+	void prepareFrameData(std::vector<FrameInfo>& frameInfo);
 
 private:
-	AttackResources standingAttacks_;
 	BaseFighterState* state_;
 	glm::vec3 gravity_ = { 0.0f, -0.5f, 0.0f };
 	float terminalYSpeed_ = 0.25f;
-	float movedThisFrame_;
 	float deltaTime_;
 };
 

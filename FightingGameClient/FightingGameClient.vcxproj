@@ -164,7 +164,9 @@
     <ClCompile Include="Game\FightingGame\ArenaFloorBehavior.cpp" />
     <ClCompile Include="Game\FightingGame\ArenaWallBehavior.cpp" />
     <ClCompile Include="Game\FightingGame\FighterSandbox\AttackBase.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterSandbox\MoveHandler.cpp" />
     <ClCompile Include="Game\FightingGame\FighterSandbox\BasicFighter\LightPunch.cpp" />
+    <ClCompile Include="Game\FightingGame\FighterSandbox\HitHandler.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\BlockingFighterState.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\CrouchingFighterState.cpp" />
     <ClCompile Include="Game\FightingGame\FighterStates\AttackingFighterState.cpp" />
@@ -189,6 +191,8 @@
     <ClInclude Include="Game\FightingGame\ArenaFloorBehavior.h" />
     <ClInclude Include="Game\FightingGame\ArenaWallBehavior.h" />
     <ClInclude Include="Game\FightingGame\FighterSandbox\AttackBase.h" />
+    <ClInclude Include="Game\FightingGame\FighterSandbox\HitHandler.h" />
+    <ClInclude Include="Game\FightingGame\FighterSandbox\MoveHandler.h" />
     <ClInclude Include="Game\FightingGame\FighterSandbox\AttackTypes.h" />
     <ClInclude Include="Game\FightingGame\FighterSandbox\BasicFighter\LightPunch.h" />
     <ClInclude Include="Game\FightingGame\FighterStates\BlockingFighterState.h" />

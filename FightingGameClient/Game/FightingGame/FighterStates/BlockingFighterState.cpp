@@ -57,14 +57,15 @@ BaseFighterState* BlockingFighterState::handleAttackInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState* BlockingFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* BlockingFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
-	currentBlockstunFrame_ = 0;//reset hitstun frame
-	hitByAttack_ = attack;
-	if(inAir_)
-	{
-		fighter->setYSpeed(0);//reset y speed when blocking in air
-	}
+	//currentBlockstunFrame_ = 0;//reset hitstun frame
+	//hitByAttack_ = attack;
+	//if(inAir_)
+	//{
+	//	fighter->setYSpeed(0);//reset y speed when blocking in air
+	//}
+	//return nullptr;
 	return nullptr;
 }
 

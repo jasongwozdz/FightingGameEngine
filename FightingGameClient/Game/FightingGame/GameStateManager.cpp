@@ -153,6 +153,7 @@ void GameStateManager::handleFighterCollision()
 {
 	Fighter* fighter1 = Fighter::getFighterComp(fighterResources_.fighters_[0]);
 	Fighter* fighter2 = Fighter::getFighterComp(fighterResources_.fighters_[1]);
+
 	if(fighter1->colldingWithFighter && fighter2->colldingWithFighter)
 	{
 		Transform& fighter1Trans = fighter1->getTransform();
@@ -205,7 +206,6 @@ void GameStateManager::handleFighterCollision()
 		{
 			fighter2Trans.position_.x = fighter2->oldPos_.x;
 		}
-
 
 		//both checks below do the following
 		if (!fighter1->collidingWithWall && // don't move if you're colliding with wall

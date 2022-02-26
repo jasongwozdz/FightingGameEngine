@@ -12,7 +12,7 @@ void LightPunch::initateAttack()
 {
 	currentFrameIndex_ = 0;
 	Fighter* fighter = Fighter::getFighterComp(entity_);
-	fighter->currentAttack_ = this;
+	//fighter->currentAttack_ = this;
 	setAnimation(entity_, animationName_);
 	setColliders();
 }
@@ -45,7 +45,7 @@ void LightPunch::applyCallbackToHurtBoxes()
 		for (int j = 0; j < frameData_[i].colliders_.size(); j++)
 		{
 			BoxCollider& currentCollider = frameData_[i].colliders_[j];
-			if (currentCollider.layer_ == HitboxLayers::HURT_BOX)
+			if (currentCollider.layer_ == ColliderLayer::HURT_BOX)
 			{
 				currentCollider.callback_ = BIND_COLLIDER_CALLBACK(LightPunch::hitCallback);
 			}

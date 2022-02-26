@@ -62,5 +62,5 @@ private:
 	VulkanBuffer vertexBuffer_;
 	VulkanBuffer indexBuffer_;
 	VulkanBuffer uniformBuffer_;
-	PipelineBuilder::PipelineResources* skyboxPipeline_;
+	PipelineResources* skyboxPipeline_;
 };

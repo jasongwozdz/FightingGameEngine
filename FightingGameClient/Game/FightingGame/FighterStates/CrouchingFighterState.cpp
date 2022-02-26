@@ -13,6 +13,7 @@ CrouchingFighterState::CrouchingFighterState(std::string animationName, std::vec
 BaseFighterState* CrouchingFighterState::update(Fighter* fighter)
 {
 	//updateCurrentHitboxes(fighter);
+	updateCurrentHitboxes(fighter);
 	if (fighter->flipSide_)
 		fighter->flipSide();
 	return nullptr;
@@ -46,29 +47,30 @@ BaseFighterState* CrouchingFighterState::handleMovementInput(Fighter* fighter)
 //	return nullptr;
 //}
 
-BaseFighterState * CrouchingFighterState::handleAttackInput(Fighter * fighter)
+BaseFighterState* CrouchingFighterState::handleAttackInput(Fighter* fighter)
 {
-	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
-	if (attack)
+	MoveType move = checkAttackInputsNew(fighter, *attacks_);
+	if (move)
 	{
-		fighter->currentAttack_ = attack;
-		return fighter->jumpingAttackFighterState_;
+		fighter->entity_->getComponent<MoveInfoComponent>().moveInfo_ = move;
+		return fighter->attackingFighterState_;
 	}
 	return nullptr;
 }
 
 
-BaseFighterState* CrouchingFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* CrouchingFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
-	if (isFighterHoldingBack(fighter))
-	{
-		static_cast<BlockingFighterState*>(fighter->blockedFighterState_)->hitByAttack_ = attack;
-		return fighter->blockedFighterState_;
-	}
-	else
-	{
-		fighter->takeDamage(attack->damage);
-		static_cast<HitFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
-		return fighter->hitFighterState_;
-	}
+	//if (isFighterHoldingBack(fighter))
+	//{
+	//	static_cast<BlockingFighterState*>(fighter->blockedFighterState_)->hitByAttack_ = attack;
+	//	return fighter->blockedFighterState_;
+	//}
+	//else
+	//{
+	//	fighter->takeDamage(attack->damage);
+	//	static_cast<HitFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
+	//	return fighter->hitFighterState_;
+	//}
+	return nullptr;
 }

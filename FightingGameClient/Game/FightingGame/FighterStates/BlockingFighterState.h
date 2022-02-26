@@ -10,7 +10,7 @@ public:
 	void enterState(Fighter* fighter) override;
 	BaseFighterState* handleMovementInput(Fighter* fighter) override;
 	BaseFighterState* handleAttackInput(Fighter* fighter) override;
-	BaseFighterState* onHit(Fighter* fighter, Attack* attack) override;
+	BaseFighterState* onHit(Fighter* fighter, OnHitType attack) override;
 	BaseFighterState* handleWallCollision(Fighter* fighter, bool collidedWithLeftSide) override;
 	BaseFighterState* handleFloorCollision(Fighter* fighter) override;
 public:

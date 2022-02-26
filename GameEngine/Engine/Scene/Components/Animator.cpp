@@ -12,6 +12,8 @@
 #include "assimp/scene.h"
 #include <stb_image.h>
 
+extern const int MAX_BONES;
+
 Animator::Animator(std::vector<AnimationClip> animations, int boneStructureIndex) :
 	animations_(animations), boneStructureIndex_(boneStructureIndex), resourceManager_(ResourceManager::getSingleton())
 {

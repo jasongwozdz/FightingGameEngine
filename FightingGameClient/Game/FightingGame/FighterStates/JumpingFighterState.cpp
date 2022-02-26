@@ -12,7 +12,7 @@ JumpingFighterState::JumpingFighterState(std::string animationName, std::vector<
 
 BaseFighterState* JumpingFighterState::update(Fighter* fighter)
 {
-	//updateCurrentHitboxes(fighter);
+	updateCurrentHitboxes(fighter);
 	if (airDashResources_.airDashing_)//during the start of the airdash ignore gravity
 	{
 		if (++airDashResources_.currentDashFrame > airDashResources_.dashFrames)
@@ -60,34 +60,34 @@ BaseFighterState* JumpingFighterState::handleMovementInput(Fighter* fighter)
 
 BaseFighterState* JumpingFighterState::handleAttackInput(Fighter* fighter)
 {
-	AttackBase* attack = checkAttackInputsNew(fighter, *attacks_);
-	if (attack)
+	MoveType move = checkAttackInputsNew(fighter, *attacks_);
+	if (move)
 	{
-		attack->initateAttack();
+		fighter->entity_->getComponent<MoveInfoComponent>().moveInfo_ = move;
 		return fighter->jumpingAttackFighterState_;
 	}
 	return nullptr;
 }
 
-BaseFighterState* JumpingFighterState::onHit(Fighter* fighter, Attack* attack)
+BaseFighterState* JumpingFighterState::onHit(Fighter* fighter, OnHitType attack)
 {
 	
-	if (isFighterHoldingBack(fighter))
-	{
-		BlockingFighterState* fighterState = fighter->blockedFighterState_;
-		fighterState->inAir_ = true;
-		fighterState->hitByAttack_ = attack;
-		return fighter->blockedFighterState_;
-	}
-	else
-	{
-		fighter->takeDamage(attack->damage);
-		HitFighterState* fighterState = fighter->hitFighterState_;
-		fighterState->inAir_ = true;
-		fighterState->hitByAttack_ = attack;
-		return fighter->hitFighterState_;
-	}
-
+	//if (isFighterHoldingBack(fighter))
+	//{
+	//	BlockingFighterState* fighterState = fighter->blockedFighterState_;
+	//	fighterState->inAir_ = true;
+	//	fighterState->hitByAttack_ = attack;
+	//	return fighter->blockedFighterState_;
+	//}
+	//else
+	//{
+	//	fighter->takeDamage(attack->damage);
+	//	HitFighterState* fighterState = fighter->hitFighterState_;
+	//	fighterState->inAir_ = true;
+	//	fighterState->hitByAttack_ = attack;
+	//	return fighter->hitFighterState_;
+	//}
+	return nullptr;
 }
 
 BaseFighterState* JumpingFighterState::handleWallCollision(Fighter* fighter, bool collidedWithLeftSide)
