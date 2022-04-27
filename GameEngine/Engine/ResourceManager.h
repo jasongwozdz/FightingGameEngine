@@ -116,7 +116,7 @@ struct ENGINE_API ModelReturnVals : ReturnVals{
 	~ModelReturnVals() {
 	}
 
-	std::vector<Vertex> vertices;
+	std::vector<NonAnimVertex> vertices;
 	std::vector<uint32_t> indices;
 };
 
@@ -135,37 +135,46 @@ struct ENGINE_API AnimationReturnVals : ReturnVals
 	std::vector<AnimationClip> animations;
 };
 
+struct ENGINE_API AssetCreateInfo
+{
+	std::string modelPath = "";
+	std::string texturePath = "";
+	std::string animationPath = "";
+};
 
+struct AssetCreateInfoHash
+{
+	size_t operator()(const AssetCreateInfo& assetCreateInfo) const
+	{
+		size_t hash = std::hash<std::string>{}(assetCreateInfo.modelPath) ^
+			std::hash<std::string>{}(assetCreateInfo.animationPath) ^
+			std::hash<std::string>{}(assetCreateInfo.texturePath);
+		return hash;
+	}
+};
+
+bool operator==(const AssetCreateInfo& left, const AssetCreateInfo& right);
 
 class ENGINE_API ResourceManager : Singleton<ResourceManager>
 {
 public:
+	ResourceManager() = default;
 	~ResourceManager();
-
-	static glm::mat4 aiMatToGlmMat(aiMatrix4x4& a);
-	
-	std::unordered_map<std::string, uintptr_t> m_resourceRegistry;
-
-	ModelReturnVals& loadObjFile(const std::string& filePath);
-
-	TextureReturnVals& loadTextureFile(const std::string& filePath);
-
-	AnimationReturnVals loadAnimationFile(const std::string& filePath);
-
-	void freeResource(std::string filePath);
-
-	void freeAllResources();
-
 	static ResourceManager& getSingleton();
-
 	static ResourceManager* getSingletonPtr();
 
-	Assimp::Importer importer; //importer owns scene object so need to keep a copy of it
+	static glm::mat4 aiMatToGlmMat(aiMatrix4x4& a);
+	ModelReturnVals& loadObjFile(const std::string& filePath);
+	TextureReturnVals& loadTextureFile(const std::string& filePath);
+	AnimationReturnVals loadAnimationFile(const std::string& filePath);
+	class Asset* createAsset(AssetCreateInfo info);
+
+	void freeResource(std::string filePath);
+	void freeAllResources();
 
 	std::vector<BoneStructure> boneStructures_;
 
 private:
-
 	inline aiBone* findBoneName(std::string boneName, aiBone** bones, int numBones)
 	{
 		for (int i = 0; i < numBones; i++)
@@ -179,14 +188,14 @@ private:
 	}
 
 	aiBone* findRootBone(aiNode* node, aiMesh* mesh);
-
 	void populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStructure& boneStructure);
-
 	void recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure);
-
 	void recursivePopulateBoneStructure(aiNode* node, aiMesh* mesh, BoneStructure& boneStructure, int parentIndex);
-
 	bool populateAnimationClips(aiAnimation** animations, int numAnimations, BoneStructure& bones, std::vector<AnimationClip>& animationClips);
-
 	bool populateAnimationClip(AnimationClip& sample, aiNodeAnim** animationNodes, int numChannels, BoneStructure& bones);
+
+private:
+	Assimp::Importer importer; //importer owns scene object so need to keep a copy of it
+	std::unordered_map<std::string, uintptr_t> resourceRegistry_;
+	std::unordered_map<AssetCreateInfo, Asset*, AssetCreateInfoHash> assetMap_;
 };

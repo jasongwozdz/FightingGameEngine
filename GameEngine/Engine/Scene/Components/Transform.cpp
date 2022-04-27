@@ -61,6 +61,12 @@ void Transform::applyTransformToMesh(Renderable& mesh)
 	return;
 }
 
+void Transform::applyTransformToMesh(AssetInstance* assetInstance)
+{
+	finalTransform_ = calculateTransform();
+	assetInstance->setModelMatrix(finalTransform_);
+}
+
 void Transform::drawDebug()
 {
 	DebugDrawManager& debugDrawManager = DebugDrawManager::getSingleton();

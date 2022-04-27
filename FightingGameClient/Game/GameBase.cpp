@@ -15,7 +15,7 @@ void GameBase::onStartup()
 	inputHandler_ = new InputHandler();
 	inputHandlerRight_ = new InputHandler(FightingGameInput::Side::rightSide);
 	
-	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim" }, inputHandler_, inputHandlerRight_, debugManager_, this);
+	characterSelectAppState_ = new CharacterSelectAppState({ "C:\\Users\\jsngw\\dev\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim" }, inputHandler_, inputHandlerRight_, debugManager_, this);
 	currentAppState_ = AppState::transitionAppState(characterSelectAppState_);
 	addEventCallback(ENGINE_EVENT_CALLBACK(GameBase::onEvent));
 }

@@ -12,6 +12,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine", "GameEngine\GameEngine.vcxproj", "{2BFDCE30-BF3A-491B-950E-30769775D17E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FightingGameClient", "FightingGameClient\FightingGameClient.vcxproj", "{157523D9-807D-4108-940C-96B1E45D2728}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2BFDCE30-BF3A-491B-950E-30769775D17E} = {2BFDCE30-BF3A-491B-950E-30769775D17E}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FighterCreatorTool", "FighterCreatorTool\FighterCreatorTool.vcxproj", "{245D9342-A15D-47AA-A5F7-93C18B303764}"
 EndProject

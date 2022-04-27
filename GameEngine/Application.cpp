@@ -4,6 +4,7 @@
 
 #include "Application.h"
 #include "Engine/Input.h"
+#include "Engine/Console/Console.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -32,12 +33,15 @@ Application::Application()
 	scene_ = Scene::getSingletonPtr();
 	debugManager_ = renderer_->debugDrawManager_;
 	input_ = new Input(this);
+	console_ = new Console(this);
+	Console::setInstance(console_);
 }
 
 Application::~Application()
 {
 	cleanup();
 	_CrtDumpMemoryLeaks();
+	Console::destroyInstance();
 }
 
 void Application::addEventCallback(std::function<void(Events::Event&)> fn)
@@ -89,6 +93,7 @@ void Application::run()
 			window_->onUpdate();
 			renderer_->prepareFrame();
 			onUpdate(deltaTime);
+			console_->update();
 			scene_->update(deltaTime);
 		}
 	}

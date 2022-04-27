@@ -15,6 +15,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "Renderer/Asset/Asset.h"
+
 extern const int MAX_BONES;
 
 /*
@@ -27,6 +29,7 @@ Should also handle referential integrity between game objects
 ResourceManager::~ResourceManager()
 {
 	freeAllResources();
+	assetMap_.clear();
 }
 
 glm::mat4 ResourceManager::aiMatToGlmMat(aiMatrix4x4& a)
@@ -56,19 +59,19 @@ ResourceManager& ResourceManager::getSingleton()
 
 
 namespace std {
-	template<> struct hash<Vertex> {
-		size_t operator()(Vertex const& vertex) const {
+	template<> struct hash<NonAnimVertex> {
+		size_t operator()(NonAnimVertex const& vertex) const {
 			return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 		}
 	};
 }
 
 ModelReturnVals& ResourceManager::loadObjFile(const std::string& filePath) {
-	auto find = m_resourceRegistry.find(filePath);
+	auto find = resourceRegistry_.find(filePath);
 	ModelReturnVals* vals;
-	if (find == m_resourceRegistry.end())
+	if (find == resourceRegistry_.end())
 	{
-		std::vector<Vertex> vertices;
+		std::vector<NonAnimVertex> vertices;
 		std::vector<uint32_t> indices;
 		tinyobj::attrib_t attrib;
 		std::vector<tinyobj::shape_t> shapes;
@@ -79,11 +82,11 @@ ModelReturnVals& ResourceManager::loadObjFile(const std::string& filePath) {
 			throw std::runtime_error(warn + err);
 		}
 
-		std::unordered_map<Vertex, uint32_t> uniqueVertices;
+		std::unordered_map<NonAnimVertex, uint32_t> uniqueVertices;
 
 		for (const auto& shape : shapes) {
 			for (const auto& index : shape.mesh.indices) {
-				Vertex vertex{};
+				NonAnimVertex vertex{};
 
 				vertex.pos = {
 					attrib.vertices[3 * index.vertex_index + 0],
@@ -125,11 +128,11 @@ ModelReturnVals& ResourceManager::loadObjFile(const std::string& filePath) {
 		vals = new ModelReturnVals();
 		vals->vertices = vertices;
 		vals->indices = indices;
-		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(vals);
+		resourceRegistry_[filePath] = reinterpret_cast<uintptr_t>(vals);
 	}
 	else
 	{
-		vals = reinterpret_cast<ModelReturnVals*>(m_resourceRegistry[filePath]);
+		vals = reinterpret_cast<ModelReturnVals*>(resourceRegistry_[filePath]);
 	}
 	return *vals;
 }
@@ -306,8 +309,8 @@ void ResourceManager::populateBoneStructure(aiNode* root, aiMesh* mesh, BoneStru
 
 AnimationReturnVals ResourceManager::loadAnimationFile(const std::string& filePath)
 {
-	auto find = m_resourceRegistry.find(filePath);
-	if (find == m_resourceRegistry.end())
+	auto find = resourceRegistry_.find(filePath);
+	if (find == resourceRegistry_.end())
 	{
 		std::map<std::string, uint32_t> boneMapping;
 		std::vector<BoneInfo> boneInfo;
@@ -415,14 +418,65 @@ AnimationReturnVals ResourceManager::loadAnimationFile(const std::string& filePa
 		valsPtr->boneStructIndex = boneStructures_.size()-1;
 		valsPtr->animations = animationClips;
 		valsPtr->succesful = true;
-		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(valsPtr);
+		resourceRegistry_[filePath] = reinterpret_cast<uintptr_t>(valsPtr);
 		return *valsPtr;
 	}
 	else
 	{
-		AnimationReturnVals* valsPtr = reinterpret_cast<AnimationReturnVals*>(m_resourceRegistry[filePath]);
+		AnimationReturnVals* valsPtr = reinterpret_cast<AnimationReturnVals*>(resourceRegistry_[filePath]);
 		return *valsPtr;
 	}
+}
+
+Asset* ResourceManager::createAsset(AssetCreateInfo info)
+{
+	TextureReturnVals textureReturnVals;
+	AnimationReturnVals animationReturnVals;
+	ModelReturnVals modelReturnVals;
+	bool texture = false;
+	bool mesh = false;
+	bool animation = false;
+
+	auto found = assetMap_.find(info);
+	if (found != assetMap_.end())
+	{
+		return found->second;
+	}
+
+	if (info.texturePath.size() > 0)
+	{
+		texture = true;
+		textureReturnVals = loadTextureFile(info.texturePath);
+	}
+
+	if (info.animationPath.size() > 0)
+	{
+		animation = true;
+		animationReturnVals = loadAnimationFile(info.animationPath);
+	}
+	else
+	{
+		mesh = true;
+		modelReturnVals = loadObjFile(info.modelPath);
+	}
+
+	Asset* asset = new Asset();
+	if (animation)
+	{
+		asset->addMesh(animationReturnVals.vertices, animationReturnVals.indices);
+		asset->addSkeleton(animationReturnVals.boneStructIndex);
+	}
+	else
+	{
+		asset->addMesh(modelReturnVals.vertices, modelReturnVals.indices);
+	}
+	if (texture)
+	{
+		asset->addTexture(textureReturnVals.pixels, textureReturnVals.textureWidth, textureReturnVals.textureHeight, textureReturnVals.textureChannels);
+	}
+
+	assetMap_.insert({ info, asset });
+	return asset;
 }
 
 TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
@@ -430,8 +484,8 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 	TextureReturnVals* returnVals;
 	//Look in resourceRegistry for texture.  If its not found, allocate resources and then add to registry.
 	//If it is found grab pointer from registry
-	auto find = m_resourceRegistry.find(filePath);
-	if (find == m_resourceRegistry.end())
+	auto find = resourceRegistry_.find(filePath);
+	if (find == resourceRegistry_.end())
 	{
 		int texWidth, texHeight, texChannels;
 		unsigned char* pixels;
@@ -444,7 +498,7 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 
 		stbi_image_free(pixels);
 	
-		m_resourceRegistry[filePath] = reinterpret_cast<uintptr_t>(returnVals);
+		resourceRegistry_[filePath] = reinterpret_cast<uintptr_t>(returnVals);
 	}
 	else
 	{
@@ -456,21 +510,21 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 
 void ResourceManager::freeResource(std::string filePath)
 {
-	auto find = m_resourceRegistry.find(filePath);
-	if (find == m_resourceRegistry.end())
+	auto find = resourceRegistry_.find(filePath);
+	if (find == resourceRegistry_.end())
 	{
 		std::cout << "Resource not in registry" << std::endl;
 		assert(1 == 0);
 	}
 	else
 	{
-		delete reinterpret_cast<void*>(m_resourceRegistry[filePath]);
+		delete reinterpret_cast<void*>(resourceRegistry_[filePath]);
 	}
 }
 
 void ResourceManager::freeAllResources() 
 {
-	for (auto const& resource : m_resourceRegistry)
+	for (auto const& resource : resourceRegistry_)
 	{
 		//delete reinterpret_cast<ReturnVals*>(resource.second);
 		ReturnVals* pResource = reinterpret_cast<ReturnVals*>(resource.second);
@@ -493,4 +547,11 @@ void ResourceManager::freeAllResources()
 			}
 		}
 	}
+}
+
+bool operator==(const AssetCreateInfo& left, const AssetCreateInfo& right)
+{
+	return(left.animationPath == right.animationPath &&
+		left.modelPath == right.modelPath &&
+		left.texturePath == right.texturePath);
 }

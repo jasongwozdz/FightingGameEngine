@@ -120,11 +120,11 @@ UI::UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDev
 	ranges.push_back(range);
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
+	PipelineResources* r = PipelineBuilder::createPipeline<UIVertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
 
 	uiPipeline_ = r;
 
-	size_t vertexBufferSize = 2000 * 4 * sizeof(Vertex);
+	size_t vertexBufferSize = 2000 * 4 * sizeof(UIVertex);
 
 	VkBufferCreateInfo vBufferInfo{};
 	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -223,7 +223,7 @@ void UI::UIInterface::recreateUI(VkInstance& instance, VkPhysicalDevice& physica
 
 	delete uiPipeline_;
 
-	uiPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
+	uiPipeline_ = PipelineBuilder::createPipeline<UIVertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false);
 }
 
 void UI::UIInterface::showImGuiDemoWindow()
@@ -244,7 +244,7 @@ void UI::UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
 	ImDrawData* drawData = ImGui::GetDrawData();
 	ImGui_ImplVulkan_RenderDrawData(drawData, currentBuffer);
 
-	size_t vertexBufferSize = vertices_.size() * sizeof(Vertex);
+	size_t vertexBufferSize = vertices_.size() * sizeof(UIVertex);
 	size_t indexBufferSize = indicies_.size()  * sizeof(uint32_t);
 
 	if (vertexBufferSize > 0)

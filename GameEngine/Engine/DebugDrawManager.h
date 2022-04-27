@@ -105,7 +105,7 @@ private:
 		std::vector<RenderInfo> drawData_;
 		std::vector<VkDeviceSize> vertexOffsets_;
 		std::vector<VkDeviceSize> indexOffsets_;
-		std::vector<Vertex> vertices_;
+		std::vector<DebugVertex> vertices_;
 		std::vector<uint32_t> indicies_;
 		VkDeviceSize globalVertexOffset_ = 0;
 		VkDeviceSize globalIndexOffset_ = 0;

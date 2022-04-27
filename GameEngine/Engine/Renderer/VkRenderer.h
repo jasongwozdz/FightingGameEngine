@@ -7,10 +7,11 @@
 #include "../Renderer/Textured.h"
 #include "../Renderer/PipelineBuilder.h"
 #include "../Renderer/UIInterface.h"
-#include "Renderable.h"
+//#include "Renderable.h"
 #include "RenderSubsystemInterface.h"
 #include "VkTypes.h"
 #include "Asset/AssetInstance.h"
+#include "../Scene/Components/LightSource.h"
 
 class DebugDrawManager;
 
@@ -34,11 +35,15 @@ public:
 	static VkRenderer* getSingletonPtr();
 	VkRenderer(Window& window);
 	void init();
-	void draw(std::vector<Renderable*>& objectsToDraw);
+	void draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const std::vector<LightSource>& lightSources);
 	void cleanup();
 	void uploadObject(Renderable* renderableObject);
 	void uploadMesh(Renderable* mesh);
 	void uploadStaticMeshData(Renderable* mesh);
+
+	template<typename VertexType>
+	void uploadStaticMeshData(std::vector<VertexType> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
+	
 	void uploadTextureData(Textured* texture);
 	void uploadObject(Renderable* renderableObject, Textured* texture, bool animated = false);
 	void prepareFrame();
@@ -130,7 +135,7 @@ public:
 	VkFence renderFence_;
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
-	std::vector<PipelineResources*> pipelines_;
+	//std::vector<PipelineResources*> pipelines_;
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
 	std::vector<RenderSubsystemInterface*> renderSubsystems_;
@@ -142,6 +147,7 @@ private:
 	void createSwapchainResources();
 	void createSynchronizationResources();
 	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw);
+	void drawAssetInstances(VkCommandBuffer currentCommandBuffer, int imageIndex, const std::vector<AssetInstance*> &assetInstancesToDraw);
 	void initPipelines();
 	void createDescriptorSet(Renderable* object);
 	void createTextureResources(Renderable& o, Textured& texture);

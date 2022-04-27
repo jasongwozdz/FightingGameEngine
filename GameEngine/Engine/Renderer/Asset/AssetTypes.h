@@ -3,24 +3,59 @@
 #include <glm/glm.hpp>
 
 #include "../VkTypes.h"
+#include "../../EngineExport.h"
 
-struct MVP
+struct ENGINE_API MVP
 {
-	alignas(16) glm::mat4 mvpMatrix_;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 projection;
+};
+
+struct ENGINE_API MVPBoneData : public MVP
+{
+	alignas(16) glm::mat4 bones_[MAX_BONES];	
 };
 
 typedef MVP* UniformDataPtr;
 
-struct MVPBoneData : public MVP
+struct ENGINE_API DynamicAssetData 
 {
-	alignas(16) glm::mat4 bones_[MAX_BONES];
-};
+	DynamicAssetData()
+	{};
 
-struct DynamicAssetData 
-{
+	~DynamicAssetData()
+	{
+		delete ubo_;
+	}
+
+	DynamicAssetData(const DynamicAssetData& other) = delete;
+
+	DynamicAssetData(DynamicAssetData&& other)
+	{
+		uniformData_ = other.uniformData_;
+		descriptorLayout_ = other.descriptorLayout_;
+		descriptorSets_ = other.descriptorSets_;
+		pipeline_ = other.pipeline_;
+		ubo_ = other.ubo_;
+		other.ubo_ = nullptr;
+	}
+
+	DynamicAssetData& operator=(DynamicAssetData&& other)
+	{
+		uniformData_ = other.uniformData_;
+		descriptorLayout_ = other.descriptorLayout_;
+		descriptorSets_ = other.descriptorSets_;
+		pipeline_ = other.pipeline_;
+		ubo_ = other.ubo_;
+		other.ubo_ = nullptr;
+		return *this;
+	}
+
 	std::vector<VulkanBuffer> uniformData_;
 	VkDescriptorSetLayout descriptorLayout_;
 	std::vector<VkDescriptorSet> descriptorSets_;
+	//MVPBoneData ubo_;
 	UniformDataPtr ubo_;
 	PipelineResources* pipeline_;
 };

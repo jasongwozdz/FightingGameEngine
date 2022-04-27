@@ -1,5 +1,5 @@
-ModelPath : C:\Users\jsngw\Downloads\RobotKyle.gltf
-TexturePath : C:\Users\jsngw\source\repos\FightingGame\FightingGameClient\Textures\Robot_Color.png
+ModelPath : Models\RobotKyle.gltf
+TexturePath : Textures\Robot_Color.png
 IdleAnimation : Idle
 IdleHitboxData : [{0.75, 3, 1, 0, 1.5, 0.25, 0},{0.75, 3, 1, 0, 1.5, 0.25, 1}]
 WalkAnimation : walk
@@ -12,4 +12,4 @@ HitAnimation : Hit
 HitHitboxData : [{0.75, 3, 1, 0, 1.5, 0.25, 0}]
 BlockAnimation : Hit
 BlockHitboxData : [{0.75, 3, 1, 0, 1.5, 0.25, 0}]
-Move(C:\Users\jsngw\source\repos\FightingGame\FighterFiles\NewFighter\AttackFileDraft.attck)
+Move(..\FighterFiles\NewFighter\AttackFileDraft.attck)

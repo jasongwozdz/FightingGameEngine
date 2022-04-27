@@ -55,6 +55,7 @@ struct PipelineCreateInfo
 	bool depthEnabled = true;
 	bool hasSkeleton = false;
 	bool cullingEnabled = true;
+	bool lightingEnabled = false;
 };
 
 struct PipelineCreateInfoHash
@@ -76,4 +77,6 @@ struct PipelineCreateInfoHash
 };
 
 bool operator==(const PipelineCreateInfo& left, const PipelineCreateInfo& right);
+
+
 

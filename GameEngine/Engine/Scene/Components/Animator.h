@@ -12,6 +12,7 @@
 #endif
 
 class ResourceManager;
+class AssetInstance;
 
 struct AnimationClip
 {
@@ -32,22 +33,17 @@ class ENGINE_API Animator
 {
 public:
 	Animator(Animator&& animator);
-
 	Animator(std::vector<AnimationClip> animations, int boneStructureIndex);
-
 	Animator(const Animator& other);
-
 	~Animator();
 
 	void setAnimation(int animationIndex);
-
 	void setAnimation(std::string name);
-
 	void setAnimationTime(float timeInSeconds);
-
 	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable);
-
+	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber,  AssetInstance* assetInstance);
 	void update(float deltaTime, Renderable& renderable);
+	void update(float deltaTime, AssetInstance* assetInstance);
 
 	int findAnimationIndexByName(const std::string& animationName);
 	AnimationClip* getAnimationClipByName(const std::string& animationName);
@@ -86,7 +82,7 @@ public:
 private:
 	//TEST CONSTRUCTOR 
 	Animator(std::vector<AnimationClip> animations);
-	void setPose(std::vector<glm::mat4> pose, Renderable& renderable);
+	void setPose(const std::vector<glm::mat4>& pose, Renderable& renderable);
 	glm::mat4 interpolateTransforms(int jointIndex, const AnimationClip& clip, int frameIndex);
 
 private:

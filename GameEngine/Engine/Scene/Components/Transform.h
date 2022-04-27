@@ -10,6 +10,8 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
+class AssetInstance;
+
 class ENGINE_API Transform 
 {
 public:
@@ -37,6 +39,7 @@ public:
 	glm::mat4 calculateTransform();
 	glm::mat4 calculateTransformNoScale();
 	void applyTransformToMesh(Renderable& mesh);
+	void applyTransformToMesh(AssetInstance* assetInstance);
 
 	//direction to point forward vector at
 	void lookAt(glm::vec3 direction);
