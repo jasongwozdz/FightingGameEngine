@@ -12,6 +12,7 @@
 #include "../libs/VulkanMemoryAllocator/vk_mem_alloc.h"
 #include "GLFW/glfw3.h"
 #include "Asset/AssetInstance.h"
+#include "../Vertex.h"
 
 template<> VkRenderer* Singleton<VkRenderer>::msSingleton = 0;
 
@@ -43,10 +44,10 @@ void VkRenderer::cleanupSwapchain()
 
 	vkFreeCommandBuffers(logicalDevice_, cmdPool_, 1, &cmdBuffer_);
 
-	for (int i = 0; i < PipelineTypes::NUM_PIPELINE_TYPES; i++)
-	{
-		delete pipelines_[i];
-	}
+	//for (int i = 0; i < PipelineTypes::NUM_PIPELINE_TYPES; i++)
+	//{
+	//	delete pipelines_[i];
+	//}
 
 	vkDestroyRenderPass(logicalDevice_, renderPass_, nullptr);
 
@@ -61,13 +62,23 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	auto iter = pipelineMap_.find(createInfo);
 	if (iter != pipelineMap_.end())
 	{
-		assetInstance->data_->pipeline_ = iter->second;
+		assetInstance->data_.pipeline_ = iter->second;
 	}
 
 	PipelineResources* retVals = new PipelineResources(logicalDevice_);
 
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+	VkVertexInputBindingDescription bindingDescription;
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+	if (createInfo.hasSkeleton)
+	{
+		bindingDescription = VertexUtil::getBindingDescription<Vertex>();
+		attributeDescriptions = VertexUtil::getAttributeDescriptions<Vertex>();
+	}
+	else
+	{
+		bindingDescription = VertexUtil::getBindingDescription<NonAnimVertex>();
+		attributeDescriptions = VertexUtil::getAttributeDescriptions<NonAnimVertex>();
+	}
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -154,7 +165,7 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &assetInstance->data_->descriptorLayout_;
+	pipelineLayoutInfo.pSetLayouts = &assetInstance->data_.descriptorLayout_;
 
 	if (createInfo.pushConstantRanges.size() > 0)
 	{
@@ -164,8 +175,8 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	
 	VK_CHECK(vkCreatePipelineLayout(logicalDevice_, &pipelineLayoutInfo, nullptr, &retVals->pipelineLayout_));
 
-	VkShaderModule vertexShaderModule = createShaderModule(assetInstance->vertexShader_);
-	VkShaderModule fragmentShaderModule = createShaderModule(assetInstance->fragmentShader_);
+	VkShaderModule vertexShaderModule = createShaderModule(createInfo.vertexShader);
+	VkShaderModule fragmentShaderModule = createShaderModule(createInfo.fragmentShader);
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -179,12 +190,12 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	fragShaderStageInfo.module = fragmentShaderModule;
 	fragShaderStageInfo.pName = "main";
 
-	VkPipelineShaderStageCreateInfo shaderStageInfo[2] = { vertShaderStageInfo, fragShaderStageInfo };
+	std::vector<VkPipelineShaderStageCreateInfo> shaderStageInfo = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineInfo.stageCount = 2;
-	pipelineInfo.pStages = shaderStageInfo;
+	pipelineInfo.stageCount = shaderStageInfo.size();
+	pipelineInfo.pStages = shaderStageInfo.data();
 	pipelineInfo.pVertexInputState = &vertexInputInfo;
 	pipelineInfo.pInputAssemblyState = &inputAssembly;
 	pipelineInfo.pViewportState = &viewportState;
@@ -199,7 +210,7 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	
 	VK_CHECK(vkCreateGraphicsPipelines(logicalDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &retVals->pipeline_));
 
-	assetInstance->data_->pipeline_ = retVals;
+	assetInstance->data_.pipeline_ = retVals;
 	pipelineMap_.insert({ createInfo, retVals });
 }
 
@@ -216,10 +227,10 @@ void VkRenderer::createUniformBuffers(AssetInstance* assetInstance)
 	VmaAllocationCreateInfo vmaInfo{};
 	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	assetInstance->data_->uniformData_.resize(swapChainResources_.imageCount_);
+	assetInstance->data_.uniformData_.resize(swapChainResources_.imageCount_);
 	for (int i = 0; i < swapChainResources_.imageCount_; i++)
 	{
-		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &assetInstance->data_->uniformData_[i].buffer_, &assetInstance->data_->uniformData_[i].mem_, nullptr));
+		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &assetInstance->data_.uniformData_[i].buffer_, &assetInstance->data_.uniformData_[i].mem_, nullptr));
 	}
 }
 
@@ -249,14 +260,26 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 		descriptorSetLayoutBindings.push_back(samplerLayoutBinding);
 	}
 
+	if (assetInstance->createInfo_.lightingEnabled)
+	{
+		VkDescriptorSetLayoutBinding uboDirLightingBinding{};
+		uboDirLightingBinding.binding = 3;
+		uboDirLightingBinding.descriptorCount = 1; //number of elements in ubo array
+		uboDirLightingBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		uboDirLightingBinding.pImmutableSamplers = nullptr;
+		uboDirLightingBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+		descriptorSetLayoutBindings.push_back(uboDirLightingBinding);
+	}
+
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(descriptorSetLayoutBindings.size());
 	layoutInfo.pBindings = descriptorSetLayoutBindings.data();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &assetInstance->data_->descriptorLayout_));
+	VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &assetInstance->data_.descriptorLayout_));
 
-	VkDescriptorSetLayout currLayout = assetInstance->data_->descriptorLayout_;
+	VkDescriptorSetLayout currLayout = assetInstance->data_.descriptorLayout_;
 
 	std::vector<VkDescriptorSetLayout> layouts(swapChainResources_.imageCount_, currLayout);
 
@@ -266,8 +289,53 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 	allocInfo.descriptorSetCount = static_cast<uint32_t>(swapChainResources_.imageCount_);
 	allocInfo.pSetLayouts = layouts.data();
 
-	assetInstance->data_->descriptorSets_.resize(swapChainResources_.imageCount_);
-	VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, assetInstance->data_->descriptorSets_.data()));
+	assetInstance->data_.descriptorSets_.resize(swapChainResources_.imageCount_);
+	VK_CHECK(vkAllocateDescriptorSets(logicalDevice_, &allocInfo, assetInstance->data_.descriptorSets_.data()));
+
+	for (size_t i = 0; i < swapChainResources_.imageCount_; i++) {
+		int descriptorSetSize = 0;
+
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = assetInstance->data_.uniformData_[i].buffer_;
+		bufferInfo.offset = 0;
+		bufferInfo.range = assetInstance->sizeOfUniformData_;
+		descriptorSetSize++;
+
+		VkDescriptorImageInfo imageInfo{};
+		if (assetInstance->asset_->texture_)
+		{
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = assetInstance->asset_->texture_->resources_.view_;
+			imageInfo.sampler = assetInstance->asset_->texture_->resources_.sampler_;
+			descriptorSetSize++;
+		}
+
+		std::vector<VkWriteDescriptorSet> descriptorWrites{};
+		descriptorWrites.resize(descriptorSetSize);
+
+		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[0].dstSet = assetInstance->data_.descriptorSets_[i];
+		descriptorWrites[0].dstBinding = 0;
+		descriptorWrites[0].dstArrayElement = 0;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[0].descriptorCount = 1;
+		descriptorWrites[0].pBufferInfo = &bufferInfo;
+
+		if (assetInstance->asset_->texture_)
+		{
+			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[1].dstSet = assetInstance->data_.descriptorSets_[i];
+			descriptorWrites[1].dstBinding = 1;
+			descriptorWrites[1].dstArrayElement = 0;
+			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[1].descriptorCount = 1;
+			descriptorWrites[1].pImageInfo = &imageInfo;
+		}
+
+		vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+	}
+
+
 }
 
 void VkRenderer::recreateSwapchain()
@@ -284,7 +352,7 @@ void VkRenderer::recreateSwapchain()
 	createDefaultRenderPass();
 	createDefualtDepthResources();
 	createDefaultFramebuffers();
-	initPipelines();
+	//initPipelines();
 
 	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(cmdPool_, 1);
 	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
@@ -412,7 +480,7 @@ void VkRenderer::init()
 	
 	createDefaultFramebuffers();
 
-	initPipelines();
+	//initPipelines();
 
 	createSynchronizationResources();
 
@@ -583,78 +651,78 @@ void VkRenderer::prepareFrame()
 	ui_->prepareFrame();
 }
 
-void VkRenderer::uploadObject(Renderable* mesh)
-{
-	if (mesh->isLine_)
-	{
-		mesh->pipelineType_ = LINE_PIPELINE;
-	}
-	else
-	{
-		mesh->pipelineType_ = DEBUG_PIPELINE;
-	}
-
-	//======= Vertices ======
-	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
-
-	VkBufferCreateInfo vBufferInfo{};
-	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	vBufferInfo.pNext = nullptr;
-	vBufferInfo.size = vertexBufferSize;
-	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-	VmaAllocationCreateInfo vmaInfo{};
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
-
-	void *vertexData;
-	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
-	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
-	vmaUnmapMemory(allocator_, mesh->vertexMem_);
-
-	//======= Indicies ======
-	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
-
-	VkBufferCreateInfo iBufferInfo{};
-	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	iBufferInfo.pNext = nullptr;
-	iBufferInfo.size = indexBufferSize;
-	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
-
-	void *indexData;
-	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
-	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
-	vmaUnmapMemory(allocator_, mesh->indexMem_);
-
-	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(mesh->ubo_);
-	VkBufferCreateInfo uBufferInfo{};
-	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	uBufferInfo.pNext = nullptr;
-	uBufferInfo.size = uniformBufferSize;
-	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
-	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
-	for(int i = 0; i < swapChainResources_.imageCount_; i++)
-		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
-
-	createDescriptorSet(mesh);
-	updateUniformBuffer(*mesh);
-
-	mesh->allocator_ = allocator_;
-	mesh->logicalDevice_ = logicalDevice_;
-}
+//void VkRenderer::uploadObject(Renderable* mesh)
+//{
+//	if (mesh->isLine_)
+//	{
+//		mesh->pipelineType_ = LINE_PIPELINE;
+//	}
+//	else
+//	{
+//		mesh->pipelineType_ = DEBUG_PIPELINE;
+//	}
+//
+//	//======= Vertices ======
+//	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
+//
+//	VkBufferCreateInfo vBufferInfo{};
+//	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	vBufferInfo.pNext = nullptr;
+//	vBufferInfo.size = vertexBufferSize;
+//	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+//
+//	VmaAllocationCreateInfo vmaInfo{};
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
+//
+//	void *vertexData;
+//	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
+//	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
+//	vmaUnmapMemory(allocator_, mesh->vertexMem_);
+//
+//	//======= Indicies ======
+//	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
+//
+//	VkBufferCreateInfo iBufferInfo{};
+//	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	iBufferInfo.pNext = nullptr;
+//	iBufferInfo.size = indexBufferSize;
+//	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+//
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
+//
+//	void *indexData;
+//	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
+//	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
+//	vmaUnmapMemory(allocator_, mesh->indexMem_);
+//
+//	//======= Uniform ======
+//	size_t uniformBufferSize = sizeof(mesh->ubo_);
+//	VkBufferCreateInfo uBufferInfo{};
+//	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	uBufferInfo.pNext = nullptr;
+//	uBufferInfo.size = uniformBufferSize;
+//	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+//
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
+//	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
+//	for(int i = 0; i < swapChainResources_.imageCount_; i++)
+//		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
+//
+//	createDescriptorSet(mesh);
+//	updateUniformBuffer(*mesh);
+//
+//	mesh->allocator_ = allocator_;
+//	mesh->logicalDevice_ = logicalDevice_;
+//}
 
 void VkRenderer::uploadMesh(Renderable* mesh)
 {
@@ -699,6 +767,56 @@ void VkRenderer::uploadMesh(Renderable* mesh)
 	vmaUnmapMemory(allocator_, mesh->indexMem_);
 }
 
+
+template<typename VertexType>
+void VkRenderer::uploadStaticMeshData(std::vector<VertexType> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer)
+{
+	//======= Vertices ======
+	size_t vertexBufferSize = verticies.size() * sizeof(VertexType);
+
+	VkBufferCreateInfo vBufferInfo{};
+	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	vBufferInfo.pNext = nullptr;
+	vBufferInfo.size = vertexBufferSize;
+	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+	VmaAllocationCreateInfo vmaInfo{};
+	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer->buffer_, &vertexBuffer->mem_, nullptr));
+
+	void *vertexData;
+	vmaMapMemory(allocator_, vertexBuffer->mem_, &vertexData);
+	memcpy(vertexData, verticies.data(), vertexBufferSize);
+	vmaUnmapMemory(allocator_, vertexBuffer->mem_);
+
+	//======= Indicies ======
+	size_t indexBufferSize = indicies.size() * sizeof(int);
+
+	VkBufferCreateInfo iBufferInfo{};
+	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	iBufferInfo.pNext = nullptr;
+	iBufferInfo.size = indexBufferSize;
+	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+
+	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	//=DELETE=
+	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer->buffer_, &indexBuffer->mem_, nullptr));
+
+	void *indexData;
+	vmaMapMemory(allocator_, indexBuffer->mem_, &indexData);
+	memcpy(indexData, indicies.data(), indexBufferSize);
+	vmaUnmapMemory(allocator_, indexBuffer->mem_);
+}
+
+template void VkRenderer::uploadStaticMeshData<Vertex>(std::vector<Vertex> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
+
+template void VkRenderer::uploadStaticMeshData<NonAnimVertex>(std::vector<NonAnimVertex> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
+
+template void VkRenderer::uploadStaticMeshData<DebugVertex>(std::vector<DebugVertex> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
+
+
 void VkRenderer::uploadStaticMeshData(Renderable* mesh)
 {
 	mesh->uploaded_;
@@ -742,21 +860,17 @@ void VkRenderer::uploadStaticMeshData(Renderable* mesh)
 	vmaUnmapMemory(allocator_, mesh->indexMem_);
 }
 
-template<>
-void VkRenderer::uploadDynamicData<MVP>(AssetInstance* assetInstance)
+template<typename UniformDataType>
+void VkRenderer::uploadDynamicData(AssetInstance* assetInstance)
 {
-	createUniformBuffers<MVP>(assetInstance);
-	allocateDescriptorSet<MVP>(assetInstance);
+	createUniformBuffers<UniformDataType>(assetInstance);
+	allocateDescriptorSet<UniformDataType>(assetInstance);
 	createPipelineNew(assetInstance);
 }
 
-template<>
-void VkRenderer::uploadDynamicData<MVPBoneData>(AssetInstance* assetInstance)
-{
-	createUniformBuffers<MVPBoneData>(assetInstance);
-	allocateDescriptorSet<MVPBoneData>(assetInstance);
-	createPipelineNew(assetInstance);
-}
+template void VkRenderer::uploadDynamicData<MVPBoneData>(AssetInstance* assetInstance);
+
+template void VkRenderer::uploadDynamicData<MVP>(AssetInstance* assetInstance);
 
 void VkRenderer::uploadTextureData(Textured* texture)
 {
@@ -848,75 +962,75 @@ void VkRenderer::uploadTextureData(Textured* texture)
 	vmaDestroyBuffer(allocator_, stagingBuffer.buffer_, stagingBuffer.mem_);
 }
 
-void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated)
-{
-	if (mesh->isLine_)
-		mesh->pipelineType_ = LINE_PIPELINE;
-	else if (animated)
-		mesh->pipelineType_ = ANIMATION_PIPELINE;
-
-	//======= Vertices ======
-	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
-
-	VkBufferCreateInfo vBufferInfo{};
-	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	vBufferInfo.pNext = nullptr;
-	vBufferInfo.size = vertexBufferSize;
-	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-	VmaAllocationCreateInfo vmaInfo{};
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
-
-	void *vertexData;
-	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
-	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
-	vmaUnmapMemory(allocator_, mesh->vertexMem_);
-
-	//======= Indicies ======
-	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
-
-	VkBufferCreateInfo iBufferInfo{};
-	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	iBufferInfo.pNext = nullptr;
-	iBufferInfo.size = indexBufferSize;
-	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
-
-	void *indexData;
-	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
-	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
-	vmaUnmapMemory(allocator_, mesh->indexMem_);
-
-	//======= Uniform ======
-	size_t uniformBufferSize = sizeof(mesh->ubo_);
-	VkBufferCreateInfo uBufferInfo{};
-	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	uBufferInfo.pNext = nullptr;
-	uBufferInfo.size = uniformBufferSize;
-	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//=DELETE=
-	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
-	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
-	for(int i = 0; i < swapChainResources_.imageCount_; i++)
-		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
-
-	createTextureResources(*mesh, *texture);
-	createDescriptorSet(mesh);
-	updateUniformBuffer(*mesh);
-
-	mesh->allocator_ = allocator_;
-	mesh->logicalDevice_ = logicalDevice_;
-}
+//void VkRenderer::uploadObject(Renderable* mesh, Textured* texture, bool animated)
+//{
+//	if (mesh->isLine_)
+//		mesh->pipelineType_ = LINE_PIPELINE;
+//	else if (animated)
+//		mesh->pipelineType_ = ANIMATION_PIPELINE;
+//
+//	//======= Vertices ======
+//	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
+//
+//	VkBufferCreateInfo vBufferInfo{};
+//	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	vBufferInfo.pNext = nullptr;
+//	vBufferInfo.size = vertexBufferSize;
+//	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+//
+//	VmaAllocationCreateInfo vmaInfo{};
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
+//
+//	void *vertexData;
+//	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
+//	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
+//	vmaUnmapMemory(allocator_, mesh->vertexMem_);
+//
+//	//======= Indicies ======
+//	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
+//
+//	VkBufferCreateInfo iBufferInfo{};
+//	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	iBufferInfo.pNext = nullptr;
+//	iBufferInfo.size = indexBufferSize;
+//	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+//
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
+//
+//	void *indexData;
+//	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
+//	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
+//	vmaUnmapMemory(allocator_, mesh->indexMem_);
+//
+//	//======= Uniform ======
+//	size_t uniformBufferSize = sizeof(mesh->ubo_);
+//	VkBufferCreateInfo uBufferInfo{};
+//	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+//	uBufferInfo.pNext = nullptr;
+//	uBufferInfo.size = uniformBufferSize;
+//	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+//
+//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+//
+//	//=DELETE=
+//	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
+//	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
+//	for(int i = 0; i < swapChainResources_.imageCount_; i++)
+//		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
+//
+//	createTextureResources(*mesh, *texture);
+//	createDescriptorSet(mesh);
+//	updateUniformBuffer(*mesh);
+//
+//	mesh->allocator_ = allocator_;
+//	mesh->logicalDevice_ = logicalDevice_;
+//}
 
 void VkRenderer::createDescriptorSet(Renderable* o)
 {
@@ -1133,232 +1247,19 @@ VkShaderModule VkRenderer::createShaderModule(std::string shaderPath)
 	return shaderModule;
 }
 
-//VkShaderModule VkRenderer::createShaderModule(const std::vector<char>& code) 
+//void VkRenderer::updateUniformBuffer(Renderable& renderable)
 //{
-//	VkShaderModuleCreateInfo createInfo{};
-//	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-//	createInfo.codeSize = code.size();
-//	createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+//	//renderable.ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
+//	//renderable.ubo_.proj[1][1] *= -1;
 //
-//	VkShaderModule shaderModule;
-//	if (vkCreateShaderModule(logicalDevice_, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-//		throw std::runtime_error("failed to create shader module!");
-//	}
-//
-//	return shaderModule;
+//	void *data;
+//	size_t y = sizeof(Ubo);
+//	vmaMapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_], &data);
+//	memcpy(data, &renderable.ubo_, sizeof(Ubo));
+//	vmaUnmapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_]);
 //}
 
-void VkRenderer::initPipelines()
-{
-	pipelines_.resize(PipelineTypes::NUM_PIPELINE_TYPES);
-	descriptorLayouts_.resize(PipelineTypes::NUM_PIPELINE_TYPES);
-	// BASIC_PIPELINE
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		layoutInfo.pBindings = bindings.data();
-
-		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::BASIC_PIPELINE]));
-		
-		VkShaderModule vertexShader = createShaderModule("./shaders/texturedMeshVert.spv");
-		VkShaderModule fragmentShader = createShaderModule("./shaders/texturedMeshFrag.spv");
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertexShader;
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragmentShader;
-		fragShaderStageInfo.pName = "main";
-
-		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
-
-		PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::BASIC_PIPELINE], std::vector<VkPushConstantRange>(), true, true);
-
-		pipelines_[PipelineTypes::BASIC_PIPELINE] = r;
-	}
-
-	//LINE_PIPELINE
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		layoutInfo.pBindings = bindings.data();
-
-		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE]));
-
-		VkShaderModule vertexShader = createShaderModule("./shaders/vert.spv");
-		VkShaderModule fragmentShader = createShaderModule("./shaders/frag.spv");
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertexShader;
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragmentShader;
-		fragShaderStageInfo.pName = "main";
-
-		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
-
-		PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::LINE_PIPELINE],  std::vector<VkPushConstantRange>(),true, false, true);
-
-		pipelines_[PipelineTypes::LINE_PIPELINE] = r;
-	}
-
-	//Debug pipeline
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
-
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		layoutInfo.pBindings = bindings.data();
-
-		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE]));
-
-		VkShaderModule vertexShader = createShaderModule("./shaders/vert.spv");
-		VkShaderModule fragmentShader = createShaderModule("./shaders/frag.spv");
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertexShader;
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragmentShader;
-		fragShaderStageInfo.pName = "main";
-
-		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
-
-		PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::DEBUG_PIPELINE],  std::vector<VkPushConstantRange>(), true, true);
-
-		pipelines_[PipelineTypes::DEBUG_PIPELINE] = r;
-	}
-
-	//Animation pipeline
-	{
-		VkDescriptorSetLayoutBinding uboLayoutBinding{};
-		uboLayoutBinding.binding = 0;
-		uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
-		uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uboLayoutBinding.pImmutableSamplers = nullptr;
-		uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
-		samplerLayoutBinding.descriptorCount = 1;
-		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		samplerLayoutBinding.pImmutableSamplers = nullptr;
-		samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding};
-		VkDescriptorSetLayoutCreateInfo layoutInfo{};
-		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-		layoutInfo.pBindings = bindings.data();
-
-		VK_CHECK(vkCreateDescriptorSetLayout(logicalDevice_, &layoutInfo, nullptr, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE]));
-
-		VkShaderModule vertexShader = createShaderModule("./shaders/animatedMesh.vert.spv");
-		VkShaderModule fragmentShader = createShaderModule("./shaders/animatedMesh.frag.spv");
-
-		VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-		vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-		vertShaderStageInfo.module = vertexShader;
-		vertShaderStageInfo.pName = "main";
-
-		VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-		fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-		fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-		fragShaderStageInfo.module = fragmentShader;
-		fragShaderStageInfo.pName = "main";
-
-		std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
-
-		PipelineResources* r = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, windowExtent_, &descriptorLayouts_[PipelineTypes::ANIMATION_PIPELINE],  std::vector<VkPushConstantRange>(), true, false);
-
-		pipelines_[PipelineTypes::ANIMATION_PIPELINE] = r;
-	}
-}
-
-//void VkRenderer::updateUniformBuffer(RenderableObject& o)
-void VkRenderer::updateUniformBuffer(Renderable& renderable)
-{
-	//renderable.ubo_.proj = glm::perspective(glm::radians(45.0f), windowExtent_.width / (float)windowExtent_.height, 0.1f, 100.0f);
-	//renderable.ubo_.proj[1][1] *= -1;
-
-	void *data;
-	size_t y = sizeof(Ubo);
-	vmaMapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_], &data);
-	memcpy(data, &renderable.ubo_, sizeof(Ubo));
-	vmaUnmapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_]);
-}
-
-void VkRenderer::drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw)
-{
-	VkDeviceSize offsets[1] = { 0 };
-	for (auto object : objectsToDraw)
-	{
-		vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipeline_);
-
-		vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &object->vertexBuffer_, offsets);
-
-		vkCmdBindIndexBuffer(currentCommandBuffer, object->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
-
-		vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines_[object->pipelineType_]->pipelineLayout_, 0, 1, &object->descriptorSets_[imageIndex], 0, nullptr);
-
-		vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(object->indices_.size()), 1, 0, 0, 0);
-
-		updateUniformBuffer(*object);
-	}
-}
-
-void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
+void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const std::vector<LightSource>& lightSources)
 {
 	if (recreateSwapchain_)
 	{
@@ -1403,7 +1304,8 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
 	}
 
-	drawObjects(cmdBuffer_, 0, objectsToDraw);
+	//drawObjects(cmdBuffer_, 0, objectsToDraw);
+	drawAssetInstances(cmdBuffer_, swapchainImageIndex, assetInstancesToDraw);
 	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);
 	ui_->renderFrame(cmdBuffer_);//draw UI last
 
@@ -1445,6 +1347,29 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw)
 
 	//increase the number of frames drawn
 	frameNumber_++;
+}
+
+void VkRenderer::drawAssetInstances(VkCommandBuffer currentCommandBuffer, int imageIndex, const std::vector<AssetInstance*>& assetInstancesToDraw)
+{
+	VkDeviceSize offsets[1] = { 0 };
+	for (auto object : assetInstancesToDraw)
+	{
+		PipelineResources* pipelineResources = object->data_.pipeline_;
+		vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineResources->pipeline_);
+
+		vkCmdBindVertexBuffers(currentCommandBuffer, 0, 1, &object->asset_->mesh_.vertexBuffer_.buffer_, offsets);
+
+		vkCmdBindIndexBuffer(currentCommandBuffer, object->asset_->mesh_.indexBuffer_.buffer_, 0, VK_INDEX_TYPE_UINT32);
+
+		vkCmdBindDescriptorSets(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineResources->pipelineLayout_, 0, 1, &object->data_.descriptorSets_[imageIndex], 0, nullptr);
+
+		vkCmdDrawIndexed(currentCommandBuffer, static_cast<uint32_t>(object->asset_->mesh_.numInidicies_), 1, 0, 0, 0);
+
+		void *data;
+		vmaMapMemory(allocator_, object->data_.uniformData_[frameNumber_%swapChainResources_.imageCount_].mem_, &data);
+		memcpy(data, object->data_.ubo_, object->sizeOfUniformData_);
+		vmaUnmapMemory(allocator_, object->data_.uniformData_[frameNumber_%swapChainResources_.imageCount_].mem_);
+	}
 }
 
 void VkRenderer::cleanup()

@@ -71,12 +71,12 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		ranges.push_back(range);
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
+		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<DebugVertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
 
 		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
 		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
 
-		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(Vertex);
+		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(DebugVertex);
 
 		VkBufferCreateInfo vBufferInfo{};
 		vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -151,12 +151,12 @@ DebugDrawManager::DebugDrawManager(VkDevice& logicalDevice, VkRenderPass& render
 		ranges.push_back(range);
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
+		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<DebugVertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
 
 		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
 		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
 
-		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(Vertex);
+		size_t vertexBufferSize = MAX_VERTEX_BUFFER_SIZE * 4 * sizeof(DebugVertex);
 
 		VkBufferCreateInfo vBufferInfo{};
 		vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -258,7 +258,7 @@ void DebugDrawManager::recreateDebugDrawManager(VkDevice& logicalDevice, VkRende
 		ranges.push_back(range);
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
+		debugPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<DebugVertex>(logicalDevice, renderPass, shaders, extent, VK_NULL_HANDLE, ranges, true, false, true);
 
 		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
 		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
@@ -311,7 +311,7 @@ void DebugDrawManager::recreateDebugDrawManager(VkDevice& logicalDevice, VkRende
 		ranges.push_back(range);
 
 		VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
+		pickerPipelineInfo.pipeline_ = PipelineBuilder::createPipeline<DebugVertex>(logicalDevice, renderPass, shaders, extent, &pickerPipelineInfo.storageBufferDescriptorLayout_, ranges, true, false);
 
 		vkDestroyShaderModule(logicalDevice, vertexShader, VK_NULL_HANDLE);
 		vkDestroyShaderModule(logicalDevice, fragmentShader, VK_NULL_HANDLE);
@@ -325,7 +325,7 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 	if (debugPipelineInfo.vertices_.size() > 0)//make sure there is something to draw for this pipeline
 	{
 		//Calculate the total size of the debugPipeline vertex and index buffer
-		size_t vertexBufferSize = debugPipelineInfo.vertices_.size() * sizeof(Vertex);
+		size_t vertexBufferSize = debugPipelineInfo.vertices_.size() * sizeof(DebugVertex);
 		size_t indexBufferSize = debugPipelineInfo.indicies_.size()  * sizeof(uint32_t);
 
 		//populate the vertex buffer 
@@ -373,7 +373,7 @@ void DebugDrawManager::renderFrame(const VkCommandBuffer& currentBuffer, const i
 	if (pickerPipelineInfo.vertices_.size() > 0)//make sure there is something to draw for this pipeline
 	{
 		//Calculate the total size of the debugPipeline vertex and index buffer
-		size_t vertexBufferSize = pickerPipelineInfo.vertices_.size() * sizeof(Vertex);
+		size_t vertexBufferSize = pickerPipelineInfo.vertices_.size() * sizeof(DebugVertex);
 		size_t indexBufferSize = pickerPipelineInfo.indicies_.size() * sizeof(uint32_t);
 
 		void* data;
@@ -615,7 +615,7 @@ void DebugDrawManager::drawRect(glm::vec3 pos, glm::vec3 color, float minX, floa
 	debugPipelineInfo.indicies_.push_back(2);
 	debugPipelineInfo.indicies_.push_back(0);
 
-	size_t vertexBufferSize = NUM_INDICIES * sizeof(Vertex);
+	size_t vertexBufferSize = NUM_INDICIES * sizeof(DebugVertex);
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 	
 	glm::mat4 model = glm::mat4(1.0f);
@@ -643,11 +643,11 @@ void DebugDrawManager::drawLine(glm::vec3 fromPos, glm::vec3 toPos, glm::vec3 co
 	mesh.numIndicies = NUM_INDICIES;
 	mesh.numVerticies = NUM_VERTICIES;
 
-	size_t vertexBufferSize = NUM_VERTICIES * sizeof(Vertex);
+	size_t vertexBufferSize = NUM_VERTICIES * sizeof(DebugVertex);
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 	
-	debugPipelineInfo.vertices_.push_back({ fromPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
-	debugPipelineInfo.vertices_.push_back({ toPos, color, { 0.0, 0.0 }, { 0.0,0.0,0.0 } });
+	debugPipelineInfo.vertices_.push_back({ fromPos, color});
+	debugPipelineInfo.vertices_.push_back({ toPos, color});
 
 	debugPipelineInfo.indicies_.push_back(0);
 	debugPipelineInfo.indicies_.push_back(1);
@@ -677,7 +677,7 @@ void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axis
 	mesh.numIndicies = NUM_INDICIES;
 	mesh.numVerticies = NUM_VERTICIES;
 
-	size_t vertexBufferSize = NUM_VERTICIES * sizeof(Vertex);
+	size_t vertexBufferSize = NUM_VERTICIES * sizeof(DebugVertex);
 	size_t indexBufferSize = NUM_INDICIES * sizeof(uint32_t);
 
 	glm::vec3 p1 = { -width / 2, -height / 2, 0 };
@@ -686,7 +686,7 @@ void DebugDrawManager::drawGrid(const glm::vec3& position, const glm::vec3& axis
 	glm::vec3 p3 = {-width / 2, -height / 2, 0};
 	glm::vec3 p4 = {-width / 2, height / 2, 0};
 
-	std::vector<Vertex> vertices;
+	std::vector<DebugVertex> vertices;
 	std::vector<uint32_t> indices;
 
 	for (int i = 0; i < height; i++)

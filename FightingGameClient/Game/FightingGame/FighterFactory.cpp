@@ -3,6 +3,7 @@
 #include "FighterFileImporter.h"
 #include "Scene/Components/Collider.h"
 #include "FighterSandbox/BasicFighter/LightPunch.h"
+#include "Renderer/Asset/AssetInstance.h"
 
 FighterFactory::FighterFactory(Scene& scene) :
 	scene_(scene)
@@ -12,12 +13,19 @@ Entity* FighterFactory::createFighterNew(const std::string & fighterFilePath, In
 {
 	FighterFileImporter fighterFileImporter(fighterFilePath);
 	ResourceManager& resourceManager = ResourceManager::getSingleton();
+	AssetCreateInfo assetCreateInfo;
+	assetCreateInfo.animationPath = fighterFileImporter.exportData_.modelFilePath;
+	assetCreateInfo.texturePath = fighterFileImporter.exportData_.textureFilePath;
+	Asset* asset = resourceManager.createAsset(assetCreateInfo);
+
 	AnimationReturnVals ret = resourceManager.loadAnimationFile(fighterFileImporter.exportData_.modelFilePath);
-	TextureReturnVals texVals = resourceManager.loadTextureFile((std::string&)fighterFileImporter.exportData_.textureFilePath);
 
 	Entity* entity = scene_.addEntity("Fighter");
-	entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels);
-	Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter", true);
+	AssetInstance& assetInstance = entity->addComponent<AssetInstance>(asset);
+
+	//entity->addComponent<Textured>(texVals.pixels, texVals.textureWidth, texVals.textureHeight, texVals.textureChannels);
+	//Renderable& mesh = entity->addComponent<Renderable>(ret.vertices, ret.indices, false, "Fighter", true);
+
 	Transform& transform = entity->addComponent<Transform>( 1.0f, 1.0f, 1.0f );
 	transform.drawDebugGui_ = true;
 	transform.setScale(0.019f);

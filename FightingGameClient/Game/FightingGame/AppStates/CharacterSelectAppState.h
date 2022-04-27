@@ -6,8 +6,8 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 #include "Events.h"
-#include "Scene/Components/Behavior.h"
-#include "Scene/Components/Transform.h"
+#include <Scene/Components/Behavior.h>
+#include <Scene/Components/Transform.h>
 
 class InputHandler;
 class Entity;

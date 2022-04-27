@@ -78,7 +78,7 @@ void Scene::update(float deltaTime)
 	boxCollisionManager_->update(this);
 
 	calculateViewProjection(view, projection);
-	auto v = registry_.view<Transform>();
+	/*auto v = registry_.view<Renderable, Transform>();
 	for (auto entity : v)
 	{
 		auto& transform = v.get<Transform>(entity);
@@ -114,8 +114,34 @@ void Scene::update(float deltaTime)
 				objectsToDraw_.push_back(mesh);
 			}
 		}
+	}*/
+
+	auto assetInstanceView = registry_.view<AssetInstance, Transform>();
+	std::vector<AssetInstance*> assetInstancesToDraw;
+	for (auto entity : assetInstanceView)
+	{
+		AssetInstance& assetInstance = assetInstanceView.get<AssetInstance>(entity);
+		Transform& transform = assetInstanceView.get<Transform>(entity);
+		assetInstance.setModelMatrix(transform.calculateTransform());
+		assetInstance.setViewMatrix(view);
+		assetInstance.setProjectionMatrix(projection);
+		assetInstancesToDraw.push_back(&assetInstance);
+		Animator* animator = registry_.try_get<Animator>(entity);
+		if (animator)
+		{
+			animator->update(deltaTime, &assetInstance);
+		}
 	}
-	renderer_->draw(objectsToDraw_);
+
+	auto lightSourceInstanceView = registry_.view<LightSource, Transform>();
+	std::vector<LightSource> lightSources;
+	for(auto entity : lightSourceInstanceView)
+	{
+		lightSources.push_back(lightSourceInstanceView.get<LightSource>(entity));
+	}
+
+	renderer_->draw(objectsToDraw_, assetInstancesToDraw, lightSources);
+	lightSources.clear();
 	objectsToDraw_.clear();
 }
 

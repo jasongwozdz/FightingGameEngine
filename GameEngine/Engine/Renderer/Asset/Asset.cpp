@@ -6,24 +6,30 @@
 #include "../Textured.h"
 
 Asset::Asset() :
-	mesh_(nullptr),
+	//mesh_(nullptr),
 	texture_(nullptr),
 	skeleton_(nullptr)
 {};
 
 Asset::~Asset()
 {
-	delete mesh_;// this is where deleting memory from gpu will happen
+	//delete mesh_;// this is where deleting memory from gpu will happen
 	delete texture_; // this is where deleting memory from gpu will happen
-	 delete skeleton_;
+	delete skeleton_;
 }
 
-void Asset::addMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies)
+template<typename VertexType>
+void Asset::addMesh(std::vector<VertexType> verticies, std::vector<uint32_t> indicies)
 {
-	mesh_ = new Renderable(verticies, indicies, true, "", true);
+	mesh_.numInidicies_ = indicies.size();
+	mesh_.numVerticies_ = verticies.size();
 	VkRenderer* renderer = VkRenderer::getSingletonPtr();
-	renderer->uploadStaticMeshData(mesh_);
+	renderer->uploadStaticMeshData(verticies, indicies, &mesh_.vertexBuffer_, &mesh_.indexBuffer_);
 }
+
+template void Asset::addMesh<NonAnimVertex>(std::vector<NonAnimVertex> verticies, std::vector<uint32_t> indicies);
+
+template void Asset::addMesh<Vertex>(std::vector<Vertex> verticies, std::vector<uint32_t> indicies);
 
 void Asset::addTexture(std::vector<unsigned char> pixels, int textureWidth, int textureHeight, int numChannels)
 {

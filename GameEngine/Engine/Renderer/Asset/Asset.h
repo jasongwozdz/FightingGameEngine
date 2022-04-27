@@ -1,10 +1,20 @@
 #pragma once
 #include <vector>
 
+#include "../../EngineExport.h"
 #include "../../Vertex.h"
 #include "../../Scene/Components/BoneStructure.h"
+#include "../VkTypes.h"
 
-class Asset
+struct MeshData
+{
+	VulkanBuffer indexBuffer_;
+	VulkanBuffer vertexBuffer_;
+	int numVerticies_;
+	int numInidicies_;
+};
+
+class ENGINE_API Asset
 {
 public:
 	friend class AssetInstance;
@@ -13,13 +23,14 @@ public:
 	Asset();
 	~Asset();
 
-private:
-	void addMesh(std::vector<Vertex> verticies, std::vector<uint32_t> indicies);
+	template<typename VertexType>
+	void addMesh(std::vector<VertexType> verticies, std::vector<uint32_t> indicies);
 	void addTexture(std::vector<unsigned char> pixels, int textureWidth, int textureHeight, int numChannels);
 	void addSkeleton(int boneStructureIndex);
 
 private:
-	class Renderable* mesh_;
+	//class Renderable* mesh_;
+	MeshData mesh_;
 	class Textured* texture_;
 	class BoneStructure* skeleton_;
 };

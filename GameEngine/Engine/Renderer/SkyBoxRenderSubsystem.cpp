@@ -115,7 +115,7 @@ void SkyBoxRenderSubsystem::createPipeline()
 	std::vector<VkPipelineShaderStageCreateInfo> shaders = { vertShaderStageInfo, fragShaderStageInfo };
 
 	VkExtent2D extent = { EngineSettings::getSingletonPtr()->windowWidth, EngineSettings::getSingletonPtr()->windowHeight };
-	skyboxPipeline_ = PipelineBuilder::createPipeline<Vertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, false, false, false);
+	skyboxPipeline_ = PipelineBuilder::createPipeline<NonAnimVertex>(logicalDevice_, renderPass_, shaders, extent, &skyboxDescriptorSetLayout_, {}, false, false, false);
 
 	vkDestroyShaderModule(logicalDevice_, vertexShader, VK_NULL_HANDLE);
 	vkDestroyShaderModule(logicalDevice_, fragmentShader, VK_NULL_HANDLE);
@@ -215,8 +215,7 @@ int SkyBoxRenderSubsystem::getStringIndex(const std::string& filename)
 
 void SkyBoxRenderSubsystem::loadCube(ModelReturnVals* modelVals)
 {
-
-	size_t vertexBufferSize = modelVals->vertices.size() * sizeof(Vertex);
+	size_t vertexBufferSize = modelVals->vertices.size() * sizeof(NonAnimVertex);
 
 	VkBufferCreateInfo vBufferInfo{};
 	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -253,41 +252,6 @@ void SkyBoxRenderSubsystem::loadCube(ModelReturnVals* modelVals)
 	vmaMapMemory(allocator_, indexBuffer_.mem_, &indexData);
 	memcpy(indexData, modelVals->indices.data(), indexBufferSize);
 	vmaUnmapMemory(allocator_, indexBuffer_.mem_);
-
-	//size_t vertexBufferSize = modelVals->vertices.size() * sizeof(Vertex);
-
-	//VkBufferCreateInfo vBufferInfo{};
-	//vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	//vBufferInfo.pNext = nullptr;
-	//vBufferInfo.size = vertexBufferSize;
-	//vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-
-	//VmaAllocationCreateInfo vmaInfo{};
-	//vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &vertexBuffer_.buffer_, &vertexBuffer_.mem_, nullptr);
-
-	//void *vertexData;
-	//vmaMapMemory(allocator_, vertexBuffer_.mem_, &vertexData);
-	//memcpy(vertexData, modelVals->vertices.data(), vertexBufferSize);
-	//vmaUnmapMemory(allocator_, vertexBuffer_.mem_);
-
-	//size_t indexBufferSize = modelVals->indices.size() * sizeof(uint32_t);
-
-	//VkBufferCreateInfo iBufferInfo{};
-	//iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	//iBufferInfo.pNext = nullptr;
-	//iBufferInfo.size = indexBufferSize;
-	//iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-
-	//vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &indexBuffer_.buffer_, &indexBuffer_.mem_, nullptr);
-
-	//void *indexData;
-	//vmaMapMemory(allocator_, indexBuffer_.mem_, &indexData);
-	//memcpy(indexData, modelVals->indices.data(), indexBufferSize);
-	//vmaUnmapMemory(allocator_, indexBuffer_.mem_);
 }
 
 bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)

@@ -73,7 +73,7 @@ FighterFileImporter::FighterFileImporter(const std::string& filePath)
 	file_.open(filePath, std::ios::in);
 	if (file_.is_open())
 	{
-		readFileNew("C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim");
+		readFileNew(filePath);
 		//readFile();
 		//extractAttackDataFile("C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\NewFighter\\AttackFileDraft.attck");
 	}

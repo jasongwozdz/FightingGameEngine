@@ -6,6 +6,7 @@
 #include "../libs/VulkanMemoryAllocator/vk_mem_alloc.h"
 #include "../Singleton.h"
 #include <array>
+#include "../Vertex.h"
 
 #ifdef ENGINE_EXPORTS
 #define ENGINE_API __declspec(dllexport)
@@ -39,42 +40,6 @@ namespace UI
 		}
 	};
 
-	struct Vertex
-	{
-		glm::vec2 pos;
-		glm::vec2 aUV;
-		glm::vec4 color;
-
-		static VkVertexInputBindingDescription getBindingDescription() {
-			VkVertexInputBindingDescription bindingDescription{};
-			bindingDescription.binding = 0;
-			bindingDescription.stride = sizeof(Vertex);
-			bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-			return bindingDescription;
-		}
-
-		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
-			attributeDescriptions[0].binding = 0;
-			attributeDescriptions[0].location = 0;
-			attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-			attributeDescriptions[1].binding = 0;
-			attributeDescriptions[1].location = 1;
-			attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
-			attributeDescriptions[1].offset = offsetof(Vertex, aUV);
-
-			attributeDescriptions[2].binding = 0;
-			attributeDescriptions[2].location = 2;
-			attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-			attributeDescriptions[2].offset = offsetof(Vertex, color);
-
-			return attributeDescriptions;
-		}
-	};
 
 	struct PushConstantInfo
 	{
@@ -85,7 +50,7 @@ namespace UI
 	struct RenderInfo
 	{
 		PushConstantInfo pushConstantInfo;
-		std::vector<Vertex> vertices;
+		std::vector<UIVertex> vertices;
 		std::vector<uint32_t> indicies;
 	};
 
@@ -142,7 +107,7 @@ namespace UI
 		std::vector<UI::RenderInfo> drawData_;
 		std::vector<VkDeviceSize> vertexOffsets_;
 		std::vector<VkDeviceSize> indexOffsets_;
-		std::vector<Vertex> vertices_;
+		std::vector<UIVertex> vertices_;
 		std::vector<uint32_t> indicies_;
 		VkDeviceSize globalVertexOffset_ = 0;
 		VkDeviceSize globalIndexOffset_ = 0;

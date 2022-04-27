@@ -12,13 +12,14 @@ FightingAppState::FightingAppMode FightingAppState::mode_ = FightingAppState::NO
 
 FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, DebugDrawManager* debugDrawManager, InputHandler* inputLeft, InputHandler* inputRight) : 
 	scene_(Scene::getSingletonPtr()),
+	resourceManager_(ResourceManager::getSingletonPtr()),
 	inputHandlerLeft_(inputLeft),
 	inputHandlerRight_(inputRight),
 	debugDrawManager_(debugDrawManager)
 {
 	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
-	fighter1 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim";
-	fighter2 = "C:\\Users\\jsngw\\source\\repos\\FightingGame\\FighterFiles\\Fighter1-NewAttack.fgAnim";
+	fighter1 = "..\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim";
+	fighter2 = "..\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim";
 	inputHandlerLeft_->clearInputQueue();
 	inputHandlerRight_->clearInputQueue();
 	fighterFactory_ = new FighterFactory(*scene_);
@@ -47,7 +48,6 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	const glm::vec3 STARTING_POSITION_RIGHT = { -5.0f, 0.0f, 0.0f};
 
 	fighters_.resize(2);
-	//fighters_[0] = fighterFactory_->createFighter(fighterFilePath1, *inputHandlerLeft_);
 	fighters_[0] = fighterFactory_->createFighterNew(fighterFilePath1, *inputHandlerLeft_);
 	fighters_[1] = fighterFactory_->createFighterNew(fighterFilePath2, *inputHandlerRight_);
 
@@ -64,6 +64,16 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 
 	transform1.lookAt(pos2 - pos1);
 	transform2.lookAt(pos1 - pos2);
+
+	//const std::string arenaBackground = "./Models/viking_room.obj";
+	//const std::string arenaBackgroundTexturePath = "./Textures/viking_room.png";
+	//AssetCreateInfo assetCreateInfo;
+	//assetCreateInfo.modelPath = arenaBackground;
+	//assetCreateInfo.texturePath = arenaBackgroundTexturePath;
+	//Asset* asset = resourceManager_->createAsset(assetCreateInfo);
+	//Entity* entity = scene_->addEntity("Stage");
+	//entity->addComponent<Transform>(0, 0, 0);
+	//entity->addComponent<AssetInstance>(asset);
 	//generateArenaBackground();
 }
 

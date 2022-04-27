@@ -3,17 +3,18 @@
 #include <vector>
 #include "vkinit.h"
 #include "VkTypes.h"
+#include "../Vertex.h"
 
 namespace PipelineBuilder
 {
 
-	template<class Vertex>
+	template<class VertexType>
 	PipelineResources* createPipeline(VkDevice& logicalDevice, VkRenderPass& renderPass, std::vector<VkPipelineShaderStageCreateInfo>& shaderStages, VkExtent2D& windowExtent, VkDescriptorSetLayout* layout, std::vector<VkPushConstantRange> range, bool depthEnabled, bool cullingEnabled, bool isLine = false)
 	{
 	PipelineResources* retVals = new PipelineResources(logicalDevice);
 
-	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+	auto bindingDescription = VertexUtil::getBindingDescription<VertexType>();
+	auto attributeDescriptions = VertexUtil::getAttributeDescriptions<VertexType>();
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
