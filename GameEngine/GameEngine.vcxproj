@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -168,6 +168,8 @@
   <ItemGroup>
     <ClInclude Include="Application.h" />
     <ClInclude Include="Engine\BoxCollisionManager.h" />
+    <ClInclude Include="Engine\Console\Console.h" />
+    <ClInclude Include="Engine\EngineExport.h" />
     <ClInclude Include="Engine\Input.h" />
     <ClInclude Include="Engine\Renderer\Asset\Asset.h" />
     <ClInclude Include="Engine\Renderer\Asset\AssetInstance.h" />
@@ -206,6 +208,7 @@
     <ClInclude Include="Engine\ResourceManager.h" />
     <ClInclude Include="Engine\Scene\Components\Animator.h" />
     <ClInclude Include="Engine\Scene\Components\BoneStructure.h" />
+    <ClInclude Include="Engine\Scene\Components\LightSource.h" />
     <ClInclude Include="Engine\Scene\Components\Transform.h" />
     <ClInclude Include="Engine\Scene\Entity.h" />
     <ClInclude Include="Engine\Scene\Scene.h" />
@@ -220,6 +223,7 @@
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="Engine\BaseCamera.cpp" />
     <ClCompile Include="Engine\BoxCollisionManager.cpp" />
+    <ClCompile Include="Engine\Console\Console.cpp" />
     <ClCompile Include="Engine\DebugDrawManager.cpp" />
     <ClCompile Include="Engine\EngineSettings.cpp" />
     <ClCompile Include="Engine\File.cpp" />
@@ -245,6 +249,7 @@
     <ClCompile Include="Engine\Scene\Behaviors\ControllableCameraBehavior.cpp" />
     <ClCompile Include="Engine\Scene\Components\Animator.cpp" />
     <ClCompile Include="Engine\Scene\Components\BoneStructure.cpp" />
+    <ClCompile Include="Engine\Scene\Components\LightSource.cpp" />
     <ClCompile Include="Engine\Scene\Components\Transform.cpp" />
     <ClCompile Include="Engine\Scene\Entity.cpp" />
     <ClCompile Include="Engine\Scene\Scene.cpp" />

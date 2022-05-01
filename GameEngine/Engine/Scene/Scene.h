@@ -35,7 +35,7 @@ public:
 
 	void update(float deltaTime);
 	Entity* addEntity(std::string entityName);
-	std::vector<Entity*> getEntities(std::string entityName);
+	void getEntities(std::string entityName, std::vector<Entity*>& outEnt);
 
 	struct Camera& getCurrentCamera();
 	void setActiveCamera(Entity* entity);

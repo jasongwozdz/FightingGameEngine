@@ -15,8 +15,6 @@
 
 #define ENGINE_EVENT_CALLBACK(Function) std::bind(&Function, this, std::placeholders::_1)
 
-class Console;
-
 class ENGINE_API Application{
 public:
 	Application();
@@ -36,7 +34,7 @@ public:
 	Scene* scene_;
 	DebugDrawManager* debugManager_;
 	class Input* input_;
-	Console* console_;
+	class Console* console_;
 
 	static int FrameCount;
 

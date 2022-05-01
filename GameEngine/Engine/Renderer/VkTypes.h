@@ -55,7 +55,7 @@ struct PipelineCreateInfo
 	bool depthEnabled = true;
 	bool hasSkeleton = false;
 	bool cullingEnabled = true;
-	bool lightingEnabled = false;
+	bool lightingEnabled = true;
 };
 
 struct PipelineCreateInfoHash

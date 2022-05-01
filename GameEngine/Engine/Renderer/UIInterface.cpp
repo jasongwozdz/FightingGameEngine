@@ -240,10 +240,6 @@ void UI::UIInterface::prepareFrame()
 
 void UI::UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
 {
-	ImGui::Render();
-	ImDrawData* drawData = ImGui::GetDrawData();
-	ImGui_ImplVulkan_RenderDrawData(drawData, currentBuffer);
-
 	size_t vertexBufferSize = vertices_.size() * sizeof(UIVertex);
 	size_t indexBufferSize = indicies_.size()  * sizeof(uint32_t);
 
@@ -283,6 +279,10 @@ void UI::UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
 		globalVertexOffset_ = 0;
 		globalIndexOffset_ = 0;
 	}
+
+	ImGui::Render();
+	ImDrawData* drawData = ImGui::GetDrawData();
+	ImGui_ImplVulkan_RenderDrawData(drawData, currentBuffer);
 }
 
 void UI::UIInterface::drawRect(int width, int height, glm::vec2 pos, glm::vec4 color)
@@ -506,8 +506,6 @@ void  UI::UIInterface::addTextToTransparentBackground(const std::string& text, g
 	//ImGui::SetNextWindowSize({ width, height }, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowPos({ pos.x, pos.y });
 	ImGui::Begin("Temp", &windowOpen, windowFlags);
-	ImFont* font = ImGui::GetFont();
-	font->Scale = scale;
 	ImGui::TextColored({color.x, color.y, color.z, color.w}, text.c_str());
 	ImGui::End();
 }

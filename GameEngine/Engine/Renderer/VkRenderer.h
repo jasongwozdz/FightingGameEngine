@@ -41,6 +41,8 @@ public:
 	void uploadMesh(Renderable* mesh);
 	void uploadStaticMeshData(Renderable* mesh);
 
+	VmaAllocator& getAllocator() { allocator_; }
+
 	template<typename VertexType>
 	void uploadStaticMeshData(std::vector<VertexType> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
 	
@@ -154,6 +156,8 @@ private:
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 	void recreateSwapchain();
 	void cleanupSwapchain();
+	void createGlobalUniformBuffers();
+	void uploadGlobalUniformData(int imageIndex, const std::vector<LightSource>& lightSources);
 
 	template<typename UniformDataType>
 	void createUniformBuffers(AssetInstance* assetInstance);
@@ -166,4 +170,12 @@ private:
 private:
 	std::unordered_map<std::string, VkShaderModule> shaderMap_;//maps vertex shader file location to its VKShaderModule
 	std::unordered_map<PipelineCreateInfo, PipelineResources*, PipelineCreateInfoHash> pipelineMap_;
+
+	struct GlobalUniformData
+	{
+		alignas(16) glm::vec3 viewPos;
+		LightSource::DirLightUniformData dirLightData;
+	};
+	GlobalUniformData globalUniformData_;
+	std::vector<VulkanBuffer> globalUniformBuffer_;
 };

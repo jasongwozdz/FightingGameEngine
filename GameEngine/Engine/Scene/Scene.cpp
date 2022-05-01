@@ -65,7 +65,7 @@ void Scene::update(float deltaTime)
 	{
 		Camera& camera = cameraView.get<Camera>(entity);
 		Transform& transform = cameraView.get<Transform>(entity);
-		drawCameraFrustrum(camera, transform);
+		//drawCameraFrustrum(camera, transform);
 	}
 
 	auto behaviorView = registry_.view<Behavior>();
@@ -78,43 +78,6 @@ void Scene::update(float deltaTime)
 	boxCollisionManager_->update(this);
 
 	calculateViewProjection(view, projection);
-	/*auto v = registry_.view<Renderable, Transform>();
-	for (auto entity : v)
-	{
-		auto& transform = v.get<Transform>(entity);
-		glm::mat4 finalTransform = transform.calculateTransform();
-		transform.drawDebug();
-		
-		Renderable* mesh = registry_.try_get<Renderable>(entity);
-		if (mesh)
-		{
-			transform.applyTransformToMesh(*mesh);
-			mesh->ubo_.view = view;
-			mesh->ubo_.proj = projection;
-
-			Animator* animator = registry_.try_get<Animator>(entity);
-			if (animator && mesh->render_)
-			{
-				animator->update(deltaTime, *mesh);
-			}
-
-			if (!mesh->uploaded_)
-			{
-				Textured* texture = registry_.try_get<Textured>(entity);
-				if (texture != 0)
-					renderer_->uploadObject(mesh, texture, animator);
-				else
-					renderer_->uploadObject(mesh);
-
-				mesh->uploaded_ = true;
-			}
-
-			if (mesh->render_)
-			{
-				objectsToDraw_.push_back(mesh);
-			}
-		}
-	}*/
 
 	auto assetInstanceView = registry_.view<AssetInstance, Transform>();
 	std::vector<AssetInstance*> assetInstancesToDraw;
@@ -162,18 +125,17 @@ Entity* Scene::addEntity(std::string name)
 	return entity;
 }
 
-std::vector<Entity*> Scene::getEntities(std::string entityName)
+void Scene::getEntities(std::string entityName, std::vector<Entity*>& outEnt)
 {
 	auto entry = entityNameMap_.find(entityName);
 	if (entry != entityNameMap_.end())
 	{
-		return entry->second;
+		outEnt = entry->second;
 	}
 	else
 	{
 		std::cout << "ERROR couln't find an entity with that name" << std::endl;
 	}
-	return std::vector<Entity*>();
 }
 
 bool Scene::setSkybox(const std::string& path)
@@ -191,6 +153,7 @@ void Scene::setActiveCamera(Entity* entity)
 void Scene::drawCameraFrustrum(Camera& currentCamera, Transform& cameraTransform)
 {
 	DebugDrawManager& debugDrawManager = DebugDrawManager::getSingleton();
+	//debugDrawManager.drawCube(cameraTransform.position_, { 1.0f, 1.0f, 1.0f }, { 2.0f , 1.0f, 1.0f });
 	float angleRads = glm::radians(currentCamera.fovAngleInDegrees_);
 	glm::vec3 dirRight = glm::vec3(glm::sin(angleRads), 0.0f, glm::cos(angleRads));
 	glm::vec3 dirLeft = glm::vec3(glm::sin(-angleRads), 0.0f, glm::cos(-angleRads));
@@ -210,7 +173,7 @@ void Scene::calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projection
 	Camera& camera = activeCamera_->getComponent<Camera>();
 	Transform& transform = activeCamera_->getComponent<Transform>();
 
-	viewMatrix = glm::lookAt(transform.position_, transform.position_ + transform.forward(), transform.up());
+	viewMatrix = glm::lookAt(transform.position_, transform.position_ + transform.forward(), Transform::worldUp);
 
 	if (camera.projection == Camera::Projection::ORTHOGRAPHIC)
 	{

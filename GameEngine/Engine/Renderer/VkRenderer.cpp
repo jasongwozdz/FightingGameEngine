@@ -13,6 +13,7 @@
 #include "GLFW/glfw3.h"
 #include "Asset/AssetInstance.h"
 #include "../Vertex.h"
+#include "../Scene/Components/Camera.h"
 
 template<> VkRenderer* Singleton<VkRenderer>::msSingleton = 0;
 
@@ -56,9 +57,43 @@ void VkRenderer::cleanupSwapchain()
 	//delete ui_;
 }
 
+void VkRenderer::createGlobalUniformBuffers()
+{
+	size_t uniformBufferSize = sizeof(GlobalUniformData);
+	VkBufferCreateInfo uBufferInfo{};
+	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	uBufferInfo.pNext = nullptr;
+	uBufferInfo.size = uniformBufferSize;
+	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+
+	VmaAllocationCreateInfo vmaInfo{};
+	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+
+	globalUniformBuffer_.resize(swapChainResources_.imageCount_);
+	for (int i = 0; i < swapChainResources_.imageCount_; i++)
+	{
+		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &globalUniformBuffer_[i].buffer_, &globalUniformBuffer_[i].mem_, nullptr));
+	}
+}
+
+void VkRenderer::uploadGlobalUniformData(int imageIndex, const std::vector<LightSource>& lightSources)
+{
+	for (auto light : lightSources)
+	{
+		globalUniformData_.dirLightData = light.uniformData_;
+	}
+
+	globalUniformData_.viewPos = Scene::getSingleton().getCurrentCamera().entity_->getComponent<Transform>().position_;
+
+	void* data;
+	vmaMapMemory(allocator_, globalUniformBuffer_[imageIndex].mem_, &data);
+	memcpy(data, &globalUniformData_, sizeof(GlobalUniformData));
+	vmaUnmapMemory(allocator_, globalUniformBuffer_[imageIndex].mem_);
+}
+
 void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 {
-	PipelineCreateInfo createInfo = assetInstance->createInfo_;
+	const PipelineCreateInfo& createInfo = assetInstance->createInfo_;
 	auto iter = pipelineMap_.find(createInfo);
 	if (iter != pipelineMap_.end())
 	{
@@ -263,11 +298,11 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 	if (assetInstance->createInfo_.lightingEnabled)
 	{
 		VkDescriptorSetLayoutBinding uboDirLightingBinding{};
-		uboDirLightingBinding.binding = 3;
+		uboDirLightingBinding.binding = 2;
 		uboDirLightingBinding.descriptorCount = 1; //number of elements in ubo array
 		uboDirLightingBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		uboDirLightingBinding.pImmutableSamplers = nullptr;
-		uboDirLightingBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+		uboDirLightingBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 		descriptorSetLayoutBindings.push_back(uboDirLightingBinding);
 	}
@@ -301,6 +336,11 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 		bufferInfo.range = assetInstance->sizeOfUniformData_;
 		descriptorSetSize++;
 
+		VkDescriptorBufferInfo lightingBufferInfo{};
+		lightingBufferInfo.buffer = globalUniformBuffer_[i].buffer_;
+		lightingBufferInfo.offset = 0;
+		lightingBufferInfo.range = sizeof(GlobalUniformData);
+
 		VkDescriptorImageInfo imageInfo{};
 		if (assetInstance->asset_->texture_)
 		{
@@ -309,6 +349,8 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 			imageInfo.sampler = assetInstance->asset_->texture_->resources_.sampler_;
 			descriptorSetSize++;
 		}
+
+		if (assetInstance->createInfo_.lightingEnabled) descriptorSetSize++;
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites{};
 		descriptorWrites.resize(descriptorSetSize);
@@ -332,10 +374,20 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 			descriptorWrites[1].pImageInfo = &imageInfo;
 		}
 
+		if (assetInstance->createInfo_.lightingEnabled)
+		{
+
+			descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[2].dstSet = assetInstance->data_.descriptorSets_[i];
+			descriptorWrites[2].dstBinding = 2;
+			descriptorWrites[2].dstArrayElement = 0;
+			descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[2].descriptorCount = 1;
+			descriptorWrites[2].pBufferInfo = &lightingBufferInfo;
+		}
+
 		vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
-
-
 }
 
 void VkRenderer::recreateSwapchain()
@@ -480,7 +532,7 @@ void VkRenderer::init()
 	
 	createDefaultFramebuffers();
 
-	//initPipelines();
+	createGlobalUniformBuffers();
 
 	createSynchronizationResources();
 
@@ -1304,7 +1356,8 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector
 		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
 	}
 
-	//drawObjects(cmdBuffer_, 0, objectsToDraw);
+	uploadGlobalUniformData(swapchainImageIndex, lightSources);
+
 	drawAssetInstances(cmdBuffer_, swapchainImageIndex, assetInstancesToDraw);
 	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);
 	ui_->renderFrame(cmdBuffer_);//draw UI last

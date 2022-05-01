@@ -7,9 +7,10 @@ Console* Console::instance_ = nullptr;
 Console::Console(Application* application)
 {
 	application->addEventCallback(ENGINE_EVENT_CALLBACK(Console::handleEvent));
-    addFloatVar("a", 0.0f);
-    addBoolVar("abc", false);
-    addIntVar("abcd", 2);
+    addFloatVar("test.float", 0.0f);
+    addBoolVar("test.bool", false);
+    addIntVar("test.int", 2);
+	addVec3Var("test.vec3", { 1.0f, 0.0f, 2.0f });
 }
 
 void Console::handleEvent(Events::Event& currEvent)
@@ -20,15 +21,19 @@ void Console::handleEvent(Events::Event& currEvent)
 
 void Console::handleKeyPressedEvent(Events::KeyPressedEvent& keyPressedEvent)
 {
-	if (keyPressedEvent.KeyCode == GLFW_KEY_F1)
+	switch (keyPressedEvent.KeyCode)
+	{
+	case GLFW_KEY_F1:
 	{
 		shouldDraw_ = !shouldDraw_;
+		break;
+	}
 	}
 }
 
-void Console::addFloatVar(std::string command, float variableDefault)
+void Console::addFloatVar(std::string command, float variableDefault, CallbackFunc func)
 {
-	CommandVar commandVar = { CommandType_float, variableDefault };
+	CommandVar commandVar = { CommandType_float, variableDefault, func };
 	commandDataMap_.insert({ command, commandVar });
 }
 
@@ -43,9 +48,9 @@ float Console::getFloatVar(std::string command)
 	return 0.0f;
 }
 
-void Console::addIntVar(std::string command, int variableDefault)
+void Console::addIntVar(std::string command, int variableDefault, CallbackFunc func)
 {
-    CommandVar commandVar = { CommandType_int, variableDefault };
+    CommandVar commandVar = { CommandType_int, variableDefault, func };
     commandDataMap_.insert({ command, commandVar });
 }
 
@@ -60,9 +65,9 @@ int Console::getIntVar(std::string command)
     return 0;
 }
 
-void Console::addBoolVar(std::string command, bool variableDefault)
+void Console::addBoolVar(std::string command, bool variableDefault, CallbackFunc func)
 {
-    CommandVar commandVar = { CommandType_bool, variableDefault };
+    CommandVar commandVar = { CommandType_bool, variableDefault, func};
     commandDataMap_.insert({ command, commandVar });
 }
 
@@ -75,6 +80,21 @@ bool Console::getBoolVar(std::string command)
     }
     return false;
 }
+
+void Console::addVec3Var(std::string command, glm::vec3 variableDefault, CallbackFunc func)
+{
+	CommandVar commandVar{};
+	commandVar.type = CommandType_vec3;
+	commandVar.data.vec3Data = variableDefault;
+	commandVar.func = func;
+	commandDataMap_.insert({ command, commandVar });
+}
+
+glm::vec3 Console::getVec3Var(std::string command)
+{
+	return commandDataMap_[command].data.vec3Data;
+}
+
 
 void Console::update()
 {
@@ -132,6 +152,31 @@ void Console::inputTextCallback(ImGuiInputTextCallbackData* data)
         candidates_.clear();
         break;
     }
+	case ImGuiInputTextFlags_CallbackHistory:
+	{
+        std::string currString(data->Buf);
+		if (data->EventKey == ImGuiKey_UpArrow)
+		{
+			if (history_[currHistory_] != "")
+			{
+				data->DeleteChars(0, currString.size());
+				data->InsertChars(0, history_[currHistory_].c_str());
+				currHistory_ = (currHistory_ - 1);
+				if (currHistory_ < 0) currHistory_ = HISTORY_SIZE - 1;
+			}
+		}
+		else if (data->EventKey == ImGuiKey_DownArrow)
+		{
+			int checkIndex = (currHistory_ + 1) % HISTORY_SIZE;
+			if (history_[checkIndex] != "")
+			{
+				data->DeleteChars(0, currString.size());
+				data->InsertChars(0, history_[checkIndex].c_str());
+				currHistory_ = checkIndex;
+			}
+		}
+		break;
+	}
     }
 }
 
@@ -153,7 +198,7 @@ void Console::drawConsole()
         ImGui::EndPopup();
     }
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1)); // Tighten spacing
-    for (auto item : commandHistory_)
+    for (auto item : consoleOutput_)
     {
         ImVec4 color;
         bool has_color = false;
@@ -168,15 +213,18 @@ void Console::drawConsole()
     ImGui::EndChild();
     ImGui::Separator();
 
-    ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackEdit;
+    ImGuiInputTextFlags inputTextFlags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackEdit | ImGuiInputTextFlags_CallbackHistory;
     char inputBuf[256];
     memset(inputBuf, 0, sizeof(inputBuf));
     ImGui::SetKeyboardFocusHere();
     if (ImGui::InputText("Input", inputBuf, IM_ARRAYSIZE(inputBuf), inputTextFlags, &staticInputTextCallback, nullptr))
     {
-        bool printVal = false;
-        commandHistory_.insert(commandHistory_.begin(), inputBuf);
         std::string str(inputBuf);
+		history_[historyHead_] = str;
+		currHistory_ = historyHead_;
+		historyHead_ = (historyHead_ + 1) % HISTORY_SIZE;
+        bool printVal = false;
+        consoleOutput_.insert(consoleOutput_.begin(), inputBuf);
         std::string commandStr;
         std::string val;
         size_t found = str.find(' ');
@@ -200,7 +248,7 @@ void Console::drawConsole()
                 case CommandType_bool:
                     if (printVal)
                     {
-                        commandHistory_.insert(commandHistory_.begin() , command.second.data.boolData ? "true" : "false");
+                        consoleOutput_.insert(consoleOutput_.begin() , command.second.data.boolData ? "true" : "false");
                     }
                     else
                     {
@@ -217,7 +265,7 @@ void Console::drawConsole()
                 case CommandType_float:
                     if (printVal)
                     {
-                        commandHistory_.insert(commandHistory_.begin(), std::to_string(command.second.data.floatData));
+                        consoleOutput_.insert(consoleOutput_.begin(), std::to_string(command.second.data.floatData));
                     }
                     else
                     {
@@ -227,14 +275,49 @@ void Console::drawConsole()
                 case CommandType_int:
                     if (printVal)
                     {
-                        commandHistory_.insert(commandHistory_.begin(), std::to_string(command.second.data.intData));
+                        consoleOutput_.insert(consoleOutput_.begin(), std::to_string(command.second.data.intData));
                     }
                     else
                     {
                         command.second.data.intData = std::stoi(val);
                     }
                     break;
+				case CommandType_vec3:
+					if (printVal)
+					{
+						std::string output = "";
+						const glm::vec3& val = command.second.data.vec3Data;
+						output = "x: " + std::to_string(val.x) + " y: " + std::to_string(val.y) + " z: " + std::to_string(val.z);
+						consoleOutput_.insert(consoleOutput_.begin(), output);
+					}
+					else
+					{
+						glm::vec3 setVal = { 0.0f, 0.0f, 0.0f };
+						int valIdx = 0;
+						std::string valStr;
+						for (int charIdx = 0; charIdx < val.size(); charIdx++)
+						{
+							if (val[charIdx] != ' ')
+							{
+								valStr += val[charIdx];
+								continue;
+							}
+							setVal[valIdx++] = std::stof(valStr);
+							valStr.clear();
+						}
+						if (valIdx < 3)
+						{
+							setVal[valIdx] = std::stof(valStr);
+						}
+						command.second.data.vec3Data = setVal;
+					}
+					break;
                 }
+
+				if (!printVal && command.second.func)
+				{
+					command.second.func(command.first, &command.second);
+				}
             }
         }
     }

@@ -7,6 +7,7 @@
 #include "../ArenaWallBehavior.h"
 #include "Input.h"
 #include "../FighterSandbox/AttackTypes.h"
+#include "Console/Console.h"
 
 FightingAppState::FightingAppMode FightingAppState::mode_ = FightingAppState::NORMAL;
 
@@ -27,6 +28,7 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	initArena();
 	initCamera();
 	initColliderLayers();
+	initConsoleCommands();
 	Input::getSingleton().addButton("Escape", GLFW_KEY_ESCAPE);
 	gameStateManager_ = new GameStateManager(fighters_[0], fighters_[1], debugDrawManager, *arena_);
 }
@@ -64,6 +66,14 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 
 	transform1.lookAt(pos2 - pos1);
 	transform2.lookAt(pos1 - pos2);
+
+	Entity* dirLightEntity = scene_->addEntity("DirLight");
+	dirLightEntity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
+	LightSource& lightSource = dirLightEntity->addComponent<LightSource>(dirLightEntity);
+	lightSource.uniformData_.ambient = { 1.0f, 1.0f, 1.0f };
+	lightSource.uniformData_.diffuse = { 1.0f, 1.0f, 1.0f };
+	lightSource.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	lightSource.uniformData_.direction = { 0.0f, -1.0f, 0.0f };
 
 	//const std::string arenaBackground = "./Models/viking_room.obj";
 	//const std::string arenaBackgroundTexturePath = "./Textures/viking_room.png";
@@ -161,4 +171,35 @@ AppState* FightingAppState::update(float deltaTime)
 	gameStateManager_->update(deltaTime);
 	checkInput();
 	return nullptr;
+}
+
+void FightingAppState::consoleCommandCallback(std::string command, CommandVar* commandVar)
+{
+
+	std::vector<Entity*> dirLights;
+	scene_->getEntities("DirLight", dirLights);
+	for (auto iter : dirLights)
+	{
+		LightSource& lightSource = iter->getComponent<LightSource>();
+		if (command == "dirlight.ambient")
+		{
+			lightSource.uniformData_.ambient = commandVar->data.vec3Data;
+		}
+		else if (command == "dirlight.diffuse")
+		{
+			lightSource.uniformData_.diffuse = commandVar->data.vec3Data;
+		}
+		else if (command == "dirlight.direction")
+		{
+			lightSource.uniformData_.direction = commandVar->data.vec3Data;
+		}
+	}
+}
+
+void FightingAppState::initConsoleCommands()
+{
+	Console* console = Console::getInstance();
+	console->addVec3Var("dirlight.ambient", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("dirlight.diffuse", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("dirlight.direction", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
 }

@@ -10,6 +10,8 @@
 #include "../GameStateManager.h"
 #include "Scene/Components/Behavior.h"
 
+struct CommandVar;
+
 class FightingAppState :
 	public AppState
 {
@@ -24,6 +26,7 @@ public:
 	~FightingAppState();
 	virtual void enterState();
 	virtual AppState* update(float deltaTime);
+	void consoleCommandCallback(std::string command, CommandVar* commandVar);
 	void generateArenaBackground();
 	static bool isFrameByFrameModeActive();//HACK
 
@@ -32,6 +35,7 @@ private:
 	void initArena();
 	void initCamera();
 	void initColliderLayers();
+	void initConsoleCommands();
 	void checkInput();
 
 private:

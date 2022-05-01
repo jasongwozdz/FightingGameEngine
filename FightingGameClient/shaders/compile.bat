@@ -6,6 +6,8 @@ C:/VulkanSDK/Bin32/glslc.exe imgui.vert -o imgui.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe imgui.frag -o imgui.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe animatedMesh.vert -o animatedMesh.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe animatedMesh.frag -o animatedMesh.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe animatedMeshLighting.vert -o animatedMeshLighting.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe animatedMeshLighting.frag -o animatedMeshLighting.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe gui2d.vert -o gui2d.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe gui2d.frag -o gui2d.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe debug.vert -o debug.vert.spv

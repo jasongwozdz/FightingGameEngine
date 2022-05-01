@@ -18,8 +18,16 @@ AssetInstance::AssetInstance(Asset* asset) :
 	if (asset->skeleton_)
 	{
 		createInfo_.hasSkeleton = true;
-		createInfo_.vertexShader = "./shaders/animatedMesh.vert.spv";
-		createInfo_.fragmentShader = "./shaders/animatedMesh.frag.spv";
+		if (!createInfo_.lightingEnabled)
+		{
+			createInfo_.vertexShader = "./shaders/animatedMesh.vert.spv";
+			createInfo_.fragmentShader = "./shaders/animatedMesh.frag.spv";
+		}
+		else
+		{
+			createInfo_.vertexShader = "./shaders/animatedMeshLighting.vert.spv";
+			createInfo_.fragmentShader = "./shaders/animatedMeshLighting.frag.spv";
+		}
 	}
 	createInfo_.hasTexture = asset->texture_;
 	init();

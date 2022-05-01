@@ -10,19 +10,6 @@ ControllableCameraBehavior::ControllableCameraBehavior(Entity* entity) :
 	entity_->getComponent<Camera>().fovAngleInDegrees_ = 60.0f;
 }
 
-glm::vec3 calculateMidPoint()
-{
-	std::vector<Entity*> fighters = Scene::getSingleton().getEntities("Fighter");
-	std::vector<glm::vec3> positions;
-	for (Entity* entity : fighters)
-	{
-		positions.push_back(entity->getComponent<Transform>().position_);
-	}
-	glm::vec3 midPoint = positions[0] + positions[1];
-	midPoint *= 0.5f;
-	return(midPoint);
-}
-
 void ControllableCameraBehavior::update()
 {
 	handleKeyInput();
