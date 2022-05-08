@@ -15,7 +15,7 @@ void GameBase::onStartup()
 	inputHandler_ = new InputHandler();
 	inputHandlerRight_ = new InputHandler(FightingGameInput::Side::rightSide);
 	
-	characterSelectAppState_ = new CharacterSelectAppState({ "..\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim" }, inputHandler_, inputHandlerRight_, debugManager_, this);
+	characterSelectAppState_ = new CharacterSelectAppState({ "..\\FighterFiles\\NewFighter\\BasicFighter.fgAnim" }, inputHandler_, inputHandlerRight_, debugManager_, this);
 	currentAppState_ = AppState::transitionAppState(characterSelectAppState_);
 	addEventCallback(ENGINE_EVENT_CALLBACK(GameBase::onEvent));
 }
@@ -26,7 +26,6 @@ GameBase::~GameBase()
 	delete inputHandlerRight_;
 	delete characterSelectAppState_;
 }
-
 
 void GameBase::handleKeyButtonDown(Events::KeyPressedEvent& e)
 {

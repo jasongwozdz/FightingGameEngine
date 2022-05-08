@@ -15,6 +15,7 @@ void MoveHandler::setMove(MoveHandler::FighterType fighter, MoveHandler::MoveTyp
 	MoveInfoComponent& moveInfoComponent = fighter->entity_->getComponent<MoveInfoComponent>();
 	currentMove_ = moveInfoComponent.moveInfo_;
 	currentMove_->hit_ = false;
+	currentMove_->numHits_ = 0;
 	cancelMoveInto_ = nullptr;
 	nextMove_ = nullptr;
 	fighter->entity_->getComponent<Animator>().setAnimation(moveInfo->animationName_);

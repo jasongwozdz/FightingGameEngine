@@ -116,6 +116,8 @@ struct MoveInfo
 	std::string animationName_;
 	std::map<int, std::vector<std::string>> cancelMap_;
 	MoveState moveState_;
+	int totalHits_ = 1;
+	int numHits_ = 0;
 	bool hit_ = false;//set by other fighter when this attack hits
 };
 

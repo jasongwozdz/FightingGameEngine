@@ -59,18 +59,8 @@ BaseFighterState* CrouchingFighterState::handleAttackInput(Fighter* fighter)
 }
 
 
-BaseFighterState* CrouchingFighterState::onHit(Fighter* fighter, OnHitType attack)
+BaseFighterState* CrouchingFighterState::onHit(Fighter* fighter, OnHitType hitEffect)
 {
-	//if (isFighterHoldingBack(fighter))
-	//{
-	//	static_cast<BlockingFighterState*>(fighter->blockedFighterState_)->hitByAttack_ = attack;
-	//	return fighter->blockedFighterState_;
-	//}
-	//else
-	//{
-	//	fighter->takeDamage(attack->damage);
-	//	static_cast<HitFighterState*>(fighter->hitFighterState_)->hitByAttack_ = attack;
-	//	return fighter->hitFighterState_;
-	//}
-	return nullptr;
+	fighter->hitFighterState_->hitByEffect_ = hitEffect;
+	return fighter->hitFighterState_;
 }

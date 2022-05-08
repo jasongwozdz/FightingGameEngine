@@ -35,9 +35,8 @@ public:
 	static VkRenderer* getSingletonPtr();
 	VkRenderer(Window& window);
 	void init();
-	void draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const std::vector<LightSource>& lightSources);
+	void draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const DirLight& dirLight, const std::vector<PointLight>& pointLights);
 	void cleanup();
-	void uploadObject(Renderable* renderableObject);
 	void uploadMesh(Renderable* mesh);
 	void uploadStaticMeshData(Renderable* mesh);
 
@@ -47,37 +46,16 @@ public:
 	void uploadStaticMeshData(std::vector<VertexType> verticies, std::vector<uint32_t> indicies, VulkanBuffer* vertexBuffer, VulkanBuffer* indexBuffer);
 	
 	void uploadTextureData(Textured* texture);
-	void uploadObject(Renderable* renderableObject, Textured* texture, bool animated = false);
 	void prepareFrame();
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
 	void updateUniformBuffer(Renderable& mesh);
 	VkShaderModule createShaderModule(std::string shaderPath);
-	//VkShaderModule createShaderModule(const std::vector<char>& code);
 	std::vector<char> readShaderFile(const std::string& filename);
 	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
 
 
 	template<typename UniformDataType>
 	void uploadDynamicData(AssetInstance* assetInstance);
-	//{
-	//	std::vector<DynamicMeshData<UniformDataType>>& data =  assetInstance->data_;
-	//	//======= Uniform ======
-	//	size_t uniformBufferSize = sizeof(UniformDataType);
-	//	VkBufferCreateInfo uBufferInfo{};
-	//	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	//	uBufferInfo.pNext = nullptr;
-	//	uBufferInfo.size = uniformBufferSize;
-	//	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-
-	//	VmaAllocationCreateInfo vmaInfo{};
-	//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-
-	//	data.resize(swapChainResources_.imageCount_);
-	//	for (int i = 0; i < swapChainResources_.imageCount_; i++)
-	//	{
-	//		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &data[i].uniformData_.buffer , &data[i].uniformData_.mem_, nullptr));
-	//	}
-	//};
 	
 	template<class T> T* addRenderSubsystem()
 	{
@@ -137,7 +115,6 @@ public:
 	VkFence renderFence_;
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
-	//std::vector<PipelineResources*> pipelines_;
 	VkDescriptorPool descriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
 	std::vector<RenderSubsystemInterface*> renderSubsystems_;
@@ -148,16 +125,14 @@ private:
 	void createDefaultFramebuffers();
 	void createSwapchainResources();
 	void createSynchronizationResources();
-	void drawObjects(VkCommandBuffer currentCommandBuffer, int imageIndex, std::vector<Renderable*>& objectsToDraw);
 	void drawAssetInstances(VkCommandBuffer currentCommandBuffer, int imageIndex, const std::vector<AssetInstance*> &assetInstancesToDraw);
-	void initPipelines();
 	void createDescriptorSet(Renderable* object);
 	void createTextureResources(Renderable& o, Textured& texture);
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 	void recreateSwapchain();
 	void cleanupSwapchain();
 	void createGlobalUniformBuffers();
-	void uploadGlobalUniformData(int imageIndex, const std::vector<LightSource>& lightSources);
+	void uploadGlobalUniformData(int imageIndex, const DirLight& dirLight, const std::vector<PointLight>& pointLights);
 
 	template<typename UniformDataType>
 	void createUniformBuffers(AssetInstance* assetInstance);
@@ -174,7 +149,8 @@ private:
 	struct GlobalUniformData
 	{
 		alignas(16) glm::vec3 viewPos;
-		LightSource::DirLightUniformData dirLightData;
+		DirLight::DirLightUniformData dirLightData;
+		PointLight::PointLightUniformData pointLightData;
 	};
 	GlobalUniformData globalUniformData_;
 	std::vector<VulkanBuffer> globalUniformBuffer_;

@@ -149,7 +149,7 @@ void Fighter::onCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollid
 				Fighter* otherFighter = Fighter::getFighterComp(otherEnt);
 				MoveInfo* currentMove = entity_->getComponent<MoveInfoComponent>().moveInfo_;
 				_ASSERT(currentMove);//there should always be a current move set in this case
-				if (!currentMove->hit_)
+				if (currentMove->numHits_++ < currentMove->totalHits_)
 				{
 					currentMove->hit_ = true;
 					otherFighter->onAttackHit(currentMove->hitEffect_);
@@ -175,5 +175,17 @@ void Fighter::onExitCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCo
 	//	std::cout << "exit collision" << std::endl;
 	//	colldingWithFighter = false;
 	//}
+}
+
+bool Fighter::isBlocking()
+{
+	if (side_ == left)
+	{
+		return inputHandler_.currentMovementInput_.x == -1;
+	}
+	else
+	{
+		return inputHandler_.currentMovementInput_.x == 1;
+	}
 }
 

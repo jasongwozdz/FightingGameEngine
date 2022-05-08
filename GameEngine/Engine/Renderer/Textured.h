@@ -12,7 +12,6 @@
 
 struct ENGINE_API Textured
 {
-public:
 	Textured(std::vector<unsigned char> pixels, int textureWidth, int textureHeight, int textureChannels) :
 		pixels_(pixels),
 		textureWidth_(textureWidth),

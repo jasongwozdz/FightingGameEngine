@@ -52,8 +52,6 @@ private:
 	ResourceManager* resourceManager_;
 	DebugDrawManager* debugDrawManager_;
 
-	//Fighter* fighter_;
-	//Fighter* fighter2_;
 	std::vector<Entity*> fighters_;
 
 	Entity* fightingGameCamera_;
@@ -62,7 +60,7 @@ private:
 	bool drawDebug_ = false;//should debug be drawn
 	bool cursor_ = false;//is cursour disabled;
 	class Scene* scene_;
-	class Arena* arena_;
+	struct Arena* arena_;
 	static FightingAppMode mode_;//HACK
 };
 

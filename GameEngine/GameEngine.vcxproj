@@ -249,7 +249,6 @@
     <ClCompile Include="Engine\Scene\Behaviors\ControllableCameraBehavior.cpp" />
     <ClCompile Include="Engine\Scene\Components\Animator.cpp" />
     <ClCompile Include="Engine\Scene\Components\BoneStructure.cpp" />
-    <ClCompile Include="Engine\Scene\Components\LightSource.cpp" />
     <ClCompile Include="Engine\Scene\Components\Transform.cpp" />
     <ClCompile Include="Engine\Scene\Entity.cpp" />
     <ClCompile Include="Engine\Scene\Scene.cpp" />

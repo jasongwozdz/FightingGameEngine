@@ -26,7 +26,6 @@ union CommandData
 	float floatData;
 	int intData;
 	glm::vec3 vec3Data;
-	void(*funcData)(void);
 };
 
 struct CommandVar;
@@ -37,7 +36,7 @@ struct CommandVar
 {
 	CommandType type;
 	CommandData data;
-	CallbackFunc func = nullptr;
+	CallbackFunc func;
 };
 
 class ENGINE_API Console
@@ -54,18 +53,19 @@ public:
 	void handleEvent(Events::Event& currEvent);
 	void handleKeyPressedEvent(Events::KeyPressedEvent& keyPressedEvent);
 
-	void addFloatVar(std::string command, float variableDefault, CallbackFunc func = nullptr);
-	float getFloatVar(std::string comamnd);
-	void addIntVar(std::string command, int variableDefault, CallbackFunc func = nullptr);
-	int getIntVar(std::string command);
-	void addBoolVar(std::string command, bool variableDefault, CallbackFunc func = nullptr);
-	bool getBoolVar(std::string command);
-	void addVec3Var(std::string command, glm::vec3 variableDefault, CallbackFunc func = nullptr);
-	glm::vec3 getVec3Var(std::string command);
+	static void addFloatVar(std::string command, float variableDefault, CallbackFunc func = nullptr);
+	static float getFloatVar(std::string comamnd);
+	static void addIntVar(std::string command, int variableDefault, CallbackFunc func = nullptr);
+	static int getIntVar(std::string command);
+	static void addBoolVar(std::string command, bool variableDefault, CallbackFunc func = nullptr);
+	static bool getBoolVar(std::string command);
+	static void addVec3Var(std::string command, glm::vec3 variableDefault, CallbackFunc func = nullptr);
+	static glm::vec3 getVec3Var(std::string command);
 
 	void update();
 
 	void inputTextCallback(ImGuiInputTextCallbackData* data);
+
 
 private:
 	void drawConsole();
@@ -74,8 +74,8 @@ private:
 
 	static Console* instance_;
 	bool shouldDraw_ = false;
-	std::unordered_map<std::string, CommandVar> commandDataMap_;
 	std::vector<std::string> candidates_;//candidates for likely command matches
+	static std::unordered_map<std::string, CommandVar> commandDataMap_;
 	int currCandidate_;
 #define HISTORY_SIZE 3 
 	std::string history_[HISTORY_SIZE] = { "" };

@@ -3,6 +3,7 @@
 #include "../libs/imgui/imgui.h"
 
 Console* Console::instance_ = nullptr;
+std::unordered_map<std::string, CommandVar> Console::commandDataMap_;
 
 Console::Console(Application* application)
 {
@@ -67,7 +68,11 @@ int Console::getIntVar(std::string command)
 
 void Console::addBoolVar(std::string command, bool variableDefault, CallbackFunc func)
 {
-    CommandVar commandVar = { CommandType_bool, variableDefault, func};
+	CommandVar commandVar;
+	commandVar.type = CommandType_bool;
+	commandVar.data.boolData = variableDefault;
+	commandVar.func = func;
+
     commandDataMap_.insert({ command, commandVar });
 }
 

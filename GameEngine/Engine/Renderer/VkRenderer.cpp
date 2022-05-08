@@ -76,11 +76,13 @@ void VkRenderer::createGlobalUniformBuffers()
 	}
 }
 
-void VkRenderer::uploadGlobalUniformData(int imageIndex, const std::vector<LightSource>& lightSources)
+void VkRenderer::uploadGlobalUniformData(int imageIndex, const DirLight& dirLight, const std::vector<PointLight>& pointLights)
 {
-	for (auto light : lightSources)
+	globalUniformData_.dirLightData = dirLight.uniformData_;
+	//for now only support one point light so loop is useless
+	for (auto pointLight : pointLights)
 	{
-		globalUniformData_.dirLightData = light.uniformData_;
+		globalUniformData_.pointLightData = pointLight.uniformData_;
 	}
 
 	globalUniformData_.viewPos = Scene::getSingleton().getCurrentCamera().entity_->getComponent<Transform>().position_;
@@ -273,9 +275,10 @@ template<typename UniformDataType>
 void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 {
 	std::vector<VkDescriptorSetLayoutBinding> descriptorSetLayoutBindings;
+	int bindingIndex = 0;
 
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.binding = bindingIndex++;
 	uboLayoutBinding.descriptorCount = 1; //number of elements in ubo array
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	uboLayoutBinding.pImmutableSamplers = nullptr;
@@ -286,7 +289,7 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 	if (assetInstance->asset_->texture_)
 	{
 		VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-		samplerLayoutBinding.binding = 1;
+		samplerLayoutBinding.binding = bindingIndex++;
 		samplerLayoutBinding.descriptorCount = 1;
 		samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		samplerLayoutBinding.pImmutableSamplers = nullptr;
@@ -298,7 +301,7 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 	if (assetInstance->createInfo_.lightingEnabled)
 	{
 		VkDescriptorSetLayoutBinding uboDirLightingBinding{};
-		uboDirLightingBinding.binding = 2;
+		uboDirLightingBinding.binding = bindingIndex++;
 		uboDirLightingBinding.descriptorCount = 1; //number of elements in ubo array
 		uboDirLightingBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		uboDirLightingBinding.pImmutableSamplers = nullptr;
@@ -354,36 +357,40 @@ void VkRenderer::allocateDescriptorSet(AssetInstance* assetInstance)
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites{};
 		descriptorWrites.resize(descriptorSetSize);
+		int descriptorWriteIdx = 0;
 
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].dstSet = assetInstance->data_.descriptorSets_[i];
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
+		descriptorWrites[descriptorWriteIdx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrites[descriptorWriteIdx].dstSet = assetInstance->data_.descriptorSets_[i];
+		descriptorWrites[descriptorWriteIdx].dstBinding = descriptorWriteIdx;
+		descriptorWrites[descriptorWriteIdx].dstArrayElement = 0;
+		descriptorWrites[descriptorWriteIdx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		descriptorWrites[descriptorWriteIdx].descriptorCount = 1;
+		descriptorWrites[descriptorWriteIdx].pBufferInfo = &bufferInfo;
+		descriptorWriteIdx++;
 
 		if (assetInstance->asset_->texture_)
 		{
-			descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[1].dstSet = assetInstance->data_.descriptorSets_[i];
-			descriptorWrites[1].dstBinding = 1;
-			descriptorWrites[1].dstArrayElement = 0;
-			descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrites[1].descriptorCount = 1;
-			descriptorWrites[1].pImageInfo = &imageInfo;
+			descriptorWrites[descriptorWriteIdx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[descriptorWriteIdx].dstSet = assetInstance->data_.descriptorSets_[i];
+			descriptorWrites[descriptorWriteIdx].dstBinding = descriptorWriteIdx;
+			descriptorWrites[descriptorWriteIdx].dstArrayElement = 0;
+			descriptorWrites[descriptorWriteIdx].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrites[descriptorWriteIdx].descriptorCount = 1;
+			descriptorWrites[descriptorWriteIdx].pImageInfo = &imageInfo;
+			descriptorWriteIdx++;
 		}
 
 		if (assetInstance->createInfo_.lightingEnabled)
 		{
 
-			descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrites[2].dstSet = assetInstance->data_.descriptorSets_[i];
-			descriptorWrites[2].dstBinding = 2;
-			descriptorWrites[2].dstArrayElement = 0;
-			descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrites[2].descriptorCount = 1;
-			descriptorWrites[2].pBufferInfo = &lightingBufferInfo;
+			descriptorWrites[descriptorWriteIdx].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrites[descriptorWriteIdx].dstSet = assetInstance->data_.descriptorSets_[i];
+			descriptorWrites[descriptorWriteIdx].dstBinding = descriptorWriteIdx;
+			descriptorWrites[descriptorWriteIdx].dstArrayElement = 0;
+			descriptorWrites[descriptorWriteIdx].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			descriptorWrites[descriptorWriteIdx].descriptorCount = 1;
+			descriptorWrites[descriptorWriteIdx].pBufferInfo = &lightingBufferInfo;
+			descriptorWriteIdx++;
 		}
 
 		vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
@@ -1311,13 +1318,12 @@ VkShaderModule VkRenderer::createShaderModule(std::string shaderPath)
 //	vmaUnmapMemory(allocator_, renderable.uniformMem_[frameNumber_%swapChainResources_.imageCount_]);
 //}
 
-void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const std::vector<LightSource>& lightSources)
+void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const DirLight& dirLight, const std::vector<PointLight>& pointLights)
 {
 	if (recreateSwapchain_)
 	{
 		recreateSwapchain_ = false;
 		recreateSwapchain();
-		
 		return;
 	}
 
@@ -1356,7 +1362,7 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector
 		renderSubsystem->renderFrame(cmdBuffer_, swapchainImageIndex);
 	}
 
-	uploadGlobalUniformData(swapchainImageIndex, lightSources);
+	uploadGlobalUniformData(swapchainImageIndex, dirLight, pointLights);
 
 	drawAssetInstances(cmdBuffer_, swapchainImageIndex, assetInstancesToDraw);
 	debugDrawManager_->renderFrame(cmdBuffer_, swapchainImageIndex);

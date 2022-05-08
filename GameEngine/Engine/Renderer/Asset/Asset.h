@@ -31,6 +31,6 @@ public:
 private:
 	//class Renderable* mesh_;
 	MeshData mesh_;
-	class Textured* texture_;
+	struct Textured* texture_;
 	class BoneStructure* skeleton_;
 };

@@ -66,7 +66,7 @@ namespace Events
 	{
 		int mouseCode;
 
-		MousePressedEvent(float keyCode) :
+		MousePressedEvent(int keyCode) :
 			mouseCode(keyCode){}
 
 		EVENT_TYPE_FUNCS(MousePressed)
@@ -76,7 +76,7 @@ namespace Events
 	{
 		int mouseCode;
 
-		MouseReleasedEvent(float keyCode) :
+		MouseReleasedEvent(int keyCode) :
 			mouseCode(keyCode){}
 
 		EVENT_TYPE_FUNCS(MouseReleased)

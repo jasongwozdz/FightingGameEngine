@@ -3,17 +3,43 @@
 #include "../Entity.h"
 #include "../../EngineExport.h"
 
-class ENGINE_API LightSource
+class ENGINE_API DirLight
 {
 public:
-	LightSource(Entity* entity);
+	DirLight() = default;
+
+	DirLight(Entity* entity) :
+		entity_(entity) {};
 
 	struct DirLightUniformData {
-		alignas(16) glm::vec3 direction;
-		alignas(16) glm::vec3 ambient;
-		alignas(16) glm::vec3 diffuse;
-		alignas(16) glm::vec3 specular;
+		alignas(16) glm::vec3 direction = { 0.0f, 0.0f, 0.0f };
+		alignas(16) glm::vec3 ambient = { 0.0f, 0.0f, 0.0f };
+		alignas(16) glm::vec3 diffuse = { 0.0f, 0.0f, 0.0f } ;
+		alignas(16) glm::vec3 specular = { 0.0f, 0.0f, 0.0f } ;
 	};
-	Entity* entity_;
+	Entity* entity_ = nullptr;
 	DirLightUniformData uniformData_;
+};
+
+class ENGINE_API PointLight
+{
+public:
+	PointLight() = default;
+
+	PointLight(Entity* entity) :
+		entity_(entity) {};
+
+	struct PointLightUniformData 
+	{
+		alignas(4)  float constant = 1.0f;
+		alignas(4)  float linear = 0.09f;
+		alignas(4)  float quadratic = 0.03f;
+		alignas(16) glm::vec3 position = { 0.0f, 0.0f, 0.0f };
+		alignas(16) glm::vec3 ambient = { 0.0f, 0.0f, 0.0f };
+		alignas(16) glm::vec3 diffuse = { 0.0f, 0.0f, 0.0f };
+		alignas(16) glm::vec3 specular = { 0.0f, 0.0f, 0.0f };
+	};
+
+	Entity* entity_;
+	PointLightUniformData uniformData_;
 };

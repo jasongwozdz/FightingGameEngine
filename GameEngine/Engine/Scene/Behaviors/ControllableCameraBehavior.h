@@ -1,11 +1,6 @@
 #pragma once
 #include "../Components/Behavior.h"
-
-#ifdef ENGINE_EXPORTS
-#define ENGINE_API __declspec(dllexport)
-#else
-#define ENGINE_API __declspec(dllimport)
-#endif
+#include "../../EngineExport.h"
 
 class ENGINE_API ControllableCameraBehavior : public BehaviorImplementationBase
 {

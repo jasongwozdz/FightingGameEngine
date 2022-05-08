@@ -4,6 +4,7 @@
 
 #include "Transform.h"
 
+
 class Entity;
 
 class BehaviorImplementationBase
@@ -27,9 +28,9 @@ public:
 	Entity* entity_;
 
 private:
-	virtual void onCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
-	virtual void whileColliding(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
-	virtual void onExitCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void onCollision(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void whileColliding(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
+	virtual void onExitCollision(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider) {};
 	virtual void onAttach() {};//called when script is attached to entity
 	virtual void update() = 0;//called every frame
 
@@ -68,7 +69,7 @@ public:
 	template<typename T>
 	T* getBehaviorImp()
 	{
-		if (dynamic_cast<T*>(behaviorImp_))
+		if (static_cast<T*>(behaviorImp_))
 		{
 			return behaviorImp_;
 		}

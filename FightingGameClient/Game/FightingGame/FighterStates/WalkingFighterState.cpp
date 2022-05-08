@@ -58,20 +58,10 @@ BaseFighterState* WalkingFighterState::handleAttackInput(Fighter* fighter)
 	return nullptr;
 }
 
-BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, OnHitType attack)
+BaseFighterState* WalkingFighterState::onHit(Fighter* fighter, OnHitType hitEffect)
 {
-	//if (isFighterHoldingBack(fighter))
-	//{
-	//	fighter->blockedFighterState_->hitByAttack_ = attack;
-	//	return fighter->blockedFighterState_;
-	//}
-	//else
-	//{
-	//	fighter->takeDamage(attack->damage);
-	//	fighter->hitFighterState_->hitByAttack_ = attack;
-	//	return fighter->hitFighterState_;
-	//}
-	return nullptr;
+	fighter->hitFighterState_->hitByEffect_ = hitEffect;
+	return fighter->hitFighterState_;
 }
 
 void WalkingFighterState::setXSpeed(Fighter* fighter)

@@ -19,8 +19,8 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	debugDrawManager_(debugDrawManager)
 {
 	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
-	fighter1 = "..\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim";
-	fighter2 = "..\\FighterFiles\\NewFighter\\Fighter1-NewAttack - Copy.fgAnim";
+	fighter1 = "..\\FighterFiles\\NewFighter\\BasicFighter.fgAnim";
+	fighter2 = "..\\FighterFiles\\NewFighter\\BasicFighter.fgAnim";
 	inputHandlerLeft_->clearInputQueue();
 	inputHandlerRight_->clearInputQueue();
 	fighterFactory_ = new FighterFactory(*scene_);
@@ -69,21 +69,28 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 
 	Entity* dirLightEntity = scene_->addEntity("DirLight");
 	dirLightEntity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
-	LightSource& lightSource = dirLightEntity->addComponent<LightSource>(dirLightEntity);
-	lightSource.uniformData_.ambient = { 1.0f, 1.0f, 1.0f };
-	lightSource.uniformData_.diffuse = { 1.0f, 1.0f, 1.0f };
-	lightSource.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
-	lightSource.uniformData_.direction = { 0.0f, -1.0f, 0.0f };
+	DirLight& dirLight = dirLightEntity->addComponent<DirLight>(dirLightEntity);
 
-	//const std::string arenaBackground = "./Models/viking_room.obj";
-	//const std::string arenaBackgroundTexturePath = "./Textures/viking_room.png";
-	//AssetCreateInfo assetCreateInfo;
-	//assetCreateInfo.modelPath = arenaBackground;
-	//assetCreateInfo.texturePath = arenaBackgroundTexturePath;
-	//Asset* asset = resourceManager_->createAsset(assetCreateInfo);
-	//Entity* entity = scene_->addEntity("Stage");
-	//entity->addComponent<Transform>(0, 0, 0);
-	//entity->addComponent<AssetInstance>(asset);
+	Entity* pointLightEntity = scene_->addEntity("PointLight");
+	pointLightEntity->addComponent<Transform>(0.0f, 1.0f, 0.0f);
+	PointLight& pointLight = pointLightEntity->addComponent<PointLight>(pointLightEntity);
+	pointLight.uniformData_.ambient = { 0.05f, 0.05f, 0.05f };
+	pointLight.uniformData_.diffuse = { 1.0f, 1.0f, 1.0f };
+	pointLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+
+	Entity* backgroundEntity = scene_->addEntity("Background");
+	backgroundEntity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
+	AssetCreateInfo createInfo;
+	createInfo.modelPath = "Models/Background.obj";
+	//createInfo.texturePath = "Models/Shop_texturasdasdasde.png";
+	Asset* asset = resourceManager_->createAsset(createInfo);
+	backgroundEntity->addComponent<AssetInstance>(asset);
+
+	//dirLight.uniformData_.ambient = { 0.05f, 0.05f, 0.05f };
+	//dirLight.uniformData_.diffuse = { 0.7f, 0.7f, 0.7f };
+	//dirLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	//dirLight.uniformData_.direction = { 0.0f, -1.0f, 0.0f };
+
 	//generateArenaBackground();
 }
 
@@ -175,23 +182,42 @@ AppState* FightingAppState::update(float deltaTime)
 
 void FightingAppState::consoleCommandCallback(std::string command, CommandVar* commandVar)
 {
-
 	std::vector<Entity*> dirLights;
 	scene_->getEntities("DirLight", dirLights);
 	for (auto iter : dirLights)
 	{
-		LightSource& lightSource = iter->getComponent<LightSource>();
+		DirLight& dirLight = iter->getComponent<DirLight>();
 		if (command == "dirlight.ambient")
 		{
-			lightSource.uniformData_.ambient = commandVar->data.vec3Data;
+			dirLight.uniformData_.ambient = commandVar->data.vec3Data;
 		}
 		else if (command == "dirlight.diffuse")
 		{
-			lightSource.uniformData_.diffuse = commandVar->data.vec3Data;
+			dirLight.uniformData_.diffuse = commandVar->data.vec3Data;
 		}
 		else if (command == "dirlight.direction")
 		{
-			lightSource.uniformData_.direction = commandVar->data.vec3Data;
+			dirLight.uniformData_.direction = commandVar->data.vec3Data;
+		}
+	}
+
+	std::vector<Entity*> pointLights;
+	scene_->getEntities("PointLight", pointLights);
+	for (auto iter : pointLights)
+	{
+		PointLight& pointLight = iter->getComponent<PointLight>();
+		Transform& transform = iter->getComponent<Transform>();
+		if (command == "pointLight.ambient")
+		{
+			pointLight.uniformData_.ambient = commandVar->data.vec3Data;
+		}
+		else if (command == "pointLight.diffuse")
+		{
+			pointLight.uniformData_.diffuse = commandVar->data.vec3Data;
+		}
+		else if (command == "pointLight.position")
+		{
+			transform.position_ = commandVar->data.vec3Data;
 		}
 	}
 }
@@ -202,4 +228,9 @@ void FightingAppState::initConsoleCommands()
 	console->addVec3Var("dirlight.ambient", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
 	console->addVec3Var("dirlight.diffuse", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
 	console->addVec3Var("dirlight.direction", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+
+
+	console->addVec3Var("pointLight.ambient", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("pointLight.diffuse", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("pointLight.position", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
 }

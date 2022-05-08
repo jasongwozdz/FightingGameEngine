@@ -11,7 +11,7 @@
 
 class Entity;
 
-typedef void(BoxColliderCallback)(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
+typedef void(BoxColliderCallback)(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider);
 #define BIND_COLLIDER_CALLBACK(function) std::bind(&function, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 
 struct BoxCollider
@@ -61,8 +61,9 @@ struct BoxCollider
 	Entity* entity_;
 };
 
-struct Collider
+class Collider
 {
+public:
 	Collider(Entity* entity) : entity_(entity), collidersOutOfDate_(false) {};
 
 	Collider(Entity* entity, glm::vec3 size, glm::vec3 position, uint32_t layer) :

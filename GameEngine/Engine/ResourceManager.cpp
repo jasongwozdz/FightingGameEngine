@@ -492,7 +492,7 @@ TextureReturnVals& ResourceManager::loadTextureFile(const std::string& filePath)
 		pixels = stbi_load(filePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		if (!pixels) {
 			std::cout << "invalid texture path" << std::endl;
-			assert(1 == 0);
+			pixels = stbi_load(MISSING_TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		}
 		returnVals = new TextureReturnVals(pixels, texWidth, texHeight, texChannels);
 

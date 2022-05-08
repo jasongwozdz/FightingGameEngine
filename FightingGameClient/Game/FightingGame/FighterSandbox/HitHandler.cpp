@@ -32,7 +32,14 @@ bool HitHandler::updateHit(Fighter* fighter)
 void HitHandler::setHitEffect(Fighter* fighter, HitEffect hitEffect, bool attackHit)
 {
 	Animator& animator = fighter->entity_->getComponent<Animator>();
-	animator.setAnimation("Hit");
+	if (attackHit)
+	{
+		animator.setAnimation("Hit");
+	}
+	else
+	{
+		animator.setAnimation("Blocking");
+	}
 	hitEffect_ = hitEffect;
 	stunFrames_ = attackHit ? hitEffect_.hitstun_ : hitEffect_.blockstun_;
 	totalFrames_ = stunFrames_ + hitEffect.freezeFrames_;

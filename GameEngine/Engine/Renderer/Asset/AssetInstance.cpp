@@ -12,8 +12,6 @@ AssetInstance::AssetInstance(Asset* asset) :
 	createInfo_.windowExtent.height = EngineSettings::getSingleton().windowHeight;
 	createInfo_.cullingEnabled = true;
 	createInfo_.depthEnabled = true;
-	createInfo_.vertexShader = "./shaders/texturedMeshVert.spv";
-	createInfo_.fragmentShader = "./shaders/texturedMeshFrag.spv";
 	createInfo_.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	if (asset->skeleton_)
 	{
@@ -28,6 +26,29 @@ AssetInstance::AssetInstance(Asset* asset) :
 			createInfo_.vertexShader = "./shaders/animatedMeshLighting.vert.spv";
 			createInfo_.fragmentShader = "./shaders/animatedMeshLighting.frag.spv";
 		}
+	}
+	else if (asset->texture_)
+	{
+		if (!createInfo_.lightingEnabled)
+		{
+			createInfo_.vertexShader = "./shaders/texturedMeshVert.spv";
+			createInfo_.fragmentShader = "./shaders/texturedMeshFrag.spv";
+		}
+		else
+		{
+			createInfo_.vertexShader = "./shaders/texturedMeshLighting.vert.spv";
+			createInfo_.fragmentShader = "./shaders/texturedMeshLighting.frag.spv";
+		}
+	}
+	else if (createInfo_.lightingEnabled)
+	{
+		createInfo_.vertexShader = "./shaders/shaderLighting.vert.spv";
+		createInfo_.fragmentShader = "./shaders/shaderLighting.frag.spv";
+	}
+	else
+	{
+		createInfo_.vertexShader = "./shaders/vert.spv";
+		createInfo_.fragmentShader = "./shaders/frag.spv";
 	}
 	createInfo_.hasTexture = asset->texture_;
 	init();

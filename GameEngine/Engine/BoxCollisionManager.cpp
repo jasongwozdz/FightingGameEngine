@@ -3,12 +3,14 @@
 #include "Scene/Components/Transform.h"
 #include "Scene/Components/Behavior.h"
 #include "DebugDrawManager.h"
+#include "Console/Console.h"
 
 template<> BoxCollisionManager* Singleton<BoxCollisionManager>::msSingleton = 0;
 
 BoxCollisionManager::BoxCollisionManager()
 {
 	msSingleton = this;
+	Console::getInstance()->addBoolVar("Collision.EnableNewCollision", true);
 }
 
 void BoxCollisionManager::update(Scene* currentScene)
@@ -21,7 +23,14 @@ void BoxCollisionManager::update(Scene* currentScene)
 		for (int j = i+1; j < entitys.size(); j++)
 		{
 			Entity* compareEntity = entitys[j];
-			handleCollisions(currentEntity, compareEntity);
+			if (Console::getInstance()->getBoolVar("Collision.EnableNewCollision"))
+			{
+				handleCollisionsNew(currentEntity, compareEntity);
+			}
+			else
+			{
+				handleCollisions(currentEntity, compareEntity);
+			}
 		}
 	}
 
@@ -42,7 +51,64 @@ void BoxCollisionManager::update(Scene* currentScene)
 		
 		currentCollisions_.erase(key);//BUG HERE: for some reason sometimes an unhandled collision is not being erased from the map
 	}
+}
 
+void BoxCollisionManager::handleCollisionsNew(Entity* entityA, Entity* entityB)
+{
+	Collider& colliderA = entityA->getComponent<Collider>();
+	std::vector<BoxCollider>& collidersA = colliderA.colliders_;
+	Transform& transformA = entityA->getComponent<Transform>();
+
+	Collider& colliderB = entityB->getComponent<Collider>();
+	std::vector<BoxCollider>& collidersB = colliderB.colliders_;
+	Transform& transformB = entityB->getComponent<Transform>();
+	
+	struct OnCollisionParams
+	{
+		Behavior* behavior;
+		Entity* otherEntity;
+		BoxCollider thisCollider;
+		BoxCollider otherCollider;
+	};
+
+	std::vector<OnCollisionParams> collisionsToHandle;
+
+	for (int aI = 0; aI < collidersA.size(); aI++)
+	{
+		for (int bI = 0; bI < collidersB.size(); bI++)
+		{
+			BoxCollider& boxColliderA = collidersA[aI];
+			BoxCollider& boxColliderB = collidersB[bI];
+
+			drawDebug(transformA, boxColliderA);
+			drawDebug(transformB, boxColliderB);
+
+			if (!sameLayer(boxColliderA, boxColliderB))
+			{
+				continue;
+			}
+
+			if (isCollision(transformA, boxColliderA, transformB, boxColliderB))
+			{
+				Behavior* behaviorA = entityA->tryGetComponent<Behavior>();
+				if (behaviorA)
+				{
+					collisionsToHandle.push_back({ behaviorA, entityB, boxColliderA, boxColliderB });
+				}
+
+				Behavior* behaviorB = entityB->tryGetComponent<Behavior>();
+				if (behaviorB)
+				{
+					collisionsToHandle.push_back({ behaviorB, entityA, boxColliderB, boxColliderA });
+				}
+			}
+		}
+	}
+
+	for (auto param : collisionsToHandle)
+	{
+		param.behavior->onCollision(param.otherEntity, &param.thisCollider, &param.otherCollider);
+	}
 }
 
 void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
@@ -67,7 +133,7 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 
 			Key key{ &collidersA[aI], &collidersB[bI] };
 
-			if (!checkLayers(boxColliderA, boxColliderB))
+			if (!sameLayer(boxColliderA, boxColliderB))
 			{
 				continue;
 			}
@@ -78,7 +144,7 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 				collisionsNotHandled_.erase(key);
 			}
 
-			bool collisionDetected = checkCollision(transformA, boxColliderA, transformB, boxColliderB);
+			bool collisionDetected = isCollision(transformA, boxColliderA, transformB, boxColliderB);
 
 			if (collisionDetected)
 			{
@@ -143,44 +209,8 @@ void BoxCollisionManager::handleCollisions(Entity* a, Entity* b)
 	
 }
 
-bool BoxCollisionManager::checkCollision(Transform& transformA, const struct BoxCollider& colliderA, Transform& transformB, const struct BoxCollider& colliderB)
+bool BoxCollisionManager::isCollision(Transform& transformA, const struct BoxCollider& colliderA, Transform& transformB, const struct BoxCollider& colliderB)
 {
-	//glm::mat4 finalTransformA = transformA.calculateTransform();
-	//glm::mat4 finalTransformB = transformB.calculateTransform();
-
-	//glm::vec4 localMinA = {colliderA.position_.x - colliderA.size_.x/2, colliderA.position_.y - colliderA.size_.y/2, colliderA.position_.z - colliderA.size_.z/2, 1.0f};
-	//glm::vec4 localMaxA = {colliderA.position_.x + colliderA.size_.x/2, colliderA.position_.y + colliderA.size_.y/2, colliderA.position_.z + colliderA.size_.z/2, 1.0f};
-	//glm::vec3 worldMinA = finalTransformA * localMinA;
-	//glm::vec3 worldMaxA = finalTransformA * localMaxA;
-
-	//glm::vec4 localMinB = {colliderB.position_.x - colliderB.size_.x/2, colliderB.position_.y - colliderB.size_.y/2, colliderB.position_.z - colliderB.size_.z/2, 1.0f};
-	//glm::vec4 localMaxB = {colliderB.position_.x + colliderB.size_.x/2, colliderB.position_.y + colliderB.size_.y/2, colliderB.position_.z + colliderB.size_.z/2, 1.0f};
-	//glm::vec3 worldMinB = finalTransformB * localMinB;
-	//glm::vec3 worldMaxB = finalTransformB * localMaxB;
-
-	//float xMaxA = worldMaxA.x;
-	//float xMaxB = worldMaxB.x;
-	//float xMinA = worldMinA.x;
-	//float xMinB = worldMinB.x;
-
-	//float yMaxA = worldMaxA.y;
-	//float yMaxB = worldMaxB.y;
-	//float yMinA = worldMinA.y;
-	//float yMinB = worldMinB.y;
-
-	//float zMaxA = worldMaxA.z;
-	//float zMaxB = worldMaxB.z;
-	//float zMinA = worldMinA.z;
-	//float zMinB = worldMinB.z;
-
-	//if (((yMaxA >= yMinB && yMinA <= yMinB) || (yMaxB >= yMinA && yMinB <= yMaxA)) && //checking height
-	//	((xMaxA >= xMinB && xMinA <= xMinB) || (xMaxB >= xMinA && xMinB <= xMaxA)) && // checking width
-	//	((zMaxA >= zMinB && zMinA <= zMinB) || (zMaxB >= zMinA && zMinB <= zMaxA)))   // checking length
-	//{
-	//	return true;
-	//}
-	//return false;
-
 	//get world space coordinates for boxCollider
 	glm::mat4 finalTransformA = transformA.calculateTransform();
 	glm::mat4 finalTransformB = transformB.calculateTransform();
@@ -213,7 +243,15 @@ bool BoxCollisionManager::checkCollision(Transform& transformA, const struct Box
 	return false;
 }
 
-bool BoxCollisionManager::checkLayers(const BoxCollider & colliderA, const BoxCollider & colliderB)
+void BoxCollisionManager::resetColliders(std::vector<BoxCollider>& oldColliders)
+{
+	for (auto collider : oldColliders)
+	{
+		
+	}
+}
+
+bool BoxCollisionManager::sameLayer(const BoxCollider & colliderA, const BoxCollider & colliderB)
 {
 	std::vector<int> hittableLayers = layerRules_[colliderA.layer_];
 	for (int i = 0; i < hittableLayers.size(); i++)

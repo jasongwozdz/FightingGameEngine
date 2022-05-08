@@ -85,7 +85,7 @@ void Animator::setAnimation(std::string name)
 			return;
 		}
 	}
-	std::cout << "Error: animation not found" << std::endl;
+	_ASSERT_EXPR(false, ("Error: animation not found"));
 }
 
 void Animator::setAnimationTime(float timeInSeconds)
@@ -95,7 +95,6 @@ void Animator::setAnimationTime(float timeInSeconds)
 		const AnimationClip& clip = animations_[currentAnimation_];
 		assert(timeInSeconds <= clip.durationInSeconds_);
 		localTime_ = timeInSeconds;
-		std::cout << "localTime : " << timeInSeconds << std::endl;
 		timeSet_ = true;
 	}
 	else

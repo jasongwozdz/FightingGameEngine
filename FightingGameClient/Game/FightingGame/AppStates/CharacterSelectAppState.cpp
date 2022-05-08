@@ -112,9 +112,10 @@ std::vector<Entity*> CharacterSelectAppState::getCurrentlySelectedFighters()
 
 void CharacterSelectAppState::drawFighterSelectGrid()
 {
+	return;
 	int currPos = 1;
-	float width = EngineSettings::getSingletonPtr()->windowWidth;
-	float height = EngineSettings::getSingletonPtr()->windowHeight;
+	float width = static_cast<float>(EngineSettings::getSingletonPtr()->windowWidth);
+	float height = static_cast<float>(EngineSettings::getSingletonPtr()->windowHeight);
 	ui_->centerNextWindow();
 	ui_->beginWindow("A", width, height, {width/2, height/2}, NULL, true);
 	std::vector<std::pair<std::string, glm::vec4>> gridVals;
@@ -157,8 +158,8 @@ void CharacterSelectAppState::updateCursor(int fighterIndex)
 {
 	static int lastXAxisInput[NUM_FIGHTERS] = { 0, 0 };
 	static int lastYAxisInput[NUM_FIGHTERS] = { 0, 0 };
-	int currentXAxisInput = -input_->getAxis(HorizontalInputs[fighterIndex]);//axis is flipped
-	int currentYAxisInput = input_->getAxis(VerticalInputs[fighterIndex]);
+	float currentXAxisInput = -input_->getAxis(HorizontalInputs[fighterIndex]);//axis is flipped
+	float currentYAxisInput = input_->getAxis(VerticalInputs[fighterIndex]);
 	prevCursorPos_[fighterIndex] = cursorPos_[fighterIndex];
 	if (currentYAxisInput < 0 && currentYAxisInput != lastYAxisInput[fighterIndex])//down pressed : move cursor down
 	{

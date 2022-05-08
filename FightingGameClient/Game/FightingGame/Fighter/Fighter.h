@@ -60,9 +60,11 @@ public:
 	void handleFloorCollision();// called by arenaFloorBehavior when this fighter collides with the floor
 
 	//Inherited from BehaviorImplementationBase
-	virtual void onCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
-	virtual void whileColliding(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
-	virtual void onExitCollision(Entity* otherEnt, class BoxCollider* thisCollider, class BoxCollider* otherCollider);
+	virtual void onCollision(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider);
+	virtual void whileColliding(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider);
+	virtual void onExitCollision(Entity* otherEnt, struct BoxCollider* thisCollider, class BoxCollider* otherCollider);
+
+	bool isBlocking();
 public:
 	AttackResources attacks_;
 

@@ -6,7 +6,7 @@ struct Camera
 	Camera(Entity* entity) :
 		entity_(entity),
 		fovAngleInDegrees_(45.0f),
-		nearView(1.0f),
+		nearView(0.5f),
 		farView(100.0f),
 		projection(PERSPECTIVE)
 	{}

@@ -96,15 +96,26 @@ void Scene::update(float deltaTime)
 		}
 	}
 
-	auto lightSourceInstanceView = registry_.view<LightSource, Transform>();
-	std::vector<LightSource> lightSources;
+	auto lightSourceInstanceView = registry_.view<DirLight>();
+	DirLight dirLight;
 	for(auto entity : lightSourceInstanceView)
 	{
-		lightSources.push_back(lightSourceInstanceView.get<LightSource>(entity));
+		dirLight = lightSourceInstanceView.get<DirLight>(entity);
 	}
 
-	renderer_->draw(objectsToDraw_, assetInstancesToDraw, lightSources);
-	lightSources.clear();
+	std::vector<PointLight> pointLights;
+	auto pointLightInstanceView = registry_.view<PointLight, Transform>();
+	for (auto entity : pointLightInstanceView)
+	{
+		PointLight& pointLight = pointLightInstanceView.get<PointLight>(entity);
+		Transform& transform = pointLightInstanceView.get<Transform>(entity);
+		transform.drawDebug();
+		transform.calculateTransform();
+		pointLight.uniformData_.position = transform.position_;
+		pointLights.push_back(pointLight);
+	}
+
+	renderer_->draw(objectsToDraw_, assetInstancesToDraw, dirLight, pointLights);
 	objectsToDraw_.clear();
 }
 

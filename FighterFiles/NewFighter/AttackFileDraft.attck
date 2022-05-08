@@ -5,7 +5,7 @@ LP_5
     Damage(1)
     Hitstun(30)
     Blockstun(30)
-    Push(5)
+    Push(50)
     Freeze(15)
     MoveState(STANDING)
     CancelList[2](LP_5,HP_6)

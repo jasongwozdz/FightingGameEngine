@@ -198,4 +198,6 @@ private:
 	Assimp::Importer importer; //importer owns scene object so need to keep a copy of it
 	std::unordered_map<std::string, uintptr_t> resourceRegistry_;
 	std::unordered_map<AssetCreateInfo, Asset*, AssetCreateInfoHash> assetMap_;
+
+	const std::string MISSING_TEXTURE_PATH = "Textures/missingTexture.jpg";
 };
