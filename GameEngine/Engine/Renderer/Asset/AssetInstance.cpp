@@ -7,6 +7,8 @@
 AssetInstance::AssetInstance(Asset* asset) :
 	asset_(asset)
 {
+	//data_ =  new DynamicAssetData();
+	//_ASSERT(data_);
 	//initalize createInfo_ to some default values
 	createInfo_.windowExtent.width = EngineSettings::getSingleton().windowWidth;
 	createInfo_.windowExtent.height = EngineSettings::getSingleton().windowHeight;
@@ -29,6 +31,7 @@ AssetInstance::AssetInstance(Asset* asset) :
 	}
 	else if (asset->texture_)
 	{
+		createInfo_.hasTexture = true;
 		if (!createInfo_.lightingEnabled)
 		{
 			createInfo_.vertexShader = "./shaders/texturedMeshVert.spv";
@@ -50,7 +53,13 @@ AssetInstance::AssetInstance(Asset* asset) :
 		createInfo_.vertexShader = "./shaders/vert.spv";
 		createInfo_.fragmentShader = "./shaders/frag.spv";
 	}
-	createInfo_.hasTexture = asset->texture_;
+	init();
+}
+
+AssetInstance::AssetInstance(Asset * asset, PipelineCreateInfo createInfo) : 
+	createInfo_(createInfo)
+{
+	//data_ = new DynamicAssetData();
 	init();
 }
 
@@ -58,6 +67,8 @@ AssetInstance::AssetInstance(AssetInstance&& other)
 {
 	asset_ = other.asset_;
 	data_ = std::move(other.data_);
+	other.asset_ = nullptr;
+	//other.data_ = nullptr;
 	sizeOfUniformData_ = other.sizeOfUniformData_;
 	createInfo_ = other.createInfo_;
 }
@@ -65,11 +76,17 @@ AssetInstance::AssetInstance(AssetInstance&& other)
 AssetInstance& AssetInstance::operator=(AssetInstance&& other)
 {
 	asset_ = other.asset_;
-	other.asset_ = nullptr;
 	data_ = std::move(other.data_);
+	//other.data_ = nullptr;
+	other.asset_ = nullptr;
 	sizeOfUniformData_ = other.sizeOfUniformData_;
 	createInfo_ = other.createInfo_;
 	return *this;
+}
+
+AssetInstance::~AssetInstance()
+{
+	//delete data_;
 }
 
 void AssetInstance::init()

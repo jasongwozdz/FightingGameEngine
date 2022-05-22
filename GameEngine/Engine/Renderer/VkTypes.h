@@ -34,7 +34,6 @@ struct PipelineResources
 
 	~PipelineResources()
 	{
-		std::cout << "destroy PipelineResources" << std::endl;
 		vkDestroyPipelineLayout(logicalDevice_, pipelineLayout_, nullptr);
 		vkDestroyPipeline(logicalDevice_, pipeline_, nullptr);
 	}
@@ -56,6 +55,7 @@ struct PipelineCreateInfo
 	bool hasSkeleton = false;
 	bool cullingEnabled = true;
 	bool lightingEnabled = true;
+	bool isSkybox = false;
 };
 
 struct PipelineCreateInfoHash

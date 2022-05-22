@@ -16,7 +16,8 @@ BoxCollisionManager::BoxCollisionManager()
 void BoxCollisionManager::update(Scene* currentScene)
 {
 	collisionsNotHandled_ = currentCollisions_;
-	std::vector<Entity*> entitys = currentScene->getAllEntitiesWithComponents<Collider, Transform>();
+	std::vector<Entity*> entitys;
+	currentScene->getAllEntitiesWithComponents<Collider, Transform>(entitys);
 	for (int i = 0; i < ((int)entitys.size() - 1); i++)
 	{
 		Entity* currentEntity = entitys[i];

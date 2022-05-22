@@ -39,9 +39,6 @@ struct UIVertex
 	glm::vec2 pos;
 	glm::vec2 aUV;
 	glm::vec4 color;
-
-	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-	}
 };
 
 struct DebugVertex
@@ -50,6 +47,12 @@ struct DebugVertex
 	glm::vec3 color;
 };
 
+struct ParticleVertex
+{
+	glm::vec3 pos;
+	glm::vec2 aUV;
+	glm::vec4 color;
+};
 
 namespace VertexUtil
 {

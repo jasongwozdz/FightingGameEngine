@@ -23,6 +23,8 @@ template VkVertexInputBindingDescription VertexUtil::getBindingDescription<UIVer
 
 template VkVertexInputBindingDescription VertexUtil::getBindingDescription<DebugVertex>();
 
+template VkVertexInputBindingDescription VertexUtil::getBindingDescription<ParticleVertex>();
+
 template<>
 std::vector<VkVertexInputAttributeDescription> VertexUtil::getAttributeDescriptions<Vertex>()
 {
@@ -132,5 +134,28 @@ std::vector<VkVertexInputAttributeDescription> VertexUtil::getAttributeDescripti
 	attributeDescriptions[1].offset = offsetof(DebugVertex, color);
 
 	return attributeDescriptions;
+}
 
+template<>
+std::vector<VkVertexInputAttributeDescription> VertexUtil::getAttributeDescriptions<ParticleVertex>()
+{
+	std::vector<VkVertexInputAttributeDescription> attributeDescriptions{};
+	attributeDescriptions.resize(3);
+
+	attributeDescriptions[0].binding = 0;
+	attributeDescriptions[0].location = 0;
+	attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescriptions[0].offset = offsetof(ParticleVertex, pos);
+
+	attributeDescriptions[1].binding = 0;
+	attributeDescriptions[1].location = 1;
+	attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
+	attributeDescriptions[1].offset = offsetof(ParticleVertex, aUV);
+
+	attributeDescriptions[2].binding = 0;
+	attributeDescriptions[2].location = 2;
+	attributeDescriptions[2].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	attributeDescriptions[2].offset = offsetof(ParticleVertex, color);
+
+	return attributeDescriptions;
 }

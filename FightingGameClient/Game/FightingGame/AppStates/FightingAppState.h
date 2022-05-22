@@ -89,11 +89,14 @@ public:
 private:
 	glm::vec3 calculateMidPoint()
 	{
-		std::vector<glm::vec3> positions;
-		for (Entity* entity : fighters_)
-		{
-			positions.push_back(entity->getComponent<Transform>().position_);
-		}
+		glm::vec3 positions[2] = {
+			fighters_[0]->getComponent<Transform>().position_,
+			fighters_[1]->getComponent<Transform>().position_
+		};
+		//for (Entity* entity : fighters_)
+		//{
+		//	positions.push_back(entity->getComponent<Transform>().position_);
+		//}
 		glm::vec3 midPoint = positions[0] + positions[1];
 		midPoint *= 0.5f;
 		return(midPoint);

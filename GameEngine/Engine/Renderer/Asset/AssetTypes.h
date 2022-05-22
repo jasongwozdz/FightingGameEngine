@@ -29,8 +29,6 @@ struct ENGINE_API DynamicAssetData
 		delete ubo_;
 	}
 
-	DynamicAssetData(const DynamicAssetData& other) = delete;
-
 	DynamicAssetData(DynamicAssetData&& other)
 	{
 		uniformData_ = other.uniformData_;
@@ -55,7 +53,6 @@ struct ENGINE_API DynamicAssetData
 	std::vector<VulkanBuffer> uniformData_;
 	VkDescriptorSetLayout descriptorLayout_;
 	std::vector<VkDescriptorSet> descriptorSets_;
-	//MVPBoneData ubo_;
 	UniformDataPtr ubo_;
 	PipelineResources* pipeline_;
 };

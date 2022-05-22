@@ -64,7 +64,6 @@ void SkyBoxRenderSubsystem::updateUniformBuffer()
 	skyboxBufferObject_.proj = projection;
 	skyboxBufferObject_.view = view;
 	void *data;
-	size_t y = sizeof(Ubo);
 	vmaMapMemory(allocator_, uniformBuffer_.mem_, &data);
 	memcpy(data, &skyboxBufferObject_, sizeof(Ubo));
 	vmaUnmapMemory(allocator_, uniformBuffer_.mem_);
@@ -79,15 +78,15 @@ void SkyBoxRenderSubsystem::createPipeline()
 	uboLayoutBinding.pImmutableSamplers = nullptr;
 	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-	//VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	//samplerLayoutBinding.binding = 1;
-	//samplerLayoutBinding.descriptorCount = 1;
-	//samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//samplerLayoutBinding.pImmutableSamplers = nullptr;
-	//samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.pImmutableSamplers = nullptr;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	//std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-	std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
+	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	//std::array<VkDescriptorSetLayoutBinding, 1> bindings = { uboLayoutBinding };
 	VkDescriptorSetLayoutCreateInfo layoutInfo{};
 	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -163,12 +162,12 @@ void SkyBoxRenderSubsystem::createDescriptors()
 	bufferInfo.offset = 0;
 	bufferInfo.range = sizeof(skyboxBufferObject_);
 
-	//VkDescriptorImageInfo imageInfo{};
-	//imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	//imageInfo.imageView = skyboxTexture_.view_;
-	//imageInfo.sampler = skyboxTexture_.sampler_;
+	VkDescriptorImageInfo imageInfo{};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = skyboxTexture_.view_;
+	imageInfo.sampler = skyboxTexture_.sampler_;
 
-	std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+	std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
 
 	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrites[0].dstSet = skyboxDescriptorSet_;
@@ -178,13 +177,13 @@ void SkyBoxRenderSubsystem::createDescriptors()
 	descriptorWrites[0].descriptorCount = 1;
 	descriptorWrites[0].pBufferInfo = &bufferInfo;
 
-	//descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//descriptorWrites[1].dstSet = skyboxDescriptorSet_;
-	//descriptorWrites[1].dstBinding = 1;
-	//descriptorWrites[1].dstArrayElement = 0;
-	//descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//descriptorWrites[1].descriptorCount = 1;
-	//descriptorWrites[1].pImageInfo = &imageInfo;
+	descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrites[1].dstSet = skyboxDescriptorSet_;
+	descriptorWrites[1].dstBinding = 1;
+	descriptorWrites[1].dstArrayElement = 0;
+	descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrites[1].descriptorCount = 1;
+	descriptorWrites[1].pImageInfo = &imageInfo;
 
 	vkUpdateDescriptorSets(logicalDevice_, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }
@@ -282,15 +281,14 @@ bool SkyBoxRenderSubsystem::setSkyboxTexture(const std::string& path)
 				totalPixels.insert(totalPixels.end(),vals.pixels.begin(), vals.pixels.end());
 			}
 		}
-
 	}
 	if (totalPixels.size() <= 0)
 	{
 		std::cout << "ERROR couldn't load skybox" << std::endl;
-		assert(totalPixels.size() <= 0);
+		assert(false);
 	}
 	
-	//createTextureResources(baseHeight, baseWidth, numChannels, totalPixels);
+	createTextureResources(baseHeight, baseWidth, numChannels, totalPixels);
 	ModelReturnVals modelVals = resourceManager.loadObjFile(CUBE_MODEL_PATH_);
 	numSkyboxModelIndicies_ = modelVals.indices.size();
 	loadCube(&modelVals);

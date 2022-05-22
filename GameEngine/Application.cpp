@@ -5,6 +5,7 @@
 #include "Application.h"
 #include "Engine/Input.h"
 #include "Engine/Console/Console.h"
+#include "Engine/Particles/ParticleManager.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -35,6 +36,7 @@ Application::Application()
 	input_ = new Input(this);
 	console_ = new Console(this);
 	Console::setInstance(console_);
+	particleManager_ = new ParticleManager();
 }
 
 Application::~Application()
@@ -74,6 +76,7 @@ void Application::cleanup()
 	delete engineSettings_;
 	delete window_;
 	delete renderer_;
+	delete particleManager_;
 }
 
 void Application::run()
@@ -92,6 +95,7 @@ void Application::run()
 			start = endTime;
 			window_->onUpdate();
 			renderer_->prepareFrame();
+			particleManager_->update(deltaTime);
 			onUpdate(deltaTime);
 			console_->update();
 			scene_->update(deltaTime);

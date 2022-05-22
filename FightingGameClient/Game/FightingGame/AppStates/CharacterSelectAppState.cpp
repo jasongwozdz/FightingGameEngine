@@ -95,7 +95,7 @@ AppState* CharacterSelectAppState::update(float deltaTime)
 	drawFighterSelectGrid();
 	if (bothFighterSelected_)
 	{
-		scene_->clearScene();
+		//scene_->clearScene();
 		return new FightingAppState(fighterFiles_[cursorPos_[LEFT_SIDE]], fighterFiles_[cursorPos_[RIGHT_SIDE]], debugManager_, inputs_[LEFT_SIDE], inputs_[RIGHT_SIDE]);
 	}
 	

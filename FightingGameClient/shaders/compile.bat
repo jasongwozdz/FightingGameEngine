@@ -18,4 +18,6 @@ C:/VulkanSDK/Bin32/glslc.exe debugPicker.vert -o debugPicker.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe debugPicker.frag -o debugPicker.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe shaderLighting.vert -o shaderLighting.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe shaderLighting.frag -o shaderLighting.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe particle.vert -o particle.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe particle.frag -o particle.frag.spv
 pause

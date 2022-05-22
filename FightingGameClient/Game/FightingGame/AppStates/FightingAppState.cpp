@@ -8,6 +8,7 @@
 #include "Input.h"
 #include "../FighterSandbox/AttackTypes.h"
 #include "Console/Console.h"
+#include "Particles/ParticleManager.h"
 
 FightingAppState::FightingAppMode FightingAppState::mode_ = FightingAppState::NORMAL;
 
@@ -86,12 +87,25 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	Asset* asset = resourceManager_->createAsset(createInfo);
 	backgroundEntity->addComponent<AssetInstance>(asset);
 
-	//dirLight.uniformData_.ambient = { 0.05f, 0.05f, 0.05f };
-	//dirLight.uniformData_.diffuse = { 0.7f, 0.7f, 0.7f };
-	//dirLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
-	//dirLight.uniformData_.direction = { 0.0f, -1.0f, 0.0f };
+	ParticleManager* particleManager = ParticleManager::getSingletonPtr();
+	//CreateParticleInfo particleInfo;
+	//particleInfo.lifeTime = 1.0f;
+	//particleInfo.velocity = { 0.005f, 0.005f, 0.0f };
+	//particleInfo.size = 0.5f;
+	//particleInfo.startingPos = { 0.0f, 0.0f, 0.0f };
+	//particleInfo.degreesPerFrame = 1.0f;
+	//particleInfo.texturePath = "Textures/missingTexture.jpg";
+	//particleManager->addParticle(particleInfo);
 
-	//generateArenaBackground();
+	CreateParticleEmitter emitter;
+	emitter.rate = 1;
+	emitter.velocity = { 0.1f, 1.0f };
+	emitter.scale = { 0.5f, 1.0f };
+	emitter.lifeTime = {10.0f, 10.0f};
+	emitter.angularVel = { 0.5f, 0.5f };
+
+	particleManager->createParticleEmitter(emitter);
+	generateArenaBackground();
 }
 
 void FightingAppState::initCamera()

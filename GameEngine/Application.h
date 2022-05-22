@@ -35,6 +35,7 @@ public:
 	DebugDrawManager* debugManager_;
 	class Input* input_;
 	class Console* console_;
+	class ParticleManager* particleManager_;
 
 	static int FrameCount;
 

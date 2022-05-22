@@ -52,6 +52,7 @@ public:
 	VkShaderModule createShaderModule(std::string shaderPath);
 	std::vector<char> readShaderFile(const std::string& filename);
 	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
+	void deleteDynamicAssetData(Entity* assetInstance);
 
 
 	template<typename UniformDataType>
@@ -154,4 +155,6 @@ private:
 	};
 	GlobalUniformData globalUniformData_;
 	std::vector<VulkanBuffer> globalUniformBuffer_;
+	std::vector<Entity*> assetInstancesToDelete_;
+	std::vector<PipelineResources*> pipelinesToDestroy_;
 };

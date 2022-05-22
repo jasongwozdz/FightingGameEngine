@@ -171,6 +171,8 @@
     <ClInclude Include="Engine\Console\Console.h" />
     <ClInclude Include="Engine\EngineExport.h" />
     <ClInclude Include="Engine\Input.h" />
+    <ClInclude Include="Engine\Particles\ParticleManager.h" />
+    <ClInclude Include="Engine\Particles\ParticleTypes.h" />
     <ClInclude Include="Engine\Renderer\Asset\Asset.h" />
     <ClInclude Include="Engine\Renderer\Asset\AssetInstance.h" />
     <ClInclude Include="Engine\Renderer\Asset\AssetTypes.h" />
@@ -238,6 +240,7 @@
     <ClCompile Include="Engine\libs\imgui\implot\implot_demo.cpp" />
     <ClCompile Include="Engine\libs\imgui\implot\implot_items.cpp" />
     <ClCompile Include="Engine\libs\vk-bootstrap\VkBootstrap.cpp" />
+    <ClCompile Include="Engine\Particles\ParticleManager.cpp" />
     <ClCompile Include="Engine\Renderer\Asset\Asset.cpp" />
     <ClCompile Include="Engine\Renderer\Asset\AssetInstance.cpp" />
     <ClCompile Include="Engine\Renderer\Renderable.cpp" />

@@ -75,16 +75,16 @@ void ArenaFloorBehavior::onExitCollision(Entity* otherEnt, BoxCollider* thisColl
 
 void ArenaFloorBehavior::drawDebug()
 {
-	debugDrawManager_->drawGrid(arena_.pos, Transform::worldLeft, 90.0f, arena_.size.x, arena_.size.z, { 255, 255, 255 }); //floor
+	//debugDrawManager_->drawGrid(arena_.pos, Transform::worldLeft, 90.0f, arena_.size.x, arena_.size.z, { 255, 255, 255 }); //floor
 
-	glm::vec3 pos = arena_.pos;
-	pos.z += (arena_.size.z/2);
-	pos.y += (arena_.size.y/2);
-	debugDrawManager_->drawGrid(pos, Transform::worldForward, 0.0f, arena_.size.x, arena_.size.z, { 255, 255, 255 }); //back wall
+	//glm::vec3 pos = arena_.pos;
+	//pos.z += (arena_.size.z/2);
+	//pos.y += (arena_.size.y/2);
+	//debugDrawManager_->drawGrid(pos, Transform::worldForward, 0.0f, arena_.size.x, arena_.size.z, { 255, 255, 255 }); //back wall
 
-	//draw origin
-	glm::vec3 origin = glm::vec3(0.0f);
-	debugDrawManager_->drawLine(origin, Transform::worldForward + origin, { 0, 0, 255 });
-	debugDrawManager_->drawLine(origin, Transform::worldLeft + origin, { 255, 0, 0 });
-	debugDrawManager_->drawLine(origin, Transform::worldUp + origin, { 0, 255, 0 });
+	////draw origin
+	//glm::vec3 origin = glm::vec3(0.0f);
+	//debugDrawManager_->drawLine(origin, Transform::worldForward + origin, { 0, 0, 255 });
+	//debugDrawManager_->drawLine(origin, Transform::worldLeft + origin, { 255, 0, 0 });
+	//debugDrawManager_->drawLine(origin, Transform::worldUp + origin, { 0, 255, 0 });
 }

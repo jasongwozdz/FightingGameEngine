@@ -15,7 +15,7 @@ private:
 
 private:
 	float cameraSpeed_ = 0.05f;
-	float rotationSpeed_ = 1.0f;
+	float rotationSpeed_ = 0.5f;
 	bool rightClickHeld = false;
 	float horizontalAxis = 0;
 	float verticalAxis = 0;

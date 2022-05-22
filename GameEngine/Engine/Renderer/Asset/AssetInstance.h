@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <memory>
 
 #include "../VkTypes.h"
 #include "AssetTypes.h"
@@ -13,11 +14,13 @@ class ENGINE_API AssetInstance
 public:
 	friend class VkRenderer;
 
+	AssetInstance() = delete;
 	AssetInstance(Asset* asset);
+	AssetInstance(Asset* asset, PipelineCreateInfo createInfo);
 	AssetInstance(const AssetInstance& other) = delete;
 	AssetInstance(AssetInstance&& other);
 	AssetInstance& operator=(AssetInstance&& other);
-	virtual ~AssetInstance() = default;
+	~AssetInstance();
 
 	void setVertexShader(std::string shaderPath);
 	void setFragmentShader(std::string shaderPath);
@@ -27,6 +30,7 @@ public:
 	void setPose(std::vector<glm::mat4> bones);
 	const BoneStructure* getSkeleton() { return asset_->skeleton_; };
 
+	bool toDelete = false;
 private:
 	void init();
 

@@ -171,6 +171,12 @@
     <ClInclude Include="Engine\Scene\Components\LightSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Particles\ParticleManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Particles\ParticleTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Engine\libs\imgui\implot\implot.cpp">
@@ -276,6 +282,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Console\Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Particles\ParticleManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

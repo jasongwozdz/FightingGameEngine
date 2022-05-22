@@ -84,6 +84,10 @@ void Scene::update(float deltaTime)
 	for (auto entity : assetInstanceView)
 	{
 		AssetInstance& assetInstance = assetInstanceView.get<AssetInstance>(entity);
+		if (assetInstance.toDelete)
+		{
+			continue;
+		}
 		Transform& transform = assetInstanceView.get<Transform>(entity);
 		assetInstance.setModelMatrix(transform.calculateTransform());
 		assetInstance.setViewMatrix(view);
@@ -133,7 +137,14 @@ Entity* Scene::addEntity(std::string name)
 	{
 		entityNameMap_[name].push_back(entity);
 	}
+	objectsToDraw_.reserve(entityNameMap_.size());
 	return entity;
+}
+
+void Scene::deleteEntity(Entity* entity)
+{
+	registry_.destroy(entity->enttId_);
+	entitys_.erase(entity->enttId_);
 }
 
 void Scene::getEntities(std::string entityName, std::vector<Entity*>& outEnt)

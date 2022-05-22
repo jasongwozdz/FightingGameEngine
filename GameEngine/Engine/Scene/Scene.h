@@ -35,6 +35,7 @@ public:
 
 	void update(float deltaTime);
 	Entity* addEntity(std::string entityName);
+	void deleteEntity(Entity* entity);
 	void getEntities(std::string entityName, std::vector<Entity*>& outEnt);
 
 	struct Camera& getCurrentCamera();
@@ -45,15 +46,13 @@ public:
 	Entity* createCameraEntity();
 
 	template <typename ...components>
-	std::vector<Entity*> getAllEntitiesWithComponents()
+	void getAllEntitiesWithComponents(std::vector<Entity*>& output)
 	{
-		std::vector<Entity*> output;
 		auto view = registry_.view<components...>();
 		for (entt::entity entity : view)
 		{
 			output.push_back(entitys_[entity]);
 		}
-		return output;
 	}
 public:
 	static float DeltaTime;
@@ -73,5 +72,6 @@ private:
 	VkRenderer* renderer_;
 	class SkyBoxRenderSubsystem* skybox_;
 	class BoxCollisionManager* boxCollisionManager_;
+	bool skyboxCreated_ = false;
 };
 

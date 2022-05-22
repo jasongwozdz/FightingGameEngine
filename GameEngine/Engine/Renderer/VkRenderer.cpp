@@ -26,6 +26,16 @@ void VkRenderer::frameBufferResizeCallback(Events::FrameBufferResizedEvent& even
 	width_ = event.width_;
 	height_ = event.height_;
 	windowExtent_ = { width_, height_ };
+	std::vector<Entity*> assetInstances;
+	Scene::getSingleton().getAllEntitiesWithComponents<AssetInstance>(assetInstances);
+	pipelineMap_.clear();
+	for (auto iter : assetInstances)
+	{
+		AssetInstance& assetInstance = iter->getComponent<AssetInstance>();
+		assetInstance.createInfo_.windowExtent = windowExtent_;
+		createPipelineNew(&assetInstance);
+	}
+
 	recreateSwapchain_ = true;
 }
 
@@ -93,14 +103,22 @@ void VkRenderer::uploadGlobalUniformData(int imageIndex, const DirLight& dirLigh
 	vmaUnmapMemory(allocator_, globalUniformBuffer_[imageIndex].mem_);
 }
 
+void VkRenderer::deleteDynamicAssetData(Entity* assetInstance)
+{
+	AssetInstance& instance = assetInstance->getComponent<AssetInstance>();
+	instance.toDelete = true;
+	assetInstancesToDelete_.push_back(assetInstance);
+}
+
 void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 {
 	const PipelineCreateInfo& createInfo = assetInstance->createInfo_;
-	auto iter = pipelineMap_.find(createInfo);
-	if (iter != pipelineMap_.end())
-	{
-		assetInstance->data_.pipeline_ = iter->second;
-	}
+	//auto iter = pipelineMap_.find(createInfo);
+	//if (iter != pipelineMap_.end())
+	//{
+	//	assetInstance->data_.pipeline_ = iter->second;
+	//	return;
+	//}
 
 	PipelineResources* retVals = new PipelineResources(logicalDevice_);
 
@@ -248,7 +266,7 @@ void VkRenderer::createPipelineNew(AssetInstance* assetInstance)
 	VK_CHECK(vkCreateGraphicsPipelines(logicalDevice_, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &retVals->pipeline_));
 
 	assetInstance->data_.pipeline_ = retVals;
-	pipelineMap_.insert({ createInfo, retVals });
+	//pipelineMap_.insert({ createInfo, retVals });
 }
 
 template<typename UniformDataType>
@@ -411,15 +429,12 @@ void VkRenderer::recreateSwapchain()
 	createDefaultRenderPass();
 	createDefualtDepthResources();
 	createDefaultFramebuffers();
-	//initPipelines();
 
 	VkCommandBufferAllocateInfo cmdAllocInfo = vkinit::command_buffer_allocate_info(cmdPool_, 1);
 	VK_CHECK(vkAllocateCommandBuffers(logicalDevice_, &cmdAllocInfo, &cmdBuffer_));
 
 	ui_->recreateUI(instance_, physicalDevice_, logicalDevice_, graphicsQueueFamiliy_, graphicsQueue_, descriptorPool_, swapChainResources_.imageCount_, swapChainResources_.imageCount_, cmdPool_, cmdBuffer_, window_.getGLFWWindow(), renderPass_);
 	debugDrawManager_->recreateDebugDrawManager(logicalDevice_, renderPass_, descriptorPool_);
-
-	
 }
 
 VkRenderer* VkRenderer::getSingletonPtr()
@@ -695,10 +710,6 @@ void VkRenderer::createSynchronizationResources()
 	//create UploadContext fence
 	VK_CHECK(vkCreateFence(logicalDevice_, &uploadFenceCreateInfo, nullptr, &uploadContext_.uploadFence_));
 
-	////enqueue the destruction of the fence
-	//_mainDeletionQueue.push_function([=]() {
-	//	vkDestroyFence(_device, _renderFence, nullptr);
-	//	});
 	VkSemaphoreCreateInfo semaphoreCreateInfo = vkinit::semaphore_create_info();
 
 	VK_CHECK(vkCreateSemaphore(logicalDevice_, &semaphoreCreateInfo, nullptr, &presentSemaphore_));
@@ -709,79 +720,6 @@ void VkRenderer::prepareFrame()
 {
 	ui_->prepareFrame();
 }
-
-//void VkRenderer::uploadObject(Renderable* mesh)
-//{
-//	if (mesh->isLine_)
-//	{
-//		mesh->pipelineType_ = LINE_PIPELINE;
-//	}
-//	else
-//	{
-//		mesh->pipelineType_ = DEBUG_PIPELINE;
-//	}
-//
-//	//======= Vertices ======
-//	size_t vertexBufferSize = mesh->vertices_.size() * sizeof(Vertex);
-//
-//	VkBufferCreateInfo vBufferInfo{};
-//	vBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-//	vBufferInfo.pNext = nullptr;
-//	vBufferInfo.size = vertexBufferSize;
-//	vBufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-//
-//	VmaAllocationCreateInfo vmaInfo{};
-//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-//
-//	//=DELETE=
-//	VK_CHECK(vmaCreateBuffer(allocator_, &vBufferInfo, &vmaInfo, &mesh->vertexBuffer_, &mesh->vertexMem_, nullptr));
-//
-//	void *vertexData;
-//	vmaMapMemory(allocator_, mesh->vertexMem_, &vertexData);
-//	memcpy(vertexData, mesh->vertices_.data(), vertexBufferSize);
-//	vmaUnmapMemory(allocator_, mesh->vertexMem_);
-//
-//	//======= Indicies ======
-//	size_t indexBufferSize = mesh->indices_.size() * sizeof(uint32_t);
-//
-//	VkBufferCreateInfo iBufferInfo{};
-//	iBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-//	iBufferInfo.pNext = nullptr;
-//	iBufferInfo.size = indexBufferSize;
-//	iBufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-//
-//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-//
-//	//=DELETE=
-//	VK_CHECK(vmaCreateBuffer(allocator_, &iBufferInfo, &vmaInfo, &mesh->indexBuffer_, &mesh->indexMem_, nullptr));
-//
-//	void *indexData;
-//	vmaMapMemory(allocator_, mesh->indexMem_, &indexData);
-//	memcpy(indexData, mesh->indices_.data(), indexBufferSize);
-//	vmaUnmapMemory(allocator_, mesh->indexMem_);
-//
-//	//======= Uniform ======
-//	size_t uniformBufferSize = sizeof(mesh->ubo_);
-//	VkBufferCreateInfo uBufferInfo{};
-//	uBufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-//	uBufferInfo.pNext = nullptr;
-//	uBufferInfo.size = uniformBufferSize;
-//	uBufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-//
-//	vmaInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
-//
-//	//=DELETE=
-//	mesh->uniformBuffer_.resize(swapChainResources_.imageCount_);
-//	mesh->uniformMem_.resize(swapChainResources_.imageCount_);
-//	for(int i = 0; i < swapChainResources_.imageCount_; i++)
-//		VK_CHECK(vmaCreateBuffer(allocator_, &uBufferInfo, &vmaInfo, &mesh->uniformBuffer_[i], &mesh->uniformMem_[i], nullptr));
-//
-//	createDescriptorSet(mesh);
-//	updateUniformBuffer(*mesh);
-//
-//	mesh->allocator_ = allocator_;
-//	mesh->logicalDevice_ = logicalDevice_;
-//}
 
 void VkRenderer::uploadMesh(Renderable* mesh)
 {
@@ -924,7 +862,7 @@ void VkRenderer::uploadDynamicData(AssetInstance* assetInstance)
 {
 	createUniformBuffers<UniformDataType>(assetInstance);
 	allocateDescriptorSet<UniformDataType>(assetInstance);
-	createPipelineNew(assetInstance);
+	//createPipelineNew(assetInstance);
 }
 
 template void VkRenderer::uploadDynamicData<MVPBoneData>(AssetInstance* assetInstance);
@@ -1333,6 +1271,24 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector
 
 	VK_CHECK(vkResetCommandBuffer(cmdBuffer_, 0));
 
+	for (int i = 0; i < pipelinesToDestroy_.size(); i++)
+	{
+		PipelineResources* pipeline = pipelinesToDestroy_[i];
+		delete pipeline;
+	}
+	pipelinesToDestroy_.clear();
+
+	for (int i = 0; i < assetInstancesToDelete_.size(); i++)
+	{
+		AssetInstance& assetInstance = assetInstancesToDelete_[i]->getComponent<AssetInstance>();
+		for (int swapChainIdx = 0; swapChainIdx < assetInstance.data_.uniformData_.size(); swapChainIdx++)
+		{
+			vmaDestroyBuffer(allocator_, assetInstance.data_.uniformData_[swapChainIdx].buffer_, assetInstance.data_.uniformData_[swapChainIdx].mem_);
+		}
+		vkDestroyDescriptorSetLayout(logicalDevice_, assetInstance.data_.descriptorLayout_, nullptr);
+		vkFreeDescriptorSets(logicalDevice_, descriptorPool_, assetInstance.data_.descriptorSets_.size(), assetInstance.data_.descriptorSets_.data());
+	}
+
 	//request image from the swapchain
 	uint32_t swapchainImageIndex;
 	VkResult result = (vkAcquireNextImageKHR(logicalDevice_, swapchain_, 1000000000, presentSemaphore_, nullptr, &swapchainImageIndex));
@@ -1406,6 +1362,12 @@ void VkRenderer::draw(std::vector<Renderable*>& objectsToDraw, const std::vector
 
 	//increase the number of frames drawn
 	frameNumber_++;
+
+	for (int i = 0; i < assetInstancesToDelete_.size(); i++)
+	{
+		Scene::getSingleton().deleteEntity(assetInstancesToDelete_[i]);
+	}
+	assetInstancesToDelete_.clear();
 }
 
 void VkRenderer::drawAssetInstances(VkCommandBuffer currentCommandBuffer, int imageIndex, const std::vector<AssetInstance*>& assetInstancesToDraw)
@@ -1413,6 +1375,7 @@ void VkRenderer::drawAssetInstances(VkCommandBuffer currentCommandBuffer, int im
 	VkDeviceSize offsets[1] = { 0 };
 	for (auto object : assetInstancesToDraw)
 	{
+		createPipelineNew(object);
 		PipelineResources* pipelineResources = object->data_.pipeline_;
 		vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineResources->pipeline_);
 
@@ -1428,6 +1391,8 @@ void VkRenderer::drawAssetInstances(VkCommandBuffer currentCommandBuffer, int im
 		vmaMapMemory(allocator_, object->data_.uniformData_[frameNumber_%swapChainResources_.imageCount_].mem_, &data);
 		memcpy(data, object->data_.ubo_, object->sizeOfUniformData_);
 		vmaUnmapMemory(allocator_, object->data_.uniformData_[frameNumber_%swapChainResources_.imageCount_].mem_);
+
+		pipelinesToDestroy_.push_back(pipelineResources);
 	}
 }
 
