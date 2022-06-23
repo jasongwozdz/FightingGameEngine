@@ -40,9 +40,7 @@ public:
 	void setAnimation(int animationIndex);
 	void setAnimation(std::string name);
 	void setAnimationTime(float timeInSeconds);
-	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable);
 	void getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber,  AssetInstance* assetInstance);
-	void update(float deltaTime, Renderable& renderable);
 	void update(float deltaTime, AssetInstance* assetInstance);
 
 	int findAnimationIndexByName(const std::string& animationName);

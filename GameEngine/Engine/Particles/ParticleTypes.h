@@ -18,11 +18,14 @@ struct CreateParticleInfo
 	float degreesPerFrame;
 	float size;
 	float lifeTime;
+	bool applyGravity = false;
+	bool lighting = false;
 };
 
 struct Particle
 {
 	glm::vec3 velocity = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 acceleration = { 0.0f, 0.0f, 0.0f };
 	Entity* entity = nullptr;
 	float degreesPerFrame = 0.0f;
 	float currentRotation = 0.0f;

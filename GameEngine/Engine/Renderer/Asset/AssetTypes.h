@@ -34,7 +34,7 @@ struct ENGINE_API DynamicAssetData
 		uniformData_ = other.uniformData_;
 		descriptorLayout_ = other.descriptorLayout_;
 		descriptorSets_ = other.descriptorSets_;
-		pipeline_ = other.pipeline_;
+		pipelineIndex_ = other.pipelineIndex_;
 		ubo_ = other.ubo_;
 		other.ubo_ = nullptr;
 	}
@@ -44,16 +44,18 @@ struct ENGINE_API DynamicAssetData
 		uniformData_ = other.uniformData_;
 		descriptorLayout_ = other.descriptorLayout_;
 		descriptorSets_ = other.descriptorSets_;
-		pipeline_ = other.pipeline_;
+		pipelineIndex_ = other.pipelineIndex_;
 		ubo_ = other.ubo_;
 		other.ubo_ = nullptr;
 		return *this;
 	}
 
 	std::vector<VulkanBuffer> uniformData_;
-	VkDescriptorSetLayout descriptorLayout_;
+	VkDescriptorSetLayout descriptorLayout_ = VK_NULL_HANDLE;
 	std::vector<VkDescriptorSet> descriptorSets_;
+	std::vector<VkDescriptorSet> offscreenDescriptorSet_;
+	VkDescriptorSetLayout offscreenDescriptorLayout_;
 	UniformDataPtr ubo_;
-	PipelineResources* pipeline_;
+	int pipelineIndex_;
 };
 

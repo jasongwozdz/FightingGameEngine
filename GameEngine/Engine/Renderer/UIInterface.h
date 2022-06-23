@@ -61,7 +61,7 @@ namespace UI
 		static UIInterface& getSingleton();
 		static UIInterface* getSingletonPtr();
 
-		UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator);
+		UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator);
 		~UIInterface();
 		void recreateUI(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass);
 
@@ -109,6 +109,7 @@ namespace UI
 		std::vector<VkDeviceSize> indexOffsets_;
 		std::vector<UIVertex> vertices_;
 		std::vector<uint32_t> indicies_;
+		VkDescriptorPool descriptorPool_;
 		VkDeviceSize globalVertexOffset_ = 0;
 		VkDeviceSize globalIndexOffset_ = 0;
 		PipelineResources* uiPipeline_;

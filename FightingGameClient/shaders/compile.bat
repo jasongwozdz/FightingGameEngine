@@ -20,4 +20,8 @@ C:/VulkanSDK/Bin32/glslc.exe shaderLighting.vert -o shaderLighting.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe shaderLighting.frag -o shaderLighting.frag.spv
 C:/VulkanSDK/Bin32/glslc.exe particle.vert -o particle.vert.spv
 C:/VulkanSDK/Bin32/glslc.exe particle.frag -o particle.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe offscreenAnimatedMeshLighting.vert -o offscreenAnimatedMeshLighting.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe offscreenAnimatedMeshLighting.frag -o offscreenAnimatedMeshLighting.frag.spv
+C:/VulkanSDK/Bin32/glslc.exe offscreenTexturedMeshLighting.vert -o offscreenTexturedMeshLighting.vert.spv
+C:/VulkanSDK/Bin32/glslc.exe offscreenTexturedMeshLighting.frag -o offscreenTexturedMeshLighting.frag.spv
 pause

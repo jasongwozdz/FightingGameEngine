@@ -48,7 +48,6 @@ public:
 	void uploadTextureData(Textured* texture);
 	void prepareFrame();
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
-	void updateUniformBuffer(Renderable& mesh);
 	VkShaderModule createShaderModule(std::string shaderPath);
 	std::vector<char> readShaderFile(const std::string& filename);
 	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
@@ -60,7 +59,7 @@ public:
 	
 	template<class T> T* addRenderSubsystem()
 	{
-		T* renderSubsystem = new T(logicalDevice_, renderPass_, allocator_, descriptorPool_, *this);
+		T* renderSubsystem = new T(logicalDevice_, renderPass_, allocator_, debugDescriptorPool_, *this);
 		renderSubsystems_.push_back(renderSubsystem);
 		return renderSubsystem;
 	}
@@ -77,13 +76,12 @@ public:
 
 
 	//Vulkan Stuff
-	struct
+	struct DepthResources
 	{
-		VkImageView depthImageView_;
-		VkImage image_;
+		TextureResources imageResources_;
 		VkFormat imageFormat_ = VK_FORMAT_D32_SFLOAT;
-		VmaAllocation mem_;
 	}depthResources_;
+
 
 	struct
 	{
@@ -98,6 +96,18 @@ public:
 		VkFormat imageFormat_;
 		int imageCount_;
 	}swapChainResources_;
+
+	enum Face
+	{
+		FACE_FORWARD,
+		FACE_BACKWARD,
+		FACE_LEFT,
+		FACE_RIGHT,
+		FACE_TOP,
+		FACE_BOTTOM,
+
+		FACE_MAX
+	};
 
 	VkExtent2D windowExtent_;
 	VkDevice logicalDevice_;
@@ -116,18 +126,38 @@ public:
 	VkFence renderFence_;
 	VkSemaphore presentSemaphore_;
 	VkSemaphore renderSemaphore_;
-	VkDescriptorPool descriptorPool_;
+	std::vector<VkDescriptorPool> descriptorPools_;
+	VkDescriptorPool uiDescriptorPool_;
+	VkDescriptorPool debugDescriptorPool_;
 	std::vector<VkDescriptorSetLayout> descriptorLayouts_;
 	std::vector<RenderSubsystemInterface*> renderSubsystems_;
 	
 private:
+	void createOffscreenResources();
+	void createOffscreenRenderPass();
+	void createOffscreenFramebuffer();
+
+	void prepareOffscreenDirectionalLight(const DirLight& dirLight, int imageIndex);
+	void drawOffscreenDirLight(const DirLight& dirLight, int imageIndex, const std::vector<AssetInstance*>& assetInstancesToDraw);
+
+
+
+	void setImageLayout(VkImage& image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkExtent3D extent, VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+	void setImageLayout(VkImage& image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkExtent3D extent, const VkImageSubresourceRange& subresourceRange, VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+	void setImageLayoutNoUpload(VkCommandBuffer cmd, VkImage& image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkExtent3D extent, VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+	void setImageLayoutNoUpload(VkCommandBuffer cmd, VkImage& image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkExtent3D extent, const VkImageSubresourceRange& subresourceRange, VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+	
+	void prepareAssetInstanceData(const std::vector<AssetInstance*>& assetInstancesToDraw, int imageIndex);
 	void createDefaultRenderPass();
-	void createDefualtDepthResources();
+	void createDepthImageResources(TextureResources& vulkanImage, const VkExtent3D& extent, VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	void createDefaultFramebuffers();
 	void createSwapchainResources();
+	void createDescriptorPools();
 	void createSynchronizationResources();
 	void drawAssetInstances(VkCommandBuffer currentCommandBuffer, int imageIndex, const std::vector<AssetInstance*> &assetInstancesToDraw);
-	void createDescriptorSet(Renderable* object);
 	void createTextureResources(Renderable& o, Textured& texture);
 	void uploadGraphicsCommand(std::function<void(VkCommandBuffer cmd)>&& func);
 	void recreateSwapchain();
@@ -135,26 +165,66 @@ private:
 	void createGlobalUniformBuffers();
 	void uploadGlobalUniformData(int imageIndex, const DirLight& dirLight, const std::vector<PointLight>& pointLights);
 
+	void drawOffscreenPointLightFace(const PointLight& pointLight, Face face, int imageIndex, const std::vector<AssetInstance*>& assetInstancesToDraw);
+
 	template<typename UniformDataType>
 	void createUniformBuffers(AssetInstance* assetInstance);
 
-	template<typename UniformDataType>
-	void allocateDescriptorSet(AssetInstance* assetInstance);
+	void createDescriptorSetLayout(const PipelineCreateInfo & pipelineCreateInfo, VkDescriptorSetLayout& outDescriptorSetLayout);
+
+	void allocateDescriptorSet(AssetInstance* assetInstance, int imageIndex);
+	void allocateOffscreenDescriptorSet(AssetInstance* assetInstance, int imageIndex);
 
 	void createPipelineNew(AssetInstance* assetInstance);
 
+	void createPipelineNew(const PipelineCreateInfo& createInfo, PipelineResources*& pipelineResources);
+
+	void createCubeMapImage(TextureResources& textureResources, const uint32_t width, const uint32_t height, VkImageUsageFlags imageUsage, VkFormat imageFormat);
+	void createSampledImage(TextureResources& textureResources, const uint32_t width, const uint32_t height, VkImageUsageFlags imageUsage, VkFormat imageFormat);
+
 private:
 	std::unordered_map<std::string, VkShaderModule> shaderMap_;//maps vertex shader file location to its VKShaderModule
-	std::unordered_map<PipelineCreateInfo, PipelineResources*, PipelineCreateInfoHash> pipelineMap_;
+	//std::unordered_map<PipelineCreateInfo, PipelineResources*, PipelineCreateInfoHash> pipelineMap_;
 
+#define MAX_RENDERED_OBJECTS 1000
+	std::vector<PipelineResources*> pipelines_;
+
+	typedef int PipelinesIndex;
+	std::unordered_map<PipelineCreateInfo, PipelinesIndex, PipelineCreateInfoHash> pipelineResourcesMap_;
+
+	std::unordered_map<PipelineCreateInfo, VkDescriptorSetLayout, PipelineCreateInfoHash> descriptorSetLayoutMap_;
+
+	std::unordered_map<PipelineCreateInfo, std::vector<AssetInstance*>, PipelineCreateInfoHash> pipelineAssetMap_;
+
+
+#define MAX_LIGHTS 64
 	struct GlobalUniformData
 	{
 		alignas(16) glm::vec3 viewPos;
 		DirLight::DirLightUniformData dirLightData;
-		PointLight::PointLightUniformData pointLightData;
+		PointLight::PointLightUniformData pointLightData[MAX_LIGHTS];
+		alignas(4) unsigned int numLights;
 	};
 	GlobalUniformData globalUniformData_;
 	std::vector<VulkanBuffer> globalUniformBuffer_;
 	std::vector<Entity*> assetInstancesToDelete_;
-	std::vector<PipelineResources*> pipelinesToDestroy_;
+
+	struct
+	{
+		TextureResources offscreenTextureResources_;
+		TextureResources sampledImage;
+		//TextureResources shadowCubeMap_;
+		VkRenderPass offscreenRenderPass_;
+		std::vector<VkFramebuffer> offscreenFrameBuffers_;
+		DepthResources offscreenDepthResources_;
+		PipelineResources* offscreenPipeline_;
+		struct
+		{
+			alignas(16) glm::mat4 pointLightSpaceMatrix;
+			alignas(16) glm::mat4 projection;
+			alignas(16) glm::vec3 lightPos;
+		} globalOffscreenUniformData_;
+
+		std::vector<VulkanBuffer> offscreenUniformBuffers_;
+	}offscreenResources_;
 };

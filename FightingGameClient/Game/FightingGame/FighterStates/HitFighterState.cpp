@@ -41,6 +41,7 @@ void HitFighterState::enterState(Fighter* fighter)
 	//gravity_ = 0;//reset gravity
 	//currentHitstunFrame_ = 0;//reset hitstun frame
 	comboCount_ = 1;
+	fighter->takeDamage(hitByEffect_.damage_);
 	hitHandler_.setHitEffect(fighter, hitByEffect_, !fighter->isBlocking());
 
 	//fighter->entity_->getComponent<Animator>().setAnimation(animationName_);

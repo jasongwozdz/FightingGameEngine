@@ -103,66 +103,6 @@ void Animator::setAnimationTime(float timeInSeconds)
 	}
 }
 
-void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, Renderable& renderable)
-{
-	if (frameNumber > clip.frameCount_)
-	{
-		std::cout << "Error: frame number out of bounds" << std::endl;
-		return;
-	}
-
-	const BoneStructure& boneStructure = resourceManager_.boneStructures_[boneStructureIndex_];
-
-	globalTransforms_.clear();
-
-	glm::mat4 globalTransform = boneStructure.boneInfo_[0].invBindPose_;
-	glm::mat4 transform;
-	std::vector<glm::mat4> finalTransform;
-
-	if (boneStructure.boneInfo_[0].animated_)
-	{
-		globalTransform = 
-			glm::translate(glm::mat4(1.0f), clip.positions_[1][frameNumber]) *
-			glm::toMat4(clip.rotations_[1][frameNumber]) * 
-			glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[1][frameNumber]));
-	}
-
-	globalTransforms_.push_back(globalTransform);
-	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[0].offset_);
-
-	for (int i = 1; i < boneStructure.boneInfo_.size() - 1; i++)
-	{
-		glm::mat4 transform = boneStructure.boneInfo_[i].invBindPose_;
-		if (boneStructure.boneInfo_[i].animated_)
-		{
-			transform =
-				glm::translate(glm::mat4(1.0f), clip.positions_[i][frameNumber]) *
-				glm::toMat4(clip.rotations_[i][frameNumber]) *
-				glm::scale(glm::mat4(1.0f), glm::vec3(clip.scale_[i][frameNumber]));
-		}
-
-		glm::mat4 parent(1.0f);
-		int parentIndex = boneStructure.boneInfo_[i].parent_;
-		if (parentIndex < finalTransform.size())
-		{
-			parent = globalTransforms_[parentIndex];
-		}
-		else
-		{
-			parent = glm::mat4(1.0f);
-			std::cout << "ERROR: parent joint not found in final transform matrix" << std::endl;
-		}
-
-		globalTransform = parent * transform;
-		globalTransforms_.push_back(globalTransform);
-
-		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[i].offset_);
-	}
-	setPose(finalTransform, renderable);
-
-	dontUpdate_ = true;
-}
-
 void Animator::getAnimationPoseByFrame(const AnimationClip& clip, unsigned int frameNumber, AssetInstance* assetInstance)
 {
 	if (frameNumber > clip.frameCount_)
@@ -255,103 +195,6 @@ void Animator::setPose(const std::vector<glm::mat4>& pose, Renderable& renderabl
 	{
 		renderable.ubo_.bones[i] = glm::mat4(1.0f);
 	}
-}
-
-void Animator::update(float deltaTime, Renderable& renderable)
-{
-	if (dontUpdate_)
-	{
-		return;
-	}
-
-	std::vector<glm::mat4> finalTransform;
-
-	globalTransforms_.clear();
-
-	const BoneStructure& boneStructure = resourceManager_.boneStructures_[boneStructureIndex_];
-
-	glm::mat4 globalTransform = boneStructure.boneInfo_[0].invBindPose_;
-
-	if (currentAnimation_ != -1)
-	{
-		const AnimationClip& clip = animations_[currentAnimation_];
-
-		//was time set by setAnimationTime
-		if (!timeSet_)
-		{
-			localTime_ += deltaTime * 0.001 * clip.playbackRate_;//in seconds
-		}
-		timeSet_ = false;
-
-		if (clip.isLooping_)
-		{
-			localTime_ = fmod(((localTime_)), clip.durationInSeconds_);
-		}
-		else
-		{
-			localTime_ = std::clamp(((localTime_)), 0.0f, clip.durationInSeconds_);
-		}
-
-		for (unsigned int i = 0; i < clip.frameCount_-1; i++)
-		{
-			if (clip.times_[i] >= localTime_)
-			{
-				currentFrameIndex_ = i;
-				break;
-			}
-		}
-
-		if (boneStructure.boneInfo_[0].animated_)
-			globalTransform = interpolateTransforms(1, clip, currentFrameIndex_);
-	}
-
-#define DEBUG 0
-#if DEBUG == 1
-	if (ImGui::Begin("Animator Debug"))
-	{
-		debugScrollingBuffer_.add( currentTime, localTime_ );
-
-		ImPlot::SetNextPlotLimitsX(currentTime - 3000.0f, currentTime, ImGuiCond_Always);
-		if (ImPlot::BeginPlot("AnimatorTiminig", "time", "LocalTime"))
-		{
-			ImPlot::PlotLine("localTime", debugScrollingBuffer_.bufferX.data(), debugScrollingBuffer_.bufferY.data(), debugScrollingBuffer_.bufferX.size());
-			ImPlot::EndPlot();
-		}
-		ImGui::End();
-	}
-#endif
-
-	globalTransforms_.push_back(globalTransform);
-	
-	finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[0].offset_); //model -> joint space
-
-	glm::mat4 parent(1.0f);
-	//get global positions of each joint
-	for (int i = 1; i < boneStructure.boneInfo_.size()-1; i++)
-	{
-		glm::mat4 currentPose(boneStructure.boneInfo_[i].invBindPose_ );
-		if (currentAnimation_ != -1 && boneStructure.boneInfo_[i].animated_)
-			currentPose = interpolateTransforms(i, animations_[currentAnimation_], currentFrameIndex_);
-
-		int parentIndex = boneStructure.boneInfo_[i].parent_;
-		if (parentIndex < finalTransform.size())
-		{
-			parent = globalTransforms_[parentIndex];
-		}
-		else
-		{
-			parent = glm::mat4(1.0f);
-			std::cout << "ERROR: parent joint not found in final transform matrix" << std::endl;
-		}
-
-		globalTransform = parent * currentPose;
-
-		globalTransforms_.push_back(globalTransform);
-
-		finalTransform.push_back(globalInverseTransform_ * globalTransform * boneStructure.boneInfo_[i].offset_);
-	}
-
-	setPose(finalTransform, renderable);
 }
 
 void Animator::update(float deltaTime, AssetInstance* assetInstance)
@@ -468,20 +311,18 @@ glm::mat4 Animator::interpolateTransforms(int jointIndex, const AnimationClip& c
 	
 	float normalizedTime = (localTime_ - clip.times_[frameIndex]) / (clip.times_[frameIndex] - clip.times_[frameIndex+1]);
 
+	glm::mat4 output(1.0f);
 	float x = startPos.x + normalizedTime*(endPos.x - startPos.x);
 	float y = startPos.y + normalizedTime*(endPos.y - startPos.y);
 	float z = startPos.z + normalizedTime*(endPos.z - startPos.z);
-	pos = glm::translate(glm::mat4(1.0f),{x, y, z});
+	output = glm::translate(output,{x, y, z});
 
-	//normalizedTime = (localTime_ - startScale.time_) / (endScale.time_ - startScale.time_);
-	float s = startScale + normalizedTime*(endScale - startScale);
-	scale = glm::scale(glm::mat4(1.0f), { s, s, s });
-
-	//normalizedTime = (localTime_ - startRot.time_) / (endRot.time_ - startRot.time_);
 	glm::quat rotationQuat = glm::normalize(glm::slerp(startRot, endRot, normalizedTime));
-	rotation = glm::toMat4(rotationQuat);
+	output *= glm::toMat4(rotationQuat);
 
-	glm::mat4 output = pos * rotation * scale;
+	float s = startScale + normalizedTime*(endScale - startScale);
+	output = glm::scale(output, { s, s, s });
+
 	return output;
 }
 

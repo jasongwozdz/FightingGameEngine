@@ -20,6 +20,7 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	debugDrawManager_(debugDrawManager)
 {
 	//scene_->setSkybox("C:/Users/jsngw/source/repos/FightingGame/FightingGameClient/Textures/skybox");
+	initConsoleCommands();
 	fighter1 = "..\\FighterFiles\\NewFighter\\BasicFighter.fgAnim";
 	fighter2 = "..\\FighterFiles\\NewFighter\\BasicFighter.fgAnim";
 	inputHandlerLeft_->clearInputQueue();
@@ -29,7 +30,6 @@ FightingAppState::FightingAppState(std::string fighter1, std::string fighter2, D
 	initArena();
 	initCamera();
 	initColliderLayers();
-	initConsoleCommands();
 	Input::getSingleton().addButton("Escape", GLFW_KEY_ESCAPE);
 	gameStateManager_ = new GameStateManager(fighters_[0], fighters_[1], debugDrawManager, *arena_);
 }
@@ -71,13 +71,27 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	Entity* dirLightEntity = scene_->addEntity("DirLight");
 	dirLightEntity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
 	DirLight& dirLight = dirLightEntity->addComponent<DirLight>(dirLightEntity);
+	dirLight.uniformData_.ambient = Console::getVec3Var("dirlight.ambient");
+	dirLight.uniformData_.diffuse = Console::getVec3Var("dirlight.diffuse");
+	dirLight.uniformData_.direction = Console::getVec3Var("dirlight.direction");
 
-	Entity* pointLightEntity = scene_->addEntity("PointLight");
-	pointLightEntity->addComponent<Transform>(0.0f, 1.0f, 0.0f);
-	PointLight& pointLight = pointLightEntity->addComponent<PointLight>(pointLightEntity);
-	pointLight.uniformData_.ambient = { 0.05f, 0.05f, 0.05f };
-	pointLight.uniformData_.diffuse = { 1.0f, 1.0f, 1.0f };
-	pointLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	{
+		Entity* pointLightEntity = scene_->addEntity("PointLight");
+		pointLightEntity->addComponent<Transform>(0.0f, 1.0f, 0.0f);
+		PointLight& pointLight = pointLightEntity->addComponent<PointLight>(pointLightEntity);
+		pointLight.uniformData_.ambient = { 0.01f, 0.01f, 0.01f };
+		pointLight.uniformData_.diffuse = { 0.1f, 0.1f, 0.1f };
+		pointLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	}
+
+	//{
+	//	Entity* pointLightEntity = scene_->addEntity("PointLight");
+	//	pointLightEntity->addComponent<Transform>(10.0f, 0.0f, 0.0f);
+	//	PointLight& pointLight = pointLightEntity->addComponent<PointLight>(pointLightEntity);
+	//	pointLight.uniformData_.ambient = { 0.05f, 0.05f, 0.05f };
+	//	pointLight.uniformData_.diffuse = { 1.0f, 1.0f, 1.0f };
+	//	pointLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	//}
 
 	Entity* backgroundEntity = scene_->addEntity("Background");
 	backgroundEntity->addComponent<Transform>(0.0f, 0.0f, 0.0f);
@@ -96,15 +110,6 @@ void FightingAppState::initScene(std::string fighterFilePath1, std::string fight
 	//particleInfo.degreesPerFrame = 1.0f;
 	//particleInfo.texturePath = "Textures/missingTexture.jpg";
 	//particleManager->addParticle(particleInfo);
-
-	CreateParticleEmitter emitter;
-	emitter.rate = 1;
-	emitter.velocity = { 0.1f, 1.0f };
-	emitter.scale = { 0.5f, 1.0f };
-	emitter.lifeTime = {10.0f, 10.0f};
-	emitter.angularVel = { 0.5f, 0.5f };
-
-	particleManager->createParticleEmitter(emitter);
 	generateArenaBackground();
 }
 
@@ -213,6 +218,7 @@ void FightingAppState::consoleCommandCallback(std::string command, CommandVar* c
 		{
 			dirLight.uniformData_.direction = commandVar->data.vec3Data;
 		}
+		break;
 	}
 
 	std::vector<Entity*> pointLights;
@@ -233,18 +239,40 @@ void FightingAppState::consoleCommandCallback(std::string command, CommandVar* c
 		{
 			transform.position_ = commandVar->data.vec3Data;
 		}
+		break;
+	}
+
+	if (command == "emitter.active")
+	{
+		if (commandVar->data.boolData)
+		{
+			CreateParticleEmitter emitter;
+			emitter.rate = 10;
+			emitter.velocity = { -1.0f, 1.0f };
+			emitter.scale = { 0.5f, 1.0f };
+			emitter.lifeTime = {10.0f, 10.0f};
+			emitter.angularVel = { 0.1f, 0.5f };
+
+			ParticleManager::getSingleton().createParticleEmitter(emitter);
+		}
+		else
+		{
+			ParticleManager::getSingleton().destroyParticleEmitter(0);
+		}
 	}
 }
 
 void FightingAppState::initConsoleCommands()
 {
 	Console* console = Console::getInstance();
-	console->addVec3Var("dirlight.ambient", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
-	console->addVec3Var("dirlight.diffuse", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
-	console->addVec3Var("dirlight.direction", { 1.0f, 1.0f, 1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("dirlight.ambient", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback) );
+	console->addVec3Var("dirlight.diffuse", { 1.0f, 1.0f, 1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+	console->addVec3Var("dirlight.direction", { 1.0f, 1.0f, 1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
 
 
-	console->addVec3Var("pointLight.ambient", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
-	console->addVec3Var("pointLight.diffuse", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
-	console->addVec3Var("pointLight.position", { 1.0f,1.0f,1.0f }, std::bind(&FightingAppState::consoleCommandCallback, this, std::placeholders::_1, std::placeholders::_2));
+	console->addVec3Var("pointLight.ambient", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+	console->addVec3Var("pointLight.diffuse", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+	console->addVec3Var("pointLight.position", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+
+	console->addBoolVar("emitter.active", true, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
 }

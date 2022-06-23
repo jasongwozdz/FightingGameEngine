@@ -1,8 +1,9 @@
-
+#include "../EngineSettings.h"
 #include "ParticleManager.h"
 #include "../Scene/Scene.h"
 #include "../ResourceManager.h"
 #include "../Scene/Components/Camera.h"
+#include "../Scene/Components/LightSource.h"
 
 template<> ParticleManager* Singleton<ParticleManager>::msSingleton = nullptr;
 
@@ -41,6 +42,7 @@ int ParticleManager::createParticleEmitter(const CreateParticleEmitter& createPa
 			particleEmitters_[i].scale = UniformDist(createParticleEmitter.scale.min, createParticleEmitter.scale.max);
 			particleEmitters_[i].velocity = UniformDist(createParticleEmitter.velocity.min, createParticleEmitter.velocity.max);
 			particleEmitters_[i].active = true;
+			particleEmitters_[i].rate = createParticleEmitter.rate;
 			particleEmitterTime_[i] = 0.0f;
 			nextAvailableIndex = i;
 			break;
@@ -67,9 +69,29 @@ void ParticleManager::addParticle(CreateParticleInfo createParticleInfo)
 	assetCreateInfo.texturePath = createParticleInfo.texturePath;
 	assetCreateInfo.modelPath = QUAD_PATH;
 	Asset* asset = ResourceManager::getSingleton().createAsset(assetCreateInfo);
-	particle.entity->addComponent<AssetInstance>(asset);
+	PipelineCreateInfo createInfo;
+	createInfo.windowExtent.width = EngineSettings::getSingleton().windowWidth;
+	createInfo.windowExtent.height = EngineSettings::getSingleton().windowHeight;
+	createInfo.cullingEnabled = true;
+	createInfo.depthEnabled = true;
+	createInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	createInfo.vertexShader = "./shaders/particle.vert.spv";
+	createInfo.fragmentShader = "./shaders/particle.frag.spv";
+	createInfo.hasSkeleton = false;
+	particle.entity->addComponent<AssetInstance>(asset, createInfo);
 	Transform& transform = particle.entity->addComponent<Transform>(createParticleInfo.startingPos);
 	transform.setScale(particle.size);
+	if (createParticleInfo.lighting)
+	{
+		PointLight& pointLight = particle.entity->addComponent<PointLight>();
+		pointLight.uniformData_.ambient = { 0.00f, 0.00f, 0.00f };
+		pointLight.uniformData_.diffuse = { 0.05f, 0.05f, 0.05f };
+		pointLight.uniformData_.specular = { 1.0f, 1.0f, 1.0f };
+	}
+	if (createParticleInfo.applyGravity)
+	{
+		particle.acceleration = { 0.0f, -0.15f ,0.0f };
+	}
 	int index = findNextOpenParticle();
 	_ASSERT(index != -1);
 	particles_[index] = particle;
@@ -78,7 +100,6 @@ void ParticleManager::addParticle(CreateParticleInfo createParticleInfo)
 void ParticleManager::update(float dt)
 {
 	dt *= 0.001f;
-	std::cout << dt << std::endl;
 	updateParticleEmitters(dt);
 	Camera& camera = Scene::getSingleton().getCurrentCamera();
 	for (int i = 0; i < MAX_PARTICLES; i++)
@@ -91,7 +112,8 @@ void ParticleManager::update(float dt)
 		Transform& transform = particle.entity->getComponent<Transform>();
 		glm::vec3 cameraPos = camera.entity_->getComponent<Transform>().position_;
 		transform.lookAt(cameraPos - transform.position_);
-		transform.position_ += particle.velocity;
+		particle.velocity += particle.acceleration;
+		transform.position_ += particle.velocity * dt;
 		particle.currentRotation += particle.degreesPerFrame;
 		transform.rotateAround(particle.currentRotation, Transform::worldForward);
 		particle.lifeTime -= dt;

@@ -46,16 +46,18 @@ struct PipelineResources
 struct PipelineCreateInfo
 {
 	VkExtent2D windowExtent;
-	VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	std::string vertexShader = "./shaders/texturedMeshVert.spv";
 	std::string fragmentShader = "./shaders/texturedMeshFrag.spv";
+	std::string geometryShader = "";
 	std::vector<VkPushConstantRange> pushConstantRanges;
+	VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	bool hasTexture = false;
 	bool depthEnabled = true;
 	bool hasSkeleton = false;
 	bool cullingEnabled = true;
 	bool lightingEnabled = true;
 	bool isSkybox = false;
+	bool isOffscreen = false;
 };
 
 struct PipelineCreateInfoHash
@@ -70,7 +72,12 @@ struct PipelineCreateInfoHash
 			std::hash<uint32_t>{}(key.windowExtent.height)^
 			std::hash<uint32_t>{}(key.windowExtent.width)^
 			std::hash<std::string>{}(key.vertexShader)^
-			std::hash<std::string>{}(key.fragmentShader);
+			std::hash<std::string>{}(key.fragmentShader)^
+			std::hash<std::string>{}(key.geometryShader)^
+			std::hash<bool>{}(key.cullingEnabled)^
+			std::hash<bool>{}(key.lightingEnabled)^
+			std::hash<bool>{}(key.isSkybox)^
+			std::hash<bool>{}(key.isOffscreen);
 
 		return hash;
 	}

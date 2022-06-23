@@ -1,4 +1,5 @@
 #include "Fighter.h"
+#include "Particles/ParticleManager.h"
 
 #include <chrono>
 
@@ -146,11 +147,39 @@ void Fighter::onCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollid
 			}
 			case ColliderLayer::HIT_BOX://this fighter's attack hit the other fighter
 			{
+
 				Fighter* otherFighter = Fighter::getFighterComp(otherEnt);
 				MoveInfo* currentMove = entity_->getComponent<MoveInfoComponent>().moveInfo_;
 				_ASSERT(currentMove);//there should always be a current move set in this case
 				if (currentMove->numHits_++ < currentMove->totalHits_)
 				{
+					glm::vec4 tempPos = { thisCollider->position_.x, thisCollider->position_.y, thisCollider->position_.z, 1.0f };
+					glm::vec3 hitBoxPos = entity_->getComponent<Transform>().calculateTransformNoScale() * tempPos;
+					tempPos = { otherCollider->position_, 1.0f };
+					glm::vec3 hurtBoxPos = otherEnt->getComponent<Transform>().calculateTransformNoScale() * tempPos;
+
+					const float VELOCITY_MAG = 5.0f;
+
+					CreateParticleInfo particleInfo;
+					particleInfo.applyGravity = true;
+					particleInfo.lighting = true;
+					particleInfo.degreesPerFrame = 1.0f;
+					particleInfo.lifeTime = 0.5f;
+					particleInfo.size = 0.2f;
+					particleInfo.startingPos = hurtBoxPos;
+					particleInfo.velocity = otherEnt->getComponent<Transform>().position_ - entity_->getComponent<Transform>().position_;
+					particleInfo.velocity *= VELOCITY_MAG;
+					ParticleManager::getSingleton().addParticle(particleInfo);
+					particleInfo.velocity = entity_->getComponent<Transform>().position_ - otherEnt->getComponent<Transform>().position_;
+					particleInfo.velocity *= VELOCITY_MAG;
+					ParticleManager::getSingleton().addParticle(particleInfo);
+					particleInfo.velocity = Transform::worldUp;
+					particleInfo.velocity *= VELOCITY_MAG;
+					ParticleManager::getSingleton().addParticle(particleInfo);
+					particleInfo.velocity = Transform::worldUp * -1.0f;
+					particleInfo.velocity *= VELOCITY_MAG;
+					ParticleManager::getSingleton().addParticle(particleInfo);
+
 					currentMove->hit_ = true;
 					otherFighter->onAttackHit(currentMove->hitEffect_);
 				}

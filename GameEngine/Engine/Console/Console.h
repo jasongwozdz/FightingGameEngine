@@ -31,6 +31,7 @@ union CommandData
 struct CommandVar;
 
 typedef std::function<void(std::string command, CommandVar* commandVar)> CallbackFunc;
+#define BIND_CONSOLE_CALLBACK(func) std::bind(&func, this, std::placeholders::_1, std::placeholders::_2)
 
 struct CommandVar
 {

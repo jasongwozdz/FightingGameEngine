@@ -18,6 +18,7 @@ AssetInstance::AssetInstance(Asset* asset) :
 	if (asset->skeleton_)
 	{
 		createInfo_.hasSkeleton = true;
+		createInfo_.hasTexture = true;
 		if (!createInfo_.lightingEnabled)
 		{
 			createInfo_.vertexShader = "./shaders/animatedMesh.vert.spv";
@@ -56,7 +57,8 @@ AssetInstance::AssetInstance(Asset* asset) :
 	init();
 }
 
-AssetInstance::AssetInstance(Asset * asset, PipelineCreateInfo createInfo) : 
+AssetInstance::AssetInstance(Asset * asset, PipelineCreateInfo createInfo) :
+	asset_(asset),
 	createInfo_(createInfo)
 {
 	//data_ = new DynamicAssetData();
