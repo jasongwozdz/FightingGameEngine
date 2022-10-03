@@ -8,11 +8,11 @@
 #include "Asset.h"
 #include "../../EngineExport.h"
 
-
 class ENGINE_API AssetInstance
 {
 public:
 	friend class VkRenderer;
+	friend class OpenGlRenderer;
 
 	AssetInstance() = delete;
 	AssetInstance(Asset* asset);
@@ -28,7 +28,7 @@ public:
 	void setViewMatrix(glm::mat4 worldToView);
 	void setProjectionMatrix(glm::mat4 viewToClip);
 	void setPose(std::vector<glm::mat4> bones);
-	const BoneStructure* getSkeleton() { return asset_->skeleton_; };
+	const BoneStructure* getSkeleton() const { return asset_->skeleton_; };
 
 	bool toDelete = false;
 private:
@@ -38,5 +38,7 @@ private:
 	DynamicAssetData data_;
 	size_t sizeOfUniformData_;
 	PipelineCreateInfo createInfo_;
+
+	unsigned int shaderProgram_;
 };
 

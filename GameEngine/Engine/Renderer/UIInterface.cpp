@@ -3,8 +3,10 @@
 #include "../libs/imgui/imgui.h"
 #include "../libs/imgui/imgui_impl_glfw.h"
 #include "../libs/imgui/imgui_impl_vulkan.h"
+#include "../libs/imgui/imgui_impl_opengl3.h"
 #include "../EngineSettings.h"
 #include <fstream>
+#include "VkRenderer.h"
 
 
 template<> UI::UIInterface* Singleton<UI::UIInterface>::msSingleton = 0;
@@ -52,9 +54,30 @@ VkShaderModule createShaderModule(const std::vector<char>& code, VkDevice logica
 	return shaderModule;
 }
 
-UI::UIInterface::UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer,  GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator) :
-	allocator_(allocator)
+UI::UIInterface::UIInterface()
 {
+	if(RendererInterface::getSingleton().api_ == RendererInterface::RenderAPI::OPENGL)
+	{
+		ImGui::CreateContext();
+		ImGui_ImplGlfw_InitForOpenGL(RendererInterface::getSingleton().window_->getGLFWWindow(), false);
+		ImGui_ImplOpenGL3_Init("#version 130");
+		//_ASSERTE(false, ("Need to implement UI constructor for opengl"));
+		return;
+	}
+	VkRenderer* renderer = VkRenderer::getInstance();
+	VkInstance& instance = renderer->instance_;
+	VkPhysicalDevice& physicalDevice = renderer->physicalDevice_;
+	VkDevice& logicalDevice = renderer->logicalDevice_;
+	uint32_t queueFamily = renderer->graphicsQueueFamiliy_;
+	VkQueue& queue = renderer->graphicsQueue_;
+	int minImageCount = renderer->swapChainResources_.imageCount_;
+	int imageCount = renderer->swapChainResources_.imageCount_;
+	VkCommandPool& commandPool = renderer->cmdPool_;
+	VkCommandBuffer& commandBuffer = renderer->cmdBuffer_;
+	GLFWwindow* window = renderer->window_->getGLFWWindow();
+	VkRenderPass& renderPass = renderer->renderPass_; 
+	allocator_ = renderer->allocator_;
+
 	VkDescriptorPoolSize pool_sizes[] =
 	{
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -256,13 +279,30 @@ void UI::UIInterface::showImGuiDemoWindow()
 
 void UI::UIInterface::prepareFrame()
 {
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
+	if (EngineSettings::getSingleton().isOpenglApi())
+	{
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+	}
+	else if (EngineSettings::getSingleton().isVulkanApi())
+	{
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+	}
 	ImGui::NewFrame();
 }
 
-void UI::UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
+void UI::UIInterface::renderFrame(VkCommandBuffer* currentBufferPtr)
 {
+	if(EngineSettings::getSingleton().isOpenglApi())
+	{
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		return;
+	}
+
+	_ASSERT(currentBufferPtr);
+	VkCommandBuffer& currentBuffer = *currentBufferPtr;
 	size_t vertexBufferSize = vertices_.size() * sizeof(UIVertex);
 	size_t indexBufferSize = indicies_.size()  * sizeof(uint32_t);
 
@@ -310,7 +350,11 @@ void UI::UIInterface::renderFrame(VkCommandBuffer& currentBuffer)
 
 void UI::UIInterface::drawRect(int width, int height, glm::vec2 pos, glm::vec4 color)
 {
-
+	if(RendererInterface::getSingleton().api_ == RendererInterface::RenderAPI::OPENGL)
+	{
+		//_ASSERTE(false, ("Need to implement UI constructor for opengl"));
+		return;
+	}
 	glm::vec2 p1 = {-width / 2, height / 2};
 	glm::vec2 p2 = { width / 2, height / 2 };
 	glm::vec2 p3 = { -width / 2, -height / 2};
@@ -359,6 +403,12 @@ void UI::UIInterface::drawRect(int width, int height, glm::vec2 pos, glm::vec4 c
 
 UI::UIInterface::~UIInterface()
 {
+	if (RendererInterface::getSingleton().api_ == RendererInterface::RenderAPI::OPENGL)
+	{
+		_ASSERTE(false, ("Need to implement UI constructor for opengl"));
+		return;
+	}
+
 	ImPlot::DestroyContext();
 	ImGui::DestroyContext();
 }

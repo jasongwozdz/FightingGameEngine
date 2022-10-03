@@ -19,10 +19,8 @@ layout(location = 2) in vec2 inTexPos;
 layout(location = 3) in vec3 inNormal;
 
 layout(location = 0) out vec4 fragPos;
-layout(location = 1) out vec3 fragLightPos;
 
 void main() {
     gl_Position = globalOffscreenData.projection * globalOffscreenData.pointLightSpaceMatrix * ubo.model * vec4(inPosition, 1.0);
     fragPos = ubo.model * vec4(inPosition, 1.0);
-    fragLightPos = globalOffscreenData.lightPos;
 }

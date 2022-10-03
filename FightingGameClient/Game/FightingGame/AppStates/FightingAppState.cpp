@@ -120,6 +120,7 @@ void FightingAppState::initCamera()
 	scene_->setActiveCamera(fightingGameCamera_);
 
 	flyCamera_ = scene_->createCameraEntity();
+	flyCamera_->getComponent<Camera>().projection = Camera::PERSPECTIVE;
 	flyCamera_->addComponent<Behavior>(new ControllableCameraBehavior(flyCamera_));
 }
 
@@ -265,9 +266,9 @@ void FightingAppState::consoleCommandCallback(std::string command, CommandVar* c
 void FightingAppState::initConsoleCommands()
 {
 	Console* console = Console::getInstance();
-	console->addVec3Var("dirlight.ambient", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback) );
-	console->addVec3Var("dirlight.diffuse", { 1.0f, 1.0f, 1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
-	console->addVec3Var("dirlight.direction", { 1.0f, 1.0f, 1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+	console->addVec3Var("dirlight.ambient", { 0.0f,0.0f,0.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback) );
+	console->addVec3Var("dirlight.diffuse", { 0.5f, 0.5f, 0.5f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
+	console->addVec3Var("dirlight.direction", { 0.2f, -1.0f, 0.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));
 
 
 	console->addVec3Var("pointLight.ambient", { 1.0f,1.0f,1.0f }, BIND_CONSOLE_CALLBACK(FightingAppState::consoleCommandCallback));

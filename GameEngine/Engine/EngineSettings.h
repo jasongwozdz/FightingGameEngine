@@ -16,11 +16,16 @@ public:
 
 	static EngineSettings& getSingleton();
 	static EngineSettings* getSingletonPtr();
+
+	bool isVulkanApi();
+	bool isOpenglApi();
+
 	int windowWidth;
 	int windowHeight;
 	int framesPerSecond = 144;
 	double dt;
 	double currentTime;
+	int renderApi;
 private:
 	const char* fileLoc = "./Engine/Settings/EngineSettings.ini";
 };

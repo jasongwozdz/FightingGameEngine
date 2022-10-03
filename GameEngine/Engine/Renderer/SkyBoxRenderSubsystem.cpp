@@ -139,7 +139,7 @@ bool SkyBoxRenderSubsystem::createTextureResources(int baseHeight, int baseWidth
 	VkExtent3D extent = {baseHeight, baseWidth, 1};
 	VkImageCreateInfo textureInfo = vkinit::image_create_info(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, extent, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 	
-	skyboxTexture_ = renderer_.createTextureResources(baseWidth, baseHeight, numChannels, baseWidth*baseHeight * 4, totalPixels, textureInfo);//create image and image view
+	//skyboxTexture_ = static_cast<VkRenderer*>(&renderer_)->createTextureResources(baseWidth, baseHeight, numChannels, baseWidth*baseHeight * 4, totalPixels, textureInfo);//create image and image view
 
 	VkSamplerCreateInfo samplerCreateInfo = vkinit::sampler_create_info(VK_FILTER_LINEAR, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 	vkCreateSampler(logicalDevice_, &samplerCreateInfo, nullptr, &skyboxTexture_.sampler_);

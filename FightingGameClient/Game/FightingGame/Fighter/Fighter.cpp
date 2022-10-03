@@ -170,15 +170,15 @@ void Fighter::onCollision(Entity* otherEnt, BoxCollider* thisCollider, BoxCollid
 					particleInfo.velocity = otherEnt->getComponent<Transform>().position_ - entity_->getComponent<Transform>().position_;
 					particleInfo.velocity *= VELOCITY_MAG;
 					ParticleManager::getSingleton().addParticle(particleInfo);
-					particleInfo.velocity = entity_->getComponent<Transform>().position_ - otherEnt->getComponent<Transform>().position_;
-					particleInfo.velocity *= VELOCITY_MAG;
-					ParticleManager::getSingleton().addParticle(particleInfo);
-					particleInfo.velocity = Transform::worldUp;
-					particleInfo.velocity *= VELOCITY_MAG;
-					ParticleManager::getSingleton().addParticle(particleInfo);
-					particleInfo.velocity = Transform::worldUp * -1.0f;
-					particleInfo.velocity *= VELOCITY_MAG;
-					ParticleManager::getSingleton().addParticle(particleInfo);
+					//particleInfo.velocity = entity_->getComponent<Transform>().position_ - otherEnt->getComponent<Transform>().position_;
+					//particleInfo.velocity *= VELOCITY_MAG;
+					//ParticleManager::getSingleton().addParticle(particleInfo);
+					//particleInfo.velocity = Transform::worldUp;
+					//particleInfo.velocity *= VELOCITY_MAG;
+					//ParticleManager::getSingleton().addParticle(particleInfo);
+					//particleInfo.velocity = Transform::worldUp * -1.0f;
+					//particleInfo.velocity *= VELOCITY_MAG;
+					//ParticleManager::getSingleton().addParticle(particleInfo);
 
 					currentMove->hit_ = true;
 					otherFighter->onAttackHit(currentMove->hitEffect_);

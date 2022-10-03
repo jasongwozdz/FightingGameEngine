@@ -83,7 +83,7 @@ public:
 		transform.position_ += -Transform::worldForward * DISTANCE;
 		transform.lookAt(midPoint - transform.position_);
 
-		entity_->getComponent<Camera>().fovAngleInDegrees_ = calculateFov(midPoint);
+		entity_->getComponent<Camera>().projectionData.perspectiveData.fovAngleInDegrees = calculateFov(midPoint);
 	}
 
 private:

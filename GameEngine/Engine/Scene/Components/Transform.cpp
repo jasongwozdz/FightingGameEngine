@@ -6,6 +6,7 @@
 
 #include "../../DebugDrawManager.h"
 #include "../../EngineSettings.h"
+#include "../../Renderer/Asset/AssetInstance.h"
 
 glm::vec3 Transform::worldLeft =	{ 1.0f, 0.0f, 0.0f };
 glm::vec3 Transform::worldUp =		{ 0.0f, 1.0f, 0.0f };
@@ -95,7 +96,7 @@ glm::mat4 Transform::calculateTransform()
 	return finalTransform_;
 }
 
-glm::vec3 Transform::left()
+glm::vec3 Transform::left() const
 {
 	glm::vec3 leftVec{};
 	for (int i = 0; i < 3; i++)
@@ -106,7 +107,7 @@ glm::vec3 Transform::left()
 	return leftVec;
 }
 
-glm::vec3 Transform::up()
+glm::vec3 Transform::up() const
 {
 	glm::vec3 upVec{};
 	for (int i = 0; i < 3; i++)
@@ -117,7 +118,7 @@ glm::vec3 Transform::up()
 	return upVec;
 }
 
-glm::vec3 Transform::forward()
+glm::vec3 Transform::forward() const
 {
 	glm::vec3 forwardVec{};
 	for (int i = 0; i < 3; i++)

@@ -1,59 +1,20 @@
 #include "AssetInstance.h"
 
 #include "../../EngineSettings.h"
-
+#include "../RendererInterface.h"
 #include "../VkRenderer.h"
+#include "../OpenGl/OpenGlRenderer.h"
 
 AssetInstance::AssetInstance(Asset* asset) :
 	asset_(asset)
 {
-	//data_ =  new DynamicAssetData();
-	//_ASSERT(data_);
 	//initalize createInfo_ to some default values
 	createInfo_.windowExtent.width = EngineSettings::getSingleton().windowWidth;
 	createInfo_.windowExtent.height = EngineSettings::getSingleton().windowHeight;
 	createInfo_.cullingEnabled = true;
 	createInfo_.depthEnabled = true;
 	createInfo_.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	if (asset->skeleton_)
-	{
-		createInfo_.hasSkeleton = true;
-		createInfo_.hasTexture = true;
-		if (!createInfo_.lightingEnabled)
-		{
-			createInfo_.vertexShader = "./shaders/animatedMesh.vert.spv";
-			createInfo_.fragmentShader = "./shaders/animatedMesh.frag.spv";
-		}
-		else
-		{
-			createInfo_.vertexShader = "./shaders/animatedMeshLighting.vert.spv";
-			createInfo_.fragmentShader = "./shaders/animatedMeshLighting.frag.spv";
-		}
-	}
-	else if (asset->texture_)
-	{
-		createInfo_.hasTexture = true;
-		if (!createInfo_.lightingEnabled)
-		{
-			createInfo_.vertexShader = "./shaders/texturedMeshVert.spv";
-			createInfo_.fragmentShader = "./shaders/texturedMeshFrag.spv";
-		}
-		else
-		{
-			createInfo_.vertexShader = "./shaders/texturedMeshLighting.vert.spv";
-			createInfo_.fragmentShader = "./shaders/texturedMeshLighting.frag.spv";
-		}
-	}
-	else if (createInfo_.lightingEnabled)
-	{
-		createInfo_.vertexShader = "./shaders/shaderLighting.vert.spv";
-		createInfo_.fragmentShader = "./shaders/shaderLighting.frag.spv";
-	}
-	else
-	{
-		createInfo_.vertexShader = "./shaders/vert.spv";
-		createInfo_.fragmentShader = "./shaders/frag.spv";
-	}
+	RendererInterface::getSingleton().setDefaultShader(this);
 	init();
 }
 
@@ -61,7 +22,6 @@ AssetInstance::AssetInstance(Asset * asset, PipelineCreateInfo createInfo) :
 	asset_(asset),
 	createInfo_(createInfo)
 {
-	//data_ = new DynamicAssetData();
 	init();
 }
 
@@ -73,38 +33,53 @@ AssetInstance::AssetInstance(AssetInstance&& other)
 	//other.data_ = nullptr;
 	sizeOfUniformData_ = other.sizeOfUniformData_;
 	createInfo_ = other.createInfo_;
+	shaderProgram_ = other.shaderProgram_;
 }
 
 AssetInstance& AssetInstance::operator=(AssetInstance&& other)
 {
 	asset_ = other.asset_;
 	data_ = std::move(other.data_);
-	//other.data_ = nullptr;
 	other.asset_ = nullptr;
 	sizeOfUniformData_ = other.sizeOfUniformData_;
 	createInfo_ = other.createInfo_;
+	shaderProgram_ = other.shaderProgram_;
 	return *this;
 }
 
 AssetInstance::~AssetInstance()
 {
-	//delete data_;
 }
 
 void AssetInstance::init()
 {
-	VkRenderer* renderer = VkRenderer::getSingletonPtr();
+	//need to fix this to work with OPENGL
+	RendererInterface* renderInterface = RendererInterface::getSingletonPtr();
 	if (asset_->skeleton_)
 	{
 		data_.ubo_ = new MVPBoneData;
 		sizeOfUniformData_ = sizeof(MVPBoneData);
-		renderer->uploadDynamicData<MVPBoneData>(this);
+		if (renderInterface->api_ == RendererInterface::RenderAPI::VULKAN)
+		{
+			VkRenderer::getInstance()->uploadDynamicData<MVPBoneData>(this);
+		}
+		else if (renderInterface->api_ == RendererInterface::RenderAPI::OPENGL)
+		{
+			OpenGlRenderer::getInstance()->uploadDynamicData<MVPBoneData>(this);
+		}
 	}
 	else
 	{
 		data_.ubo_ = new MVP;
 		sizeOfUniformData_ = sizeof(MVP);
-		renderer->uploadDynamicData<MVP>(this);
+		if (renderInterface->api_ == RendererInterface::RenderAPI::VULKAN)
+		{
+			VkRenderer::getInstance()->uploadDynamicData<MVP>(this);
+		}
+		else if (renderInterface->api_ == RendererInterface::RenderAPI::OPENGL)
+		{
+			OpenGlRenderer::getInstance()->uploadDynamicData<MVP>(this);
+		}
 	}
 }
 

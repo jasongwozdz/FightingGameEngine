@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <iostream>
 
+#include "Renderer/RendererInterface.h"
+
 
 template <> EngineSettings* Singleton<EngineSettings>::msSingleton = 0;
 
@@ -34,5 +36,19 @@ void EngineSettings::init()
 		windowWidth = 640;
 		windowHeight = 480;
 	}
-
+	
+	section = "graphics";
+	const char* apiStr = "api";
+	renderApi = GetPrivateProfileIntA(section, apiStr, NULL, fileLoc);
 }
+
+bool EngineSettings::isVulkanApi()
+{
+	return static_cast<RendererInterface::RenderAPI>(renderApi) == RendererInterface::RenderAPI::VULKAN;
+}
+
+bool EngineSettings::isOpenglApi()
+{
+	return static_cast<RendererInterface::RenderAPI>(renderApi) == RendererInterface::RenderAPI::OPENGL;
+}
+

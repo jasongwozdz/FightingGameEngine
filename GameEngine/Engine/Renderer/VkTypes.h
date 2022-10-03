@@ -21,9 +21,12 @@ struct VulkanImage
 
 struct TextureResources
 {
+	//Vulkan Resources
 	VulkanImage image_;
 	VkImageView view_;
 	VkSampler sampler_;
+	//OpenGl resources
+	unsigned int textureId_;
 };
 
 struct PipelineResources
@@ -46,8 +49,8 @@ struct PipelineResources
 struct PipelineCreateInfo
 {
 	VkExtent2D windowExtent;
-	std::string vertexShader = "./shaders/texturedMeshVert.spv";
-	std::string fragmentShader = "./shaders/texturedMeshFrag.spv";
+	std::string vertexShader = "";
+	std::string fragmentShader = "";
 	std::string geometryShader = "";
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

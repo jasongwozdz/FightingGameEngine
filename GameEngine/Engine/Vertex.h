@@ -1,6 +1,5 @@
 #pragma once
 #include "Vertex.h"
-
 #include <array>
 #include <vector>
 
@@ -61,6 +60,9 @@ namespace VertexUtil
 
 	template<typename VertexType>
 	std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+
+	template <typename VertexType>
+	void setupVertexAttribPointers();
 }
 
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "Engine/Renderer/VkRenderer.h"
+#include "Engine/Renderer/OpenGl/OpenGlRenderer.h"
 #include "Engine/Scene/Scene.h"
 #include "Engine/ResourceManager.h"
 #include "Engine/EngineSettings.h"
@@ -28,7 +29,7 @@ public:
 public:
 	// Singletons
 	ResourceManager* resourceManager_;
-	VkRenderer* renderer_;
+	RendererInterface* renderer_;
 	EngineSettings* engineSettings_;
 	Window* window_;
 	Scene* scene_;

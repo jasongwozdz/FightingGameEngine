@@ -10,7 +10,7 @@
 #include "Components/Animator.h"
 #include "Components/Collider.h"
 #include "../Renderer/Renderable.h"
-#include "../Renderer/VkRenderer.h"
+#include "../Renderer/RendererInterface.h"
 #include "../Renderer/Textured.h"
 #include "../Renderer/SkyBoxRenderSubsystem.h"
 
@@ -22,9 +22,14 @@
 #define ENGINE_API __declspec(dllimport)
 #endif
 
+
 class ENGINE_API Scene : Singleton<Scene>
 {
 public:
+//temp delete
+static glm::mat4 sProjection;
+static glm::mat4 sView;
+
 	Scene();
 	~Scene();
 
@@ -69,7 +74,7 @@ private:
 	std::unordered_map < std::string, std::vector<Entity*>> entityNameMap_;
 	Entity* activeCamera_;
 	std::vector<Renderable*> objectsToDraw_;
-	VkRenderer* renderer_;
+	RendererInterface* renderer_;
 	class SkyBoxRenderSubsystem* skybox_;
 	class BoxCollisionManager* boxCollisionManager_;
 	bool skyboxCreated_ = false;

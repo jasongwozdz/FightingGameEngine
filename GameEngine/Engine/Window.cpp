@@ -3,15 +3,32 @@
 #include "Window.h"
 #include "EngineSettings.h"
 #include "../Engine/libs/imgui/imgui_impl_glfw.h"
+#include "Renderer/RendererInterface.h"
 
 Window::Window()
 {
 	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	windowInfo_.width = EngineSettings::getSingleton().windowWidth;
 	windowInfo_.height = EngineSettings::getSingleton().windowHeight;
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	if (EngineSettings::getSingleton().isOpenglApi())
+	{
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	}
+	else if(EngineSettings::getSingleton().isVulkanApi())
+	{
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	}
+
 	window_= glfwCreateWindow(windowInfo_.width, windowInfo_.height, "Engine", nullptr, nullptr);
+
+	if (EngineSettings::getSingleton().isOpenglApi())
+	{
+		glfwMakeContextCurrent(getGLFWWindow());
+	}
+
 	glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	glfwSetWindowUserPointer(window_, &windowInfo_);
 
@@ -132,6 +149,10 @@ void Window::setCursor(bool cursorEnabled)
 
 void Window::onUpdate()
 {
+	if (EngineSettings::getSingleton().isOpenglApi())
+	{
+		glfwSwapBuffers(getGLFWWindow());
+	}
 	glfwPollEvents();
 }
 

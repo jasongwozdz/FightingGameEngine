@@ -29,9 +29,9 @@ public:
 	// > 0 indicates right, < 0 indicates left
 	static float checkSide(glm::vec2 middle, glm::vec2 checkSide);
 
-	glm::vec3 left();
-	glm::vec3 up();
-	glm::vec3 forward();
+	glm::vec3 left() const;
+	glm::vec3 up() const;
+	glm::vec3 forward() const;
 
 	void drawDebugGui();
 	void drawDebug();

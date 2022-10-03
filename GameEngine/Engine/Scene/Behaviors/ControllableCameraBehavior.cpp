@@ -7,7 +7,7 @@ ControllableCameraBehavior::ControllableCameraBehavior(Entity* entity) :
 	BehaviorImplementationBase(entity),
 	input_(Input::getSingletonPtr())
 {
-	entity_->getComponent<Camera>().fovAngleInDegrees_ = 60.0f;
+	entity_->getComponent<Camera>().projectionData.perspectiveData.fovAngleInDegrees = 120.0f;
 }
 
 void ControllableCameraBehavior::update()

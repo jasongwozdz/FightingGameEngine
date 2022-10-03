@@ -5,6 +5,7 @@
 #include "../../Engine/EngineSettings.h"
 #include "../DebugDrawManager.h"
 #include "../BoxCollisionManager.h"
+#include "../Renderer/VkRenderer.h"
 
 template<> Scene* Singleton<Scene>::msSingleton = 0;
 float Scene::DeltaTime = 0.0f;
@@ -41,10 +42,10 @@ Scene& Scene::getSingleton()
 }
 
 Scene::Scene() : 
-	renderer_(VkRenderer::getSingletonPtr()),
+	renderer_(RendererInterface::getSingletonPtr()),
 	boxCollisionManager_(new BoxCollisionManager())
 {
-	skybox_ = renderer_->addRenderSubsystem<SkyBoxRenderSubsystem>();
+	//skybox_ = static_cast<VkRenderer*>(renderer_)->addRenderSubsystem<SkyBoxRenderSubsystem>();
 	initalizeDefaultCamera();
 }
 
@@ -176,7 +177,7 @@ void Scene::drawCameraFrustrum(Camera& currentCamera, Transform& cameraTransform
 {
 	DebugDrawManager& debugDrawManager = DebugDrawManager::getSingleton();
 	//debugDrawManager.drawCube(cameraTransform.position_, { 1.0f, 1.0f, 1.0f }, { 2.0f , 1.0f, 1.0f });
-	float angleRads = glm::radians(currentCamera.fovAngleInDegrees_);
+	float angleRads = glm::radians(currentCamera.projectionData.perspectiveData.fovAngleInDegrees);
 	glm::vec3 dirRight = glm::vec3(glm::sin(angleRads), 0.0f, glm::cos(angleRads));
 	glm::vec3 dirLeft = glm::vec3(glm::sin(-angleRads), 0.0f, glm::cos(-angleRads));
 	glm::vec3 worldDirRight = cameraTransform.calculateTransform() * glm::vec4(dirRight, 0.0f);
@@ -199,13 +200,17 @@ void Scene::calculateViewProjection(glm::mat4& viewMatrix, glm::mat4& projection
 
 	if (camera.projection == Camera::Projection::ORTHOGRAPHIC)
 	{
-		projectionMatrix = glm::ortho(0.0f, width, 0.0f, height, camera.nearView, camera.farView);
+		projectionMatrix = glm::ortho(0.0f, 0.5f, 0.0f, 0.5f, camera.projectionData.perspectiveData.nearView, camera.projectionData.perspectiveData.farView);
 	}
 	else
 	{
-		projectionMatrix = glm::perspective(glm::radians(camera.fovAngleInDegrees_), aspectRatio, camera.nearView, camera.farView);
+		projectionMatrix = glm::perspective(glm::radians(camera.projectionData.perspectiveData.fovAngleInDegrees), aspectRatio, camera.projectionData.perspectiveData.nearView, camera.projectionData.perspectiveData.farView);
 	}
-	projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
+
+	if (renderer_->api_ == RendererInterface::RenderAPI::VULKAN)
+	{
+		projectionMatrix[1][1] *= -1;//need to flip this because GLM uses OpenGl coordinates where top left is -1,1 where as in vulkan top left is -1,-1.  Flip y scale
+	}
 	//drawCameraFrustrum(camera, transform);
 }
 

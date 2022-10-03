@@ -220,6 +220,10 @@
     <None Include="shaders\animatedMesh.vert" />
     <None Include="shaders\imgui.frag" />
     <None Include="shaders\imgui.vert" />
+    <None Include="shaders\OpenGlShaders\fragment.glsl" />
+    <None Include="shaders\OpenGlShaders\shaderLighting.frag.glsl" />
+    <None Include="shaders\OpenGlShaders\shaderLighting.vert.glsl" />
+    <None Include="shaders\OpenGlShaders\vertex.glsl" />
     <None Include="shaders\shader.frag" />
     <None Include="shaders\shader.vert" />
     <None Include="shaders\texturedMeshShader.frag" />

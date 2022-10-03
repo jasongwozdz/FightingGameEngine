@@ -24,7 +24,6 @@ layout(location = 4) in vec4 inBoneWeights;
 layout(location = 5) in ivec4 inBoneIds;
 
 layout(location = 0) out vec4 fragPos;
-layout(location = 1) out vec3 fragLightPos;
 
 void main() {
     mat4 boneTransforms = ubo.bones[inBoneIds[0]] * inBoneWeights[0];
@@ -35,5 +34,4 @@ void main() {
     gl_Position = globalOffscreenData.projection * globalOffscreenData.pointLightSpaceMatrix * ubo.model * boneTransforms * vec4(inPosition, 1.0);
 
     fragPos = ubo.model * boneTransforms * vec4(inPosition, 1.0);
-    fragLightPos = globalOffscreenData.lightPos;
 }

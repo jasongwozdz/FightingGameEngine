@@ -4,6 +4,7 @@
 #include "../VkRenderer.h"
 #include "../Renderable.h"
 #include "../Textured.h"
+#include "../OpenGl/OpenGlRenderer.h"
 
 Asset::Asset() :
 	//mesh_(nullptr),
@@ -23,8 +24,19 @@ void Asset::addMesh(std::vector<VertexType> verticies, std::vector<uint32_t> ind
 {
 	mesh_.numInidicies_ = indicies.size();
 	mesh_.numVerticies_ = verticies.size();
-	VkRenderer* renderer = VkRenderer::getSingletonPtr();
-	renderer->uploadStaticMeshData(verticies, indicies, &mesh_.vertexBuffer_, &mesh_.indexBuffer_);
+	RendererInterface* renderInterface = RendererInterface::getSingletonPtr();
+	if(renderInterface->api_ == RendererInterface::RenderAPI::VULKAN)
+	{
+		VkRenderer* renderer = static_cast<VkRenderer*>(RendererInterface::getSingletonPtr());
+		renderer->uploadStaticMeshData(verticies, indicies, &mesh_.vertexBuffer_, &mesh_.indexBuffer_);
+	}
+	else if(renderInterface->api_ == RendererInterface::RenderAPI::OPENGL)
+	{
+		OpenGlRenderer* renderer = OpenGlRenderer::getInstance();
+		renderer->uploadStaticMeshData(this, verticies, indicies);
+
+		//_ASSERTE(false, ("Need to handle this for OpenGl"));
+	}
 }
 
 template void Asset::addMesh<NonAnimVertex>(std::vector<NonAnimVertex> verticies, std::vector<uint32_t> indicies);
@@ -34,7 +46,7 @@ template void Asset::addMesh<Vertex>(std::vector<Vertex> verticies, std::vector<
 void Asset::addTexture(std::vector<unsigned char> pixels, int textureWidth, int textureHeight, int numChannels)
 {
 	texture_ = new Textured(pixels, textureWidth, textureHeight, numChannels);
-	VkRenderer* renderer = VkRenderer::getSingletonPtr();
+	RendererInterface* renderer = RendererInterface::getSingletonPtr();
 	renderer->uploadTextureData(texture_);
 }
 

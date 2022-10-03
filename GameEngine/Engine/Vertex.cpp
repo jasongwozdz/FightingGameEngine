@@ -3,6 +3,13 @@
 #include "Vertex.h"
 #include "glm/glm.hpp"
 #include <array>
+#include "glad/glad.h"
+
+#define CHECK_FOR_ERROR() \
+{\
+	GLenum error = glGetError(); \
+	_ASSERT(error == GL_NO_ERROR);\
+}
 
 template<typename VertexType>
 VkVertexInputBindingDescription VertexUtil::getBindingDescription()
@@ -62,6 +69,56 @@ std::vector<VkVertexInputAttributeDescription> VertexUtil::getAttributeDescripti
 	attributeDescriptions[5].offset = offsetof(Vertex, boneIds);
 
 	return attributeDescriptions;
+}
+
+template<>
+void VertexUtil::setupVertexAttribPointers<NonAnimVertex>()
+{
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(NonAnimVertex), (void*)(0));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(NonAnimVertex), (void*)(offsetof(NonAnimVertex, color)));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(NonAnimVertex), (void*)(offsetof(NonAnimVertex, texCoord)));
+
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(NonAnimVertex), (void*)(offsetof(NonAnimVertex, normal)));
+}
+
+template<>
+void VertexUtil::setupVertexAttribPointers<Vertex>()
+{
+	glEnableVertexAttribArray(0);
+	CHECK_FOR_ERROR();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(0));
+	CHECK_FOR_ERROR();
+
+	glEnableVertexAttribArray(1);
+	CHECK_FOR_ERROR();
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, color)));
+	CHECK_FOR_ERROR();
+
+	glEnableVertexAttribArray(2);
+	CHECK_FOR_ERROR();
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, texCoord)));
+	CHECK_FOR_ERROR();
+
+	glEnableVertexAttribArray(3);
+	CHECK_FOR_ERROR();
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
+	CHECK_FOR_ERROR();
+
+	glEnableVertexAttribArray(4);
+	CHECK_FOR_ERROR();
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, boneWeights)));
+	CHECK_FOR_ERROR();
+
+	glEnableVertexAttribArray(5);
+	CHECK_FOR_ERROR();
+	glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, boneIds)));
+	CHECK_FOR_ERROR();
 }
 
 template<>

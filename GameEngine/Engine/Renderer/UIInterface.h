@@ -61,12 +61,12 @@ namespace UI
 		static UIInterface& getSingleton();
 		static UIInterface* getSingletonPtr();
 
-		UIInterface(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass, VmaAllocator& allocator);
+		UIInterface();
 		~UIInterface();
 		void recreateUI(VkInstance& instance, VkPhysicalDevice& physicalDevice, VkDevice& logicalDevice, uint32_t queueFamily, VkQueue& queue, VkDescriptorPool& descriptorPool, int minImageCount, int imageCount, VkCommandPool& commandPool, VkCommandBuffer& commandBuffer, GLFWwindow* window, VkRenderPass& renderPass);
 
 		void prepareFrame();
-		void renderFrame(VkCommandBuffer& curentBuffer);
+		void renderFrame(VkCommandBuffer* curentBuffer);
 
 		//Custom UI elements
 		void drawRect(int width, int height, glm::vec2 pos, glm::vec4 color);
@@ -114,7 +114,7 @@ namespace UI
 		VkDeviceSize globalIndexOffset_ = 0;
 		PipelineResources* uiPipeline_;
 		VkDescriptorSetLayout descriptorLayout_;
-		VmaAllocator& allocator_;
+		VmaAllocator allocator_;
 		VkBuffer vertexBuffer_;
 		VkBuffer indexBuffer_;
 		VmaAllocation vertexBufferMem_;

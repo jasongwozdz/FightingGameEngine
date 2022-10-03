@@ -75,8 +75,8 @@ void ParticleManager::addParticle(CreateParticleInfo createParticleInfo)
 	createInfo.cullingEnabled = true;
 	createInfo.depthEnabled = true;
 	createInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	createInfo.vertexShader = "./shaders/particle.vert.spv";
-	createInfo.fragmentShader = "./shaders/particle.frag.spv";
+	createInfo.vertexShader = RendererInterface::getSingleton().getParticleVertexShader(createParticleInfo.vertexType);
+	createInfo.fragmentShader = RendererInterface::getSingleton().getParticleFragmentShader(createParticleInfo.fragmentType);
 	createInfo.hasSkeleton = false;
 	particle.entity->addComponent<AssetInstance>(asset, createInfo);
 	Transform& transform = particle.entity->addComponent<Transform>(createParticleInfo.startingPos);
@@ -119,7 +119,7 @@ void ParticleManager::update(float dt)
 		particle.lifeTime -= dt;
 		if (particle.lifeTime <= 0.0f)
 		{
-			VkRenderer::getSingleton().deleteDynamicAssetData(particle.entity);
+			RendererInterface::getSingleton().deleteDynamicAssetData(particle.entity);
 			particle = {};
 		}
 	}

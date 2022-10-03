@@ -3,7 +3,6 @@
 #include <vector>
 #include <map>
 #include "../Singleton.h"
-#include "../Window.h"
 #include "../Renderer/Textured.h"
 #include "../Renderer/PipelineBuilder.h"
 #include "../Renderer/UIInterface.h"
@@ -12,8 +11,9 @@
 #include "VkTypes.h"
 #include "Asset/AssetInstance.h"
 #include "../Scene/Components/LightSource.h"
+#include "RendererInterface.h"
 
-class DebugDrawManager;
+class VulkanDebugDrawManager;
 
 #define VK_CHECK(x) \
 	do \
@@ -28,17 +28,17 @@ class DebugDrawManager;
 
 
 
-class VkRenderer : Singleton<VkRenderer>
+class VkRenderer : public RendererInterface
 {
 public:
-	static VkRenderer& getSingleton();
-	static VkRenderer* getSingletonPtr();
+	static VkRenderer* getInstance();
+
 	VkRenderer(Window& window);
 	void init();
 	void draw(std::vector<Renderable*>& objectsToDraw, const std::vector<AssetInstance*>& assetInstancesToDraw, const DirLight& dirLight, const std::vector<PointLight>& pointLights);
 	void cleanup();
 	void uploadMesh(Renderable* mesh);
-	void uploadStaticMeshData(Renderable* mesh);
+	//void uploadStaticMeshData(Renderable* mesh);
 
 	VmaAllocator& getAllocator() { allocator_; }
 
@@ -49,13 +49,15 @@ public:
 	void prepareFrame();
 	void frameBufferResizeCallback(Events::FrameBufferResizedEvent& event);
 	VkShaderModule createShaderModule(std::string shaderPath);
-	std::vector<char> readShaderFile(const std::string& filename);
-	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
 	void deleteDynamicAssetData(Entity* assetInstance);
-
 
 	template<typename UniformDataType>
 	void uploadDynamicData(AssetInstance* assetInstance);
+
+	virtual void setDefaultShader(AssetInstance* assetInstance) const;
+
+	virtual const std::string& getParticleVertexShader(ParticleTypeVertex vertex) const;
+	virtual const std::string& getParticleFragmentShader(ParticleTypeFragment fragment) const;
 	
 	template<class T> T* addRenderSubsystem()
 	{
@@ -65,9 +67,7 @@ public:
 	}
 
 public:
-	Window& window_;
 	UI::UIInterface* ui_;
-	DebugDrawManager* debugDrawManager_;
 
 	uint32_t width_;
 	uint32_t height_;
@@ -140,6 +140,7 @@ private:
 	void prepareOffscreenDirectionalLight(const DirLight& dirLight, int imageIndex);
 	void drawOffscreenDirLight(const DirLight& dirLight, int imageIndex, const std::vector<AssetInstance*>& assetInstancesToDraw);
 
+	TextureResources createTextureResources(int textureWidth, int textureHeight, int numChannles, int offset, std::vector<unsigned char>& pixles, VkImageCreateInfo& textureInfo);
 
 
 	void setImageLayout(VkImage& image, VkImageAspectFlags imageAspect, VkImageLayout oldLayout, VkImageLayout newLayout, VkExtent3D extent, VkPipelineStageFlags srcStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VkPipelineStageFlags dstStageMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
@@ -152,7 +153,7 @@ private:
 	
 	void prepareAssetInstanceData(const std::vector<AssetInstance*>& assetInstancesToDraw, int imageIndex);
 	void createDefaultRenderPass();
-	void createDepthImageResources(TextureResources& vulkanImage, const VkExtent3D& extent, VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	void createDepthImageResources(TextureResources& vulkanImage, const VkExtent3D& extent, VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, bool createSampler = false);
 	void createDefaultFramebuffers();
 	void createSwapchainResources();
 	void createDescriptorPools();
@@ -197,15 +198,6 @@ private:
 	std::unordered_map<PipelineCreateInfo, std::vector<AssetInstance*>, PipelineCreateInfoHash> pipelineAssetMap_;
 
 
-#define MAX_LIGHTS 64
-	struct GlobalUniformData
-	{
-		alignas(16) glm::vec3 viewPos;
-		DirLight::DirLightUniformData dirLightData;
-		PointLight::PointLightUniformData pointLightData[MAX_LIGHTS];
-		alignas(4) unsigned int numLights;
-	};
-	GlobalUniformData globalUniformData_;
 	std::vector<VulkanBuffer> globalUniformBuffer_;
 	std::vector<Entity*> assetInstancesToDelete_;
 

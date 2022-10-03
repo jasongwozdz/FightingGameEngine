@@ -144,5 +144,4 @@ public:
 
 	VkDescriptorSetLayout descriptorLayout_;
 	std::vector<VkDescriptorSet> descriptorSets_;
-
 };

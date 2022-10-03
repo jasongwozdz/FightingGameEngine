@@ -29,10 +29,21 @@ Application::Application()
 	engineSettings_->init();
 	window_ = new Window();
 	window_->setEventCallback(std::bind(&Application::onEvent, this, std::placeholders::_1));
-	renderer_ = new VkRenderer(*window_);
+
+	if (static_cast<RendererInterface::RenderAPI>(engineSettings_->renderApi) == RendererInterface::RenderAPI::VULKAN)
+	{
+		renderer_ = new VkRenderer(*window_);
+	}
+	else if (static_cast<RendererInterface::RenderAPI>(engineSettings_->renderApi) == RendererInterface::RenderAPI::OPENGL)
+	{
+		renderer_ = new OpenGlRenderer(window_);
+	}
+
 	renderer_->init();
 	scene_ = Scene::getSingletonPtr();
+
 	debugManager_ = renderer_->debugDrawManager_;
+
 	input_ = new Input(this);
 	console_ = new Console(this);
 	Console::setInstance(console_);
@@ -54,7 +65,7 @@ void Application::addEventCallback(std::function<void(Events::Event&)> fn)
 void Application::onEvent(Events::Event& e)
 {
 	Events::EventDispatcher dispatcher(e);
-	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&VkRenderer::frameBufferResizeCallback, renderer_, std::placeholders::_1));
+	dispatcher.dispatch<Events::FrameBufferResizedEvent>(std::bind(&RendererInterface::frameBufferResizeCallback, renderer_, std::placeholders::_1));
 
 	//callbacks defined in client
 	for (auto fn : callbacks_)
@@ -101,5 +112,4 @@ void Application::run()
 			scene_->update(deltaTime);
 		}
 	}
-	vkDeviceWaitIdle(renderer_->logicalDevice_);
 }

@@ -5,14 +5,41 @@
 #include "../VkTypes.h"
 #include "../../EngineExport.h"
 
-struct ENGINE_API MVP
+struct PointLightUniformData 
+{
+	alignas(4)  float constant = 1.0f;
+	alignas(4)  float linear = 0.09f;
+	alignas(4)  float quadratic = 0.03f;
+	alignas(16) glm::vec3 position = { 0.0f, 0.0f, 0.0f };
+	alignas(16) glm::vec3 ambient = { 0.0f, 0.0f, 0.0f };
+	alignas(16) glm::vec3 diffuse = { 0.0f, 0.0f, 0.0f };
+	alignas(16) glm::vec3 specular = { 0.0f, 0.0f, 0.0f };
+};
+
+struct DirLightUniformData {
+	alignas(16) glm::vec3 direction = { 0.0f, 0.0f, 0.0f };
+	alignas(16) glm::vec3 ambient = { 0.0f, 0.0f, 0.0f };
+	alignas(16) glm::vec3 diffuse = { 0.0f, 0.0f, 0.0f } ;
+	alignas(16) glm::vec3 specular = { 0.0f, 0.0f, 0.0f } ;
+};
+
+#define MAX_LIGHTS 64
+struct GlobalUniformData
+{
+	alignas(16) glm::vec3 viewPos;
+	DirLightUniformData dirLightData;
+	PointLightUniformData pointLightData[MAX_LIGHTS];
+	alignas(4) unsigned int numLights;
+};
+
+struct MVP
 {
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 view;
 	alignas(16) glm::mat4 projection;
 };
 
-struct ENGINE_API MVPBoneData : public MVP
+struct MVPBoneData : public MVP
 {
 	alignas(16) glm::mat4 bones_[MAX_BONES];	
 };
@@ -55,7 +82,7 @@ struct ENGINE_API DynamicAssetData
 	std::vector<VkDescriptorSet> descriptorSets_;
 	std::vector<VkDescriptorSet> offscreenDescriptorSet_;
 	VkDescriptorSetLayout offscreenDescriptorLayout_;
-	UniformDataPtr ubo_;
 	int pipelineIndex_;
+	UniformDataPtr ubo_;
 };
 
